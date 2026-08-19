@@ -126,7 +126,7 @@ Created on Mar 20, 2026
 ---------------
 '''
 #################################################################################
-# (c) Copyright 2024-2025, Rob Kremer, MIT open source license.                 #
+# (c) Copyright 2024-2026, Rob Kremer, MIT open source license.                 #
 #                                                                               #
 # Permission is hereby granted, free of charge, to any person obtaining a copy  #
 # of this software and associated documentation files (the "Software"), to deal #

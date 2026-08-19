@@ -1,3 +1,24 @@
+#################################################################################
+# (c) Copyright 2024-2026, Rob Kremer, MIT open source license.                 #
+#                                                                               #
+# Permission is hereby granted, free of charge, to any person obtaining a copy  #
+# of this software and associated documentation files (the "Software"), to deal #
+# in the Software without restriction, including without limitation the rights  #
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     #
+# copies of the Software, and to permit persons to whom the Software is         #
+# furnished to do so, subject to the following conditions:                      #
+#                                                                               #
+# The above copyright notice and this permission notice shall be included in all#
+# copies or substantial portions of the Software.                               #
+#                                                                               #
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    #
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      #
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   #
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        #
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, #
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
+# SOFTWARE.                                                                     #
+#################################################################################
 import types
 import sys
 import logging
@@ -68,12 +89,11 @@ def setupLogger(loggerClass:type|None=None, logFileName:str|None=None):
     name = Path(sys.argv[0]).stem
     logFileName = name+'.log'
   else:
-    if '.' in logFileName:
+    if '.' not in logFileName:
       logFileName += ".log"
   if os.path.isfile(logFileName): os.remove(logFileName)
   fileHandler = logging.FileHandler(logFileName)
   fileHandler.setFormatter(logging.Formatter('**%(levelname)s: %(name)s: %(message)s\n  at %(filename)s, func=%(funcName)s, line=%(lineno)d', style='%'))
-  #streamHandler = logging.StreamHandler(sys.stderr)
   streamHandler = DynamicStderrHandler()
   logging.basicConfig(force=True, level=logging.INFO, handlers=[fileHandler, streamHandler])
  
