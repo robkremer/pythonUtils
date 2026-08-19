@@ -1,0 +1,62 @@
+Is there a relatively simple way to have a web server run a program on access to an xml page where it interprets the xml, keeps the resultant complex object in memory, then accepts serialized commands/requests from the local program to modify the in-memory data on the server?
+
+5:40 PM
+Claude responded: Yes — this is a classic local RPC / API server pattern.
+Yes — this is a classic local RPC / API server pattern. The simplest approach in Python is Flask (or FastAPI) running locally:
+
+The basic architecture:
+
+your_script.py  →  HTTP requests  →  Flask server (holds object in memory)
+Server (server.py):
+
+python
+from flask import Flask, request, jsonify
+import xml.etree.ElementTree as ET
+
+app = Flask(__name__)
+
+# The in-memory object, built once from XML
+db = {}
+
+@app.route('/load', methods=['POST'])
+def load():
+  xml = request.data.decode()
+  tree = ET.fromstring(xml)
+  # parse into whatever structure you need
+  db['data'] = {'root': tree.tag, 'items': []}
+  return jsonify({'status': 'loaded'})
+
+@app.route('/command', methods=['POST'])
+def command():
+  cmd = request.get_json()
+  # interpret cmd and mutate db['data']
+  if cmd['action'] == 'add':
+    db['data']['items'].append(cmd['value'])
+  return jsonify(db['data'])
+
+if __name__ == '__main__':
+  app.run(port=5000)
+Client (your_script.py):
+
+python
+import requests
+
+# Load the XML
+with open('data.xml') as f:
+  requests.post('http://localhost:5000/load', data=f.read())
+
+# Send commands
+r = requests.post('http://localhost:5000/command',
+                  json={'action': 'add', 'value': 'hello'})
+print(r.json())
+Alternatives depending on your needs:
+
+Approach	Best when
+Flask (above)	Simple, familiar HTTP, easy to debug
+FastAPI	You want async, auto-docs, and type validation
+xmlrpc (stdlib)	Want true RPC feel, no dependencies
+multiprocessing.Manager	Both sides are Python in same process tree
+ZeroMQ / pyzmq	High throughput, low latency messaging
+The xmlrpc stdlib option is worth mentioning since it requires zero dependencies and fits your "serialized commands" description nicely — but Flask is probably the easiest to get running and debug quickly.
+
+Given your setup, Flask or FastAPI would be my recommendation — the JSON command interface is easy to evolve as your needs grow.

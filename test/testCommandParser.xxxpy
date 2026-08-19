@@ -1,0 +1,203 @@
+'''
+Created on Nov 1, 2024
+
+@author: kremer
+'''
+from __future__ import annotations
+import unittest
+from util.commandParser import TopCommandParser, MutatingCommandGenerator, GenFromCommand
+from util.command import Command
+from typing import Any, override, Optional
+from util.command import UndoError, RedoError
+import logging
+from argparse import Namespace
+
+logger = logging.getLogger(__name__)
+
+string:str = "A test String"
+
+# def change(upper:bool=False, lower:bool=False):
+#   return ChangeCaseCommandGenerator.do(Namespace({"upper":upper, "lower":lower}))
+#   # cmd:Command = ChangeCaseCommand(upper, lower)
+#   # parser.doList.do(cmd)
+  
+
+class ChangeCaseCommand(Command):
+  def __init__(self, name:str, upper:bool=False, lower:bool=False):
+    "doc for ChangeCaseCommand.__init__()"
+#    print(kwargs)
+    Command.__init__(self, name)
+    
+    if upper:
+      self.upper = True
+      assert lower is False
+    elif lower:
+      self.upper = False 
+    else:
+      raise Exception()
+
+  @override
+  def do(self)->Any:
+    super().do()
+    global string
+    self.oldValue = string
+    if self.upper:
+      string = string.upper()
+    else:
+      string = string.lower()
+    return string, self.oldValue
+
+  @override
+  def undo(self)->Any:
+    super().undo()
+    global string
+    string = self.oldValue
+    return string
+
+
+  def delete(self):
+    super().delete()
+
+  @override
+  def __str__(self):
+    super().__str__()
+
+class ChangeCaseCommandGenerator(MutatingCommandGenerator):
+  def __init__(self, commandParser:TopCommandParser, **kwargs):
+    super().__init__("change", commandParser, **kwargs)
+
+  def __str__(self):
+    return f'{self.commandName} '
+
+  @override
+  def _makeCommand(self, args:Namespace)->Command:
+    kwargs = dict(args._get_kwargs())
+#    print(args)
+#    print(kwargs)
+    return ChangeCaseCommand(self.commandName, **kwargs) 
+
+  # @override
+  # @property
+  # def commandName(self) -> str:
+  #   return "change"
+  
+  @override
+  def defineParse(self):
+    group = self.parser.add_mutually_exclusive_group()
+    group.add_argument("--upper", action='store_true')
+    group.add_argument("--lower", action='store_true')
+    
+
+
+class CaseModifyCommand(ChangeCaseCommandGenerator):
+  @override
+  @property
+  def commandName(self) -> str:
+    return "case modify"
+  
+class CaseChangeCommand(ChangeCaseCommandGenerator):
+  @override
+  @property
+  def commandName(self) -> str:
+    return "case change"
+  
+class CaseChangeCommand2(ChangeCaseCommandGenerator):
+  @override
+  @property
+  def commandName(self) -> str:
+    return "case again change"
+  
+    
+parser = TopCommandParser("")
+ChangeCaseCommandGenerator(parser)
+
+class Test(unittest.TestCase):
+
+  def setUp(self):
+    global string
+    string = "A test String"
+  
+  def tearDown(self):
+    pass
+
+  def test0100CommandParserUndoRedo(self):
+    'tests the basic command "change [--lower] [--upper]" and the undo/redo commands.'
+    global parser
+    #parser.parseLine("change --lower")
+    self.assertEqual(string, "A test String")
+    self.assertEqual(parser.parseLine("change --lower")[0], "a test string")
+    self.assertEqual(string, "a test string")
+    self.assertEqual(parser.parseLine("change --upper")[0], "A TEST STRING")
+    self.assertEqual(string, "A TEST STRING")
+    parser.parseLine("undo")
+    self.assertEqual(string, "a test string")
+    parser.parseLine("undo")
+    self.assertEqual(string, "A test String")
+    # with self.assertRaises(UndoError):
+    #   self.parser.parseLine("undo")
+    self.assertEqual(string, "A test String")
+    parser.parseLine("redo")
+    self.assertEqual(string, "a test string")
+    parser.parseLine("redo")
+    self.assertEqual(string, "A TEST STRING")
+    # with self.assertRaises(RedoError):
+    #   self.parser.parseLine("redo")
+    self.assertEqual(string, "A TEST STRING")
+    
+  def test0200CommandParserError(self):
+    'tests for throwing execptions to syntax errors, etc.'
+    with self.assertRaises(Exception):
+      parser.parseLine("hello there")
+    parser.parseLine("help")
+    parser.parseLine("change -h")
+
+  def test0300CommandHierarchical(self):
+    'tests the command "case modify [--lower] [--upper]"'
+    CaseModifyCommand(parser)
+#    parser.parseLine("help")
+    parser.parseLine("case modify --upper")
+    self.assertEqual(string, "A TEST STRING")
+    parser.parseLine("case modify --lower")
+    self.assertEqual(string, "a test string")
+    #with self.assertRaises(SyntaxError):
+    #  self.parser.parseLine("case")
+    parser.parseLine("undo")
+    self.assertEqual(string, "A TEST STRING")
+    parser.parseLine("redo")
+    self.assertEqual(string, "a test string")
+
+    CaseChangeCommand(parser)
+#    parser.parseLine("help")
+    parser.parseLine("case change --upper")
+    self.assertEqual(string, "A TEST STRING")
+    parser.parseLine("case change --lower")
+    self.assertEqual(string, "a test string")
+    #with self.assertRaises(SyntaxError):
+    #  self.parser.parseLine("case")
+    parser.parseLine("undo")
+    self.assertEqual(string, "A TEST STRING")
+    parser.parseLine("redo")
+    self.assertEqual(string, "a test string")
+
+    CaseChangeCommand2(parser)
+    
+    parser.parseLine("case again change --upper")
+    self.assertEqual(string, "A TEST STRING")
+    parser.parseLine("case again change --lower")
+    self.assertEqual(string, "a test string")
+
+    parser.parseLine("case -h")
+    logger.print("-----------")
+    parser.parseLine("case modify -h")
+    parser.parseLine("case again change -h")
+
+  def test0400GenFromCommand(self):
+    'tests the GenFromCommand CommandGenerator'
+    GenFromCommand(ChangeCaseCommand, parser, "x")
+    parser.parseLine("x -h")
+    parser.parseLine('x --upper')
+    self.assertEqual(string, "A TEST STRING")
+    
+if __name__ == "__main__":
+    #import sys;sys.argv = ['', 'Test.testName']
+    unittest.main()

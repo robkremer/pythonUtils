@@ -1,0 +1,67 @@
+Given a reference to a function, can I analyse the function enough to generate an argparse definition for it?
+
+5:23 PM
+Claude responded: Yes!
+Yes! Python's inspect module gives you everything you need:
+
+python
+import inspect
+import argparse
+
+def my_func(name: str, count: int = 5, verbose: bool = False):
+    """Does something useful."""
+    pass
+
+sig = inspect.signature(my_func)
+
+for paramName, param in sig.parameters.items():
+    print(paramName, param.annotation, param.default)
+Output:
+
+name <class 'str'> <class 'inspect._empty'>
+count <class 'int'> 5
+verbose <class 'bool'> False
+From that you can derive:
+
+param.annotation → argparse type (e.g. int, str)
+param.default → whether the arg is required (inspect.Parameter.empty = no default = required)
+param.kind → positional vs keyword (POSITIONAL_OR_KEYWORD, VAR_POSITIONAL, KEYWORD_ONLY, etc.)
+inspect.getdoc(fn) → docstring for the parser description
+A rough auto-generator:
+
+python
+def makeParserFromFunc(fn) -> argparse.ArgumentParser:
+  parser = argparse.ArgumentParser(description=inspect.getdoc(fn))
+  sig = inspect.signature(fn)
+
+  for paramName, param in sig.parameters.items():
+    annotation = param.annotation
+    default = param.default
+    hasDefault = default is not inspect.Parameter.empty
+
+    kwargs = {}
+
+    if annotation is not inspect.Parameter.empty:
+      if annotation is bool:
+        kwargs['action'] = 'store_true'
+      else:
+        kwargs['type'] = annotation
+
+    if hasDefault:
+      kwargs['default'] = default
+      kwargs['required'] = False
+      flagName = f'--{paramName}'
+    else:
+      flagName = paramName  # positional
+
+    parser.add_argument(flagName, **kwargs)
+
+  return parser
+Limitations to be aware of:
+
+Complex annotations (list[int], Optional[str], unions) need extra handling
+*args / **kwargs don't map cleanly to argparse
+Bool detection via action='store_true' is a simplification — you might want --no-X flags too
+Docstring param descriptions (:param name:) need separate parsing (e.g. with docstring_parser) to wire up help= per argument
+But for straightforward typed functions it works well.
+

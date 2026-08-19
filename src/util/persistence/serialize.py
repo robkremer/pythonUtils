@@ -1,0 +1,1401 @@
+'''
+This module represents a Strategy pattern (Gamma et al) class 
+(:py:class:`SerializationStrategy`) that serves to serialize
+and unserialize Python objects with proper support for multiple references to
+the same object. Thus, if *[a, b]* where *a is b* is stored, then when *[a, b]* is
+read back, *a is b* will still be true (although the read-back *a* will not likely
+have the same *id* as the original *a*). 
+
+This module contains the following classes/functions:
+
+  :class: :py:class:`SerializationStrategy`: The main class programs use to write and read
+      persistent data to files or URLs. It serves both as an abstract superclass
+      to all specific strategies/protocols (eg: XML, JSON) and it's class methods support
+      easy access to these specific strategies.
+  :class: :py:class:`Serializable`: If you want to store user-defined classes, you 
+      must include this abstract class as a superclass. This obligates defining
+      the :py:meth:`Serializable.getInstantiationInfo` method.
+  :class: :py:class:`InstantiationInfo`: A data class the is returned by the above
+      method.
+  :class: :py:class:`ParamInfo` and :py:class:`PropertyInfo`: A data class that forms
+      part of the information in :py:class:`InstantiationInfo`.
+  :class: :py:class:`strdict`: A direct sublclass of *dict* that restricts keys to 
+      *str*. Many of the serialization protocols use such a structure and you can
+      significantly reduce the size of files by storing dictionary-type data
+      using this class rather than *dict* whenever you have a *dict* with string
+      keys. 
+  :func: :py:func:`getInstantiationInfo`: A utility function to retrieve the 
+      instantiation information from a :py:class:`Serializable` subclass.
+
+:py:class:`SerializationStrategy`
+is an abstract class that supports various storage formats
+such as **XML** or **JSON** through concrete subclasses. 
+Other possibilities are **plist**, **marshal**, and **pickle**.  
+This an application can hold
+a reference to *SerializationStrategy* witch could, for example, be either a concrete 
+:py:class:`SerializeXML <util.persistence.SerializeXML>`
+or :py:class:`SerializeJSON <util.persistence.SerializeJSON>` 
+and use the :py:meth:`write() <SerializationStrategy.write>`
+and :py:meth:`read() <SerializationStrategy.read>` methods
+to write/read data in the relevant data formats.
+
+Object types supported:
+  
+  - int
+  - float
+  - str
+  - list
+  - tuple
+  - set
+  - dict
+  - :py:class:`strdict`: a subclass of *dict* restricted to *str* keys.
+  - Any properly implemented subclass of 
+    :py:class:`Serializable`.
+
+Any user-defined class to be stored using 
+:py:class:`SerializationStrategy <util.persistence.SerializationStrategy>`
+must inherit from
+:py:class:`Serializable`, which 
+obligates it to override the 
+:py:meth:`getInstantiationInfo() <util.persistence.Serializable.getInstantiationInfo>`
+method.  This method must return a :py:class:`InstantiationInfo`
+object, which has five properties:
+
+  :cls: [type] The *class* of the object
+  :conArgs: [Optional[list[ParamInfo]]] Information about the each of the 
+    positional arguments to the object's constructor.
+  :conKWArgs: [Optional[list[ParamInfo]]] Information about the each of the 
+    keyword arguments to the object's constructor.
+  :postconSetters: [Optional[list[PropertyInfo]]] Information about each of the
+    updates to be done immediately after the constructor is called
+    (other "sibling" objects may not have been created yet).
+  :finalSetters: [Optional[list[PropertyInfo]]]  Information about the each of the 
+    updates to be done after ALL of the "sibling" objects have been created.
+
+where :py:class:`ParamInfo` and 
+:py:class:`PropertyInfo` are data classes defining:
+
+    :name: [str] The name of the parameter in the class's constructor (*__init__()*).
+    :typ: [type] The fully qualified class name.
+    :getter: [getter: Optional[Callable[[:py:class:`Serializable`], :py:class:`SerializableType`]]=None] 
+      A function taking a this object as a parameter and returning
+      a value to be passed to the constructor. If this is *None* or not given, 
+      *name* will be taken to the a property of this object and will be taken
+      as the value to pass to the constructor.
+    :setter: (*PropertyInfo* only) [Optional[Callable[[:py:class:`Serializable`, :py:class:`SerializableType`], None]]=None]
+      A function taking two arguments: a newly constructed version
+      of this object, and the object produced by *getter()*.  This is applied 
+      on restoration of the object either immediately
+      after the constructor or after all objects entailed by the construction of
+      the object are complete. If this is *None* or not given, 
+      *name* will be taken to the a property of this object that property will
+      be updated with the restored *getter()* object at the appropriate time.
+
+Programs using concrete :py:class:`SerializationStrategy` objects have the following interface
+(the "public" methods without prefix underscores):
+
+  - :py:meth:`writex() <SerializationStrategy.writex>`: (class method) Looks up a protocol to write an object to a file or URL.
+  - :py:meth:`readx() <SerializationStrategy.readx>`: (class method) Looks up a protocol to read an object from a file or URL.
+  - :py:meth:`tostringx() <SerializationStrategy.tostringx>`: (class method) Looks up a protocol to convert an object to a serialized string.
+  - :py:meth:`fromstringx() <SerializationStrategy.fromstringx>`: (class method) Looks up a protocol to convert a serialized string to an object.
+  - :py:meth:`getAvailableStrategies() <SerializationStrategy.getAvailableStrategies>`: (class method) \
+      Retrieves basic information about all known available concrete persistent strategies.  
+  - :py:meth:`write() <SerializationStrategy.write>`: Writes an object to a file or URL.
+  - :py:meth:`read() <SerializationStrategy.read>`: Reads an object from a file or URL.
+  - :py:meth:`tostring() <SerializationStrategy.tostring>`: Converts an object to a serialized string.
+  - :py:meth:`fromstring() <SerializationStrategy.fromstring>`: Converts a serialized string to an object.
+  - :py:meth:`defaultExtension() <SerializationStrategy.defaultExtension>`: Returns the default file extension for the strategy.
+  - :py:meth:`protocolName() <SerializationStrategy.protocolName>`: Returns the name of the concrete strategy.
+  - :py:meth:`protocoVersion() <SerializationStrategy.protocolVersion>`: Returns the version of the concrete strategy in n.n... form as a string.
+  - :py:attr:`header <SerializationStrategy.header>`: A *dict* containing header info from the last file, URL, or string read.
+  - :py:attr:`appName <SerializationStrategy.appName>`: Apps should set this string to the name of the app at initialization. To be recorded in file headers.
+  - :py:attr:`appVersion <SerializationStrategy.appName>`: Apps should set this string to the version of the app at initialization. To be recorded in file headers.
+  - :py:attr:`version <SerializationStrategy.version>`: (read only) The <appVersion>:<serializationVersion>:<protocolVersion> string. 
+  
+.. inheritance-diagram:: SerializationStrategy Serializable InstantiationInfo ParamInfo PropertyInfo strdict 
+    :parts: 3
+    :private-bases:
+    :top-classes: object
+
+--------------
+
+Created on Mar 20, 2026
+
+.. codeauthor:: Rob Kremer <robkremer@me.com>
+
+---------------
+'''
+#################################################################################
+# (c) Copyright 2024-2025, Rob Kremer, MIT open source license.                 #
+#                                                                               #
+# Permission is hereby granted, free of charge, to any person obtaining a copy  #
+# of this software and associated documentation files (the "Software"), to deal #
+# in the Software without restriction, including without limitation the rights  #
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     #
+# copies of the Software, and to permit persons to whom the Software is         #
+# furnished to do so, subject to the following conditions:                      #
+#                                                                               #
+# The above copyright notice and this permission notice shall be included in all#
+# copies or substantial portions of the Software.                               #
+#                                                                               #
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    #
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      #
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   #
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        #
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, #
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
+# SOFTWARE.                                                                     #
+#################################################################################
+from __future__ import annotations
+import os
+import sys
+import urllib.request
+from urllib.parse import ParseResult, urlparse, unquote
+from abc import abstractmethod, ABC
+from typing import Any, Callable, Optional, Union, override, cast, Iterable,\
+  final, NamedTuple, Self
+from types import NoneType
+from dataclasses import dataclass, field
+
+from util.utils import getFullClassName, getClassFromFullyQualifiedName,\
+  fixURL, getFullyQualifiedClass, findConcreteSubclasses, \
+  importSubmodules
+from collections import namedtuple
+import weakref
+import logging
+import util
+
+logger:util.Logger = util.getLogger(__name__)
+
+VERSION = "1.0"
+APP = (lambda: [spec := sys.modules['__main__'].__spec__,
+                spec.name if spec is not None else sys.argv[0]][1])()
+TAG_FILETYPE = "filetype"
+ATTR_TYPE = "type"
+TAG_KVPAIR = "property"
+ATTR_NAME = "name"
+
+
+class Serializable:
+  '''
+  Defines the required protocol (one class method) for any user-defined objects
+  being saved under the framework. 
+  '''
+  @classmethod
+  @abstractmethod
+  def getInstantiationInfo(cls) -> InstantiationInfo:
+    '''
+    :returns: A :py:class:`InstantiationInfo` structure describing how to store
+      and retrieve objects of the class.
+    :rtype: :py:class:`InstantiationInfo`
+    '''
+    raise NotImplementedError("Abstract method Serializable.getInstantiationInfo() not implemented.")
+
+
+
+class strdict(dict[str, Any]): # should really be dict[str, SerializableType] but that runs into forward declaration problems...
+  '''
+  A simple subclass of *dict* that restricts the type of keys to type *str*.
+  '''
+  def __init__(self, *args, **kwargs):
+    incoming = dict(*args, **kwargs)
+    for k,v in incoming.items():
+      if not isinstance(k, str):
+        raise KeyError(f"Keys must be str, got {type(k).__name__!r} for key {k!r}")
+      if not (type(v) in SerializableTypes or type(v) is strdict or isinstance(v, Serializable)):
+        raise ValueError(f'strdict is restricted to values of types {SerializableType} only; got value of type {type(v)}.')
+    self.update(incoming)
+      
+  def __setitem__(self, key, value)->None:
+    if not isinstance(key, str):
+      raise KeyError(f'strdict is restricted to keys of type str only; got key {key} of type {type(key)}.')
+    if not (type(value) in SerializableTypes or isinstance(value, Serializable)):
+      raise ValueError(f'strdict is restricted to values of types {SerializableType} only; got value of type {type(value)}.')
+    super().__setitem__(key, value)
+
+strdict_className = getFullClassName(strdict)
+
+SerializableType = Union[Serializable, int, float, bool, str, list, dict, strdict, tuple, set, None]
+SerializableTypes = (Serializable, int, float, bool, str, list, dict, strdict, tuple, set, NoneType)
+SerializableUnitTypes = Union[int, float, bool, str, None]
+SerializableCompositeTypes = Union[Serializable, list, dict, strdict, tuple, set]
+
+
+@dataclass
+class InstantiationInfo:
+  '''
+  The data structure for information for storing and retrieving user-defined 
+  persistent objects (:py:class:`Serializable` subclasses).
+  '''
+  class_:type
+  'The type of the class'
+  conArgs:list[ParamInfo] = field(default_factory=list) # param types
+  'An ordered list of :py:class:`ParamInfo` structures describing the positional parameters of the constructor.'
+  conKWArgs:list[ParamInfo] = field(default_factory=list)
+  'An *dict* of :py:class:`ParamInfo` structures describing the keyword parameters of the constructor.'
+  postconSetters:list[PropertyInfo] = field(default_factory=list)
+  'An *dict* of :py:class:`PropertyInfo` structures describing the storing and restoring of object data occurring immediately after the constructor.'
+  finalSetters:list[PropertyInfo] = field(default_factory=list)
+  'An *dict* of :py:class:`PropertyInfo` structures describing the storing and restoring of object data occurring after all other objects implied by the object construction have been restored.'
+  
+  def __post_init__(self):
+    '''
+    Check that no name is duplicated in and between the any of args lists. 
+    '''
+    names:list[str] = []
+    for args in (self.conArgs, self.conKWArgs, self.postconSetters, self.finalSetters):
+      for pinfo in args:
+        if pinfo.name in names:
+          raise NameError(f'Duplicate name "{pinfo.name}".')
+        names.append(pinfo.name)
+        
+  @property
+  def className(self):
+    '''
+    :returns: the fully qualified class name of the described class.
+    '''
+    return getFullClassName(self.class_)
+  
+
+def getInstantiationInfo(className:str) -> InstantiationInfo:
+  '''
+  :param className: The name of a *Serializable* subclass. 
+  :type className: str   
+  :returns: the *InstantiationInfo* structure for *className*.
+  :rtype: InstantiationInfo
+  :raises TypeError: if the class cannot be found or  
+  
+  Look up the *InstantiationInfo* structure for *className* and return it.
+  '''
+  cls:Optional[type] = getClassFromFullyQualifiedName(className)
+  if cls is None:
+    raise TypeError(f'Cannot find type "{className}".')
+  if not issubclass(cls, Serializable):
+    raise TypeError(f'Class "{className}" is not a subtype of PersisentObject.')
+  return cls.getInstantiationInfo()
+
+
+class ParamInfo:
+  '''
+  A data class to describe how to construct an object.
+  '''
+  def __init__(self, name:str, typ:Optional[type], 
+               getter:Optional[Callable[[Serializable], SerializableType]]=None,
+               setter:Optional[Callable[[SerializableType], Any]]=None,
+               unique:bool=False):
+    '''
+    :param name: The name of the parameter in the classes constructor (*__init__()*).
+    :type name: str
+    :param typ: The fully qualified class name **for the saved type** (which
+      *could* be different from the actual type used in the constructor).
+    :type typ: type
+    :param getter: A function taking a this object as a parameter and returning
+      a value to be passed to the constructor. If this is *None* or not given, 
+      *name* will be taken to the a property of this object and will be taken
+      as the value to pass to the constructor.
+    :type getter: Optional[Callable[[Serializable], SerializableType]]=None
+    :param setter: A function called just before restoring this object that takes
+      the object stored by *getter()* and returns an object to be applied as
+      the relevant argument in the constructor.
+    '''
+    self.name:str = name
+    'the name of the parameter'
+    assert typ is None or typ in SerializableTypes or issubclass(typ, (Serializable, strdict)), f'typ == {typ}'
+    self.typ:Optional[type] = typ
+    'the type of the parameter'
+    
+    self.getter:Callable[[Serializable], SerializableType]
+    'A function taking 1 "self" parameter and returning the run-time value of this parameter.'
+    if getter is None:
+      self.getter = lambda slf: getattr(slf, self.name)
+    else:
+      self.getter = getter
+    self.setter:Callable[[SerializableType], Any]
+    if setter is None:
+      self.setter = lambda obj: obj
+    else:
+      self.setter = setter
+    self.unique:bool = unique
+    
+
+class PropertyInfo():
+  '''
+  A data class to describe how to construct and restore an object.
+  '''
+  def __init__(self, name:str, typ:type, 
+               getter:Optional[Callable[[Serializable], SerializableType]]=None,
+               setter:Optional[Callable[[Serializable, SerializableType], None]]=None,
+               unique:bool=False):
+    '''
+    :param name: The name of the property in the class's definition. You may
+      also use the value "_" in order the just execute the *setter* function
+      without reference to any property (eg: you want to set a property to
+      a constant **after** the constructor has completed).
+    :type name: str
+    :param typ: The fully qualified class name **for the saved type** (which
+      *could* be different from the actual type in the object).
+    :type typ: type
+    :param getter: A function taking a this object as a parameter and returning
+      a value to be passed to the constructor. If this is *None* or not given, 
+      *name* will be taken to the a property of this object and will be taken
+      as the value to pass to the constructor.
+    :type getter: Optional[Callable[[Serializable], SerializableType]]=None
+    :param setter: A function taking two arguments: a newly constructed version
+      of this object, and the object saved by *getter()*.  This is applied on restoration
+      of the object either immediately
+      after the constructor or after all objects entailed by the construction of
+      the object are complete. If this is *None* or not given, 
+      *name* will be taken to the a property of this object that property will
+      be updated with the restored *getter()* object at the appropriate time.
+    :type setter: Optional[Callable[[Serializable, SerializableType], None]]=None
+    '''
+    self.name:str = name
+    'the name of the parameter'
+    assert typ is None or typ in SerializableTypes or issubclass(typ, (Serializable, strdict)), f'typ == {typ}'
+    self.typ:Optional[type] = typ
+    'the type of the parameter'
+    
+    self.getter:Callable[[Serializable], SerializableType]
+    'A function taking 1 "self" parameter and returning the run-time value of this parameter.'
+    if getter is None:
+      self.getter = (lambda self: None) if self.name == "_" else (lambda slf: getattr(slf, self.name))
+    else:
+      self.getter = getter
+    self.setter: Callable[[Serializable, SerializableType], None]
+    if setter is None:
+      self.setter = lambda slf, value: setattr(slf, self.name, value)
+    else:
+      self.setter = setter
+    self.unique:bool = unique
+
+
+class SerializationStrategy[T](ABC):
+  '''
+  A Strategy pattern class designed to save objects in a manner that allows for
+  multiple storage formats (eg: XML, JSON, etc). This class proposes to support
+  build-in data types: *int, float, bool, str, list, dict, tuple, set*, as
+  well as any (properly constructed) user-defined subclass of *Serializable*.
+  
+  **For subclass (concrete protocol) developers:**
+  
+  The T generic type is the artifact type used by the concrete protocol (subclass). For
+  example, for XML implemented with *etree* package, it's *Element* and for 
+  JSON implemented with the *json* package, it's
+  *Union[dict, list, int, float, bool, str]*.
+  
+  Subclasses (defining specific strategies) must override (minimally) the following
+  abstract methods:
+  
+    - :py:meth:`_tostring() <SerializationStrategy._tostring>`: given an eligible object, return a serialized *str* version of the object.
+    - :py:meth:`_fromstring() <SerializationStrategy._fromstring>`: given a serialized *str*, return the corresponding Python object.
+    - :py:meth:`_setAttr() <SerializationStrategy._setAttr>`: 
+    - :py:meth:`_getAttr() <SerializationStrategy._getAttr>`: 
+    - :py:meth:`_setKVPair() <SerializationStrategy._setProperty>`: 
+    - :py:meth:`_getKVPair() <SerializationStrategy._getProperty>`: 
+    - :py:meth:`_getKVPairs() <SerializationStrategy._getProperties>`: 
+    - :py:meth:`_appendItem() <SerializationStrategy._appendItem>`: 
+    - :py:meth:`_getItems() <SerializationStrategy._getItems>`: 
+    - :py:meth:`_encodeStr() <SerializationStrategy._encodeStr>`: for a *str* object, return the corresponding T object.
+    - :py:meth:`_decodeStr() <SerializationStrategy._decodeStr>`: for a T object, return the corresponding *str* object.
+    - :py:meth:`_encodeList() <SerializationStrategy._encodeList>`: return the T object corresponding to an empty list.
+    - :py:meth:`_decodeList() <SerializationStrategy._decodeList>`: for a T object representing a list, return a *list* of T objects. 
+  
+  Subclasses **may** override the following concrete methods (by default they are
+  implmented in terms of the methods above):
+  
+    - :py:meth:`_encodeInt() <SerializationStrategy._encodeInt>`: 
+    - :py:meth:`_decodeInt() <SerializationStrategy._decodeInt>`: 
+    - :py:meth:`_encodeFloat() <SerializationStrategy._encodeFloat>`: 
+    - :py:meth:`_decodeFloat() <SerializationStrategy._decodeFloat>`: 
+    - :py:meth:`_encodeBool() <SerializationStrategy._encodeBool>`: 
+    - :py:meth:`_decodeBool() <SerializationStrategy._decodeBool>`: 
+    - :py:meth:`_encodeTuple() <SerializationStrategy._encodeTuple>`: 
+    - :py:meth:`_decodeTuple() <SerializationStrategy._decodeTuple>`: 
+    - :py:meth:`_encodeSet() <SerializationStrategy._encodeSet>`: 
+    - :py:meth:`_decodeSet() <SerializationStrategy._decodeSet>`: 
+    - :py:meth:`_encodeDict() <SerializationStrategy._encodeDict>`: 
+    - :py:meth:`_decodeDict() <SerializationStrategy._decodeDict>`: 
+    - :py:meth:`_encodeStrdict() <SerializationStrategy._encodeStrdict>`: Encode a :py:class:`strdict` object; 
+        useful as so many protocols (eg: **JSON**, **plist**) have "native" dictionaries
+        restricted to *str* keys. 
+    - :py:meth:`_decodeStrdict() <SerializationStrategy._decodeStrdict>`: Decode a :py:class:`strdict` object
+    - :py:meth:`_encodeSerializable() <SerializationStrategy._encodeSerializable>`: 
+    - :py:meth:`_decodeSerializable() <SerializationStrategy._decodeSerializable>`: 
+  
+  Subclasses should **NOT** override the following methods as they encapsulate all
+  the housekeeping involved in keeping track of object pointers. However, subclasses
+  should **USE** these methods (rather than the _encode*() and _decode*() methods
+  above when storing objects for that same reason:
+  
+    - :py:meth:`_encode_() <SerializationStrategy._encode_>`: 
+    - :py:meth:`_decode_() <SerializationStrategy._decode_>`: 
+  
+  '''
+
+  
+  class Strategy(NamedTuple):
+    name:str
+    extension:str
+    cls:type
+    
+  @dataclass
+  class _MemStrategy():
+    name:str
+    extension:str
+    cls:type
+    obj:weakref.ReferenceType[SerializationStrategy]|SerializationStrategy
+    
+  knownStrategies:list[SerializationStrategy._MemStrategy] = []
+  'The list of known persistent strategies.'
+    
+  def __init__(self):
+    '''
+    Create an object from a byte array.
+    '''
+    self._finalMethodsList:list[Callable] = []
+    
+    self.header:dict[str, Any] = dict()
+    'The header information from the last file, url, or string read.'
+    
+    self.knownStrategies.insert(0, self._MemStrategy(self.protocolName(), self.defaultExtension(), type(self), weakref.ref(self)))
+    
+  ### PUBLIC METHODS ###########################################################
+  
+  @classmethod
+  def getAvailableStrategies(cls, 
+                             packages:Iterable[str]=[], 
+                             filtr:Optional[Callable[[str], bool]]=None,
+                             asString:bool=False) \
+                                -> list[SerializationStrategy.Strategy]|str:
+    '''
+    :param packages: A list of package names to scan for concrete strategy 
+      classes to be loaded. 
+    :type packages: Iterable[str]
+    :param filtr: If given, the module will only be loaded if *filter()* called with
+      a scanned module name returns *True*. All scanned modules who's name 
+      starts with "serialize" will be loaded as well.
+    :type filtr: Optional[Callable[[str], bool]]=None
+    :param asString: if *True*, return a user-readable string listing the names and extensions. 
+    :type asString: bool (default: *False*)
+    :returns: A tuple [strategy-name. default-file-extension, strategy-class].
+    :rtype: list[tuple[str, str, type]]
+    
+    Returns a list of name/class/extension 3-tuples of available strategies. That is,
+    all the concrete subtypes of this abstract class. 
+    '''
+    
+    for p in list(packages)+["util.persistence"]:
+      importSubmodules(p, 
+        filtr=lambda mod, f=filtr: mod.split(".")[-1].startswith("serialize") or (f is not None and f(mod))) # type: ignore[misc]
+  
+    ret:list[SerializationStrategy.Strategy] = []
+    for strat in findConcreteSubclasses(cls):
+      ret.append(SerializationStrategy.Strategy(strat.protocolName(), strat.defaultExtension(), strat))
+      
+    if asString:
+      width = 13 
+      for s in ret:
+        if len(s.name) > width:
+          width = len(s.name)
+      form = '{:>'+str(width)+'} | {}\n' 
+      retStr = form.format("Protocol Name", "Extension")+ \
+               form.format("-"*width, "---------")
+      for s in ret:
+        retStr += form.format(s.name, s.extension)
+      return retStr
+    else:
+      return ret
+
+  appName = APP
+  'The name of the Application -- should be reassigned by the application at startup.'
+  
+  appVerion = 'Unknown'
+  'The name of the Application -- should be reassigned by the application at startup.'
+  
+  @property
+  @final
+  def serializationStrategyVersion(self):
+    '''
+    :returns: The version string of this class.
+    
+    .. Note::
+      This is different from the :py:meth:`protocolVersion() <SerializationStrategy.protocolVersion>`
+      method that returns the version string of the actual concrete strategy.
+    '''
+    return VERSION
+  
+  @property
+  @final
+  def version(self):
+    return f'{self.appVerion}:{self.serializationStrategyVersion}:{self.protocolVersion()}'
+  
+  @classmethod
+  def findStrategy(cls, strategy:str) -> SerializationStrategy:
+    #search for a relevant strategy in memory... 
+    deleteRecs = []
+    strat:Optional[SerializationStrategy] = None
+    s: SerializationStrategy._MemStrategy
+    for s in cls.knownStrategies:
+      if (strategy == s.extension) if strategy.startswith(".") else (strategy == s.name):
+        if isinstance(s.obj, weakref.ReferenceType):
+          assert isinstance(s.obj, weakref.ReferenceType) 
+          strat = s.obj()  
+        else:
+          assert isinstance(s.obj, SerializationStrategy), type(s.obj)
+          strat = s.obj # accessing the weakref will return None 
+        if strat is None:
+          deleteRecs.append(s)
+        else:
+          s.obj = strat # keep this object in memory
+          break
+    for d in deleteRecs: # clean up any deallocated items we happened to encounter
+      cls.knownStrategies.remove(d)
+
+    #search for a relavant strategy in other modules, and put it in memory...
+    if strat is None:
+      strats = cls.getAvailableStrategies()
+      for s2 in strats:
+        assert type(s2) is SerializationStrategy.Strategy
+        if (strategy == s2.extension) if strategy.startswith(".") else (strategy == s2.name):
+          strat = s2.cls() # The constructor will add it's record to the cls.knownStrategies list.
+          cls.knownStrategies[0].obj = strat # keep this strat in memory
+      
+    if strat is None:
+      raise LookupError(f'Cannot find protocol "{strategy}"')
+    
+    return strat
+    
+  @classmethod
+  def tostringx(cls, strategy:str, obj:SerializableType, *, wrap:Union[bool,dict]=False, assume:list[Any]=[], **kwargs) -> str:
+    """
+    Return the data in *obj* as a strategy-specific formatted string. the 
+  
+    :param strategy: The name or extension (starting with a dot) of some 
+      protocol-specific strategy (a concrete subclass of this class) to use to 
+      encode *obj*. If *strategy* is an extension and there is more than one 
+      strategy with that extension, the last matching one used will
+      be selected, of if this is the first one, the selection is unspecified.
+    :type strategy: str
+    :param obj: The object to serialise and returned.
+    :type obj: SerializableType
+    :param wrap: If *wrap* is False there is not wrapping, if True or a *dict* a
+      dictionary is created containing keys "header" (which is mapped to *wrap* if
+      it's a *dict* or a default header if it's *True*) and "root" (which maps
+      to (*obj).  The *fromstring()* method will automatically unwrap and save
+      the header info (if it's there) as the property *self.header:dict*.
+    :type wrap: Union[bool,dict[
+    :returns: The serialized object as a string.
+    :rtype: str
+    """
+    strat = cls.findStrategy(strategy)
+    return strat.tostring(obj, wrap=wrap, assume=assume, **kwargs)
+    
+  @classmethod
+  def fromstringx(cls, strategy:str, string:str, **kwargs) -> SerializableType:
+    """
+    Return an object made from a strategy-specific formatted string.
+  
+    :param strategy: The name or extension (starting with a dot) of some 
+      protocol-specific strategy (a concrete subclass of this class) to use to 
+      encode *obj*. If *strategy* is an extension and there is more than one 
+      strategy with that extension, the last matching one used will
+      be selected, of if this is the first one, the selection is unspecified.
+    :param string: The string to interpret.
+    :type string: str
+    :param kwargs: A set of keyword arguments to be passed to concrete subclass.
+    :type kwargs: dict[str, Any]
+    :returns: The object interpreted from *string*.
+    :rtype: SerializableType
+    """
+    strat = cls.findStrategy(strategy)
+    return strat.fromstring(string, **kwargs)
+
+  @classmethod
+  def writex(cls, url:str, obj:SerializableType, strategy:Optional[str]=None, 
+             replaceExt:Optional[bool]=True, wrap:Union[bool,dict]=True, 
+             **kwargs) -> None:
+    """
+    Write an the data to a URL.
+  
+    For ``file:`` URLs the data is written directly to the local filesystem path.
+    For all other schemes (e.g. ``http:``, ``https:``) the XML is uploaded via
+    :func:`urllib.request.urlopen` as an HTTP PUT request with content-type
+    ``application/xml``.
+  
+    :param url: The destination URL. Use ``file:///absolute/path`` or
+      ``file://relative/path`` for local files.
+    :type url: str
+    :param obj: The object to serialise and write.
+    :type obj: SerializableType
+    :param strategy: (default=None) The name or extension (starting with a dot) of some 
+      protocol-specific strategy (a concrete subclass of this class) to use to 
+      encode *obj*. If *strategy* is an extension and there is more than one 
+      strategy with that extension, the last matching one used will
+      be selected, of if this is the first one, the selection is unspecified. If
+      *strategy* is missing or None, the strategy will be inferred from the 
+      extension in *url* as though it had been given in the *strategy* parameter.
+    :type strategy: Optional[str] 
+    :param replaceExt: If True, (the default) any extension will be replace with
+      the default extension; if False, the default will extension will be 
+      appended to the path if it's not already there; if None, nothing will
+      be done to the path.
+    :type replaceExt: Optional[bool]
+    :param kwargs: A set of keyword arguments to be passed to concrete subclass.
+    :type kwargs: dict[str, Any]
+    :returns: None
+    :rtype: None
+    :raises ValueError: If *url* is an empty string.
+    :raises FileNotFoundError: If the parent directory of a ``file:`` URL path
+      does not exist.
+    :raises urllib.error.URLError: If a remote URL cannot be reached.
+  
+    Usage::
+  
+      >>> tree = ET.parse("data.xml")
+      >>> write("file:///tmp/output.xml", tree)
+      >>> write("https://example.com/api/document", tree)
+    """
+    strat:Optional[SerializationStrategy] = None
+    if strategy is not None:
+      strat = cls.findStrategy(strategy)
+      if strat is None:
+        raise LookupError(f'No strategy matching "{strategy}" found.')
+    else:
+      parsed = urlparse(url)
+      filename = os.path.basename(parsed.path)
+      ext = filename.split(".")[-1]
+      strat = cls.findStrategy('.'+ext)
+      if strat is None:
+        raise LookupError(f'No strategy matching ".{ext}" found.')
+    return strat.write(url, obj, replaceExt=replaceExt, wrap=wrap, **kwargs)
+  
+  @classmethod
+  def readx(cls, url:str, strategy:Optional[str]=None, replaceExt:bool=True, mode="w", **kwargs) -> SerializableType:
+    '''
+    :param url: The destination URL. Use ``file:///absolute/path`` or
+      ``file://relative/path`` for local files.
+    :type url: str
+    :param strategy: (default=None) The name or extension (starting with a dot) of some 
+      protocol-specific strategy (a concrete subclass of this class) to use to 
+      encode *obj*. If *strategy* is an extension and there is more than one 
+      strategy with that extension, the last matching one used will
+      be selected, of if this is the first one, the selection is unspecified. If
+      *strategy* is missing or None, the strategy will be inferred from the 
+      extension in *url* as though it had been given in the *strategy* parameter.
+    :type strategy: Optional[str] 
+    :param kwargs: A set of keyword arguments to be passed to concrete subclass.
+    :type kwargs: dict[str, Any]
+    :returns: An object read from *url* 
+    :rtype: SerializableType
+    :raises NotImlementedError: If the subclass failed to implement one of its
+      required methods.
+    
+    Converts a byte array to an object using *_decode_()* and 
+    *_speicializeBytes()*. 
+    '''
+    strat:Optional[SerializationStrategy] = None
+    if strategy is not None:
+      strat = cls.findStrategy(strategy)
+      if strat is None:
+        raise LookupError(f'No strategy matching "{strategy}" found.')
+    else:
+      parsed = urlparse(url)
+      filename = os.path.basename(parsed.path)
+      ext = filename.split(".")[-1]
+      strat = cls.findStrategy('.'+ext)
+      if strat is None:
+        raise LookupError(f'No strategy matching ".{ext}" found.')
+    return strat.read(url, replaceExt=replaceExt, mode=mode, **kwargs)
+    
+  @classmethod
+  @abstractmethod
+  def defaultExtension(self) -> str:
+    raise NotImplementedError("Call on abstract method SerializationStrategy.defaultExtension()")
+  
+  @classmethod
+  @abstractmethod
+  def protocolName(self) -> str:
+    raise NotImplementedError("Call on abstract method SerializationStrategy.name()")
+  
+  @classmethod
+  @abstractmethod
+  def protocolVersion(self) -> str:
+    raise NotImplementedError("Call on abstract method SerializationStrategy.version()")
+  
+  def write(self, url:str, obj:SerializableType, replaceExt:Optional[bool]=True, wrap:Union[bool,dict]=True, **kwargs) -> None:
+    """
+    Write an the data to a URL.
+  
+    For ``file:`` URLs the data is written directly to the local filesystem path.
+    For all other schemes (e.g. ``http:``, ``https:``) the XML is uploaded via
+    :func:`urllib.request.urlopen` as an HTTP PUT request with content-type
+    ``application/xml``.
+  
+    :param url: The destination URL. Use ``file:///absolute/path`` or
+      ``file://relative/path`` for local files.
+    :type url: str
+    :param obj: The object to serialise and write.
+    :type obj: SerializableType
+    :param replaceExt: If True, (the default) any extension will be replace with
+      the default extension; if False, the default will extension will be 
+      appended to the path if it's not already there; if None, nothing will
+      be done to the path.
+    :type replaceExt: Optional[bool]
+    :param kwargs: A set of keyword arguments to be passed to concrete subclass.
+    :type kwargs: dict[str, Any]
+    :returns: None
+    :rtype: None
+    :raises ValueError: If *url* is an empty string.
+    :raises FileNotFoundError: If the parent directory of a ``file:`` URL path
+      does not exist.
+    :raises urllib.error.URLError: If a remote URL cannot be reached.
+  
+    Usage::
+  
+      >>> tree = ET.parse("data.xml")
+      >>> write("file:///tmp/output.xml", tree)
+      >>> write("https://example.com/api/document", tree)
+    """
+    parsedUrl:ParseResult
+    url, parsedUrl = fixURL(url, replaceExt=replaceExt, mode="w", extension=self.defaultExtension())
+    
+    if parsedUrl.scheme == "file":
+      localPath: str = parsedUrl.netloc + parsedUrl.path
+      absolutePath: str = os.path.abspath(localPath)
+      with open(unquote(absolutePath), "w", encoding="utf-8") as f:
+        f.write(self.tostring(obj, wrap=wrap, **kwargs))
+      return
+  
+    buf:bytes = self.tostring(obj, wrap=wrap, **kwargs).encode("utf-8")
+    request:urllib.request.Request = urllib.request.Request(
+      url,
+      data=buf,
+      method="PUT",
+      headers={"Content-Type": "application/xml; charset=utf-8"},
+    )
+    with urllib.request.urlopen(request):
+      pass
+    
+  def read(self, url:str, replaceExt:bool=True, mode="w", **kwargs) -> SerializableType:
+    '''
+    :param url: The source URL. Use ``file:///absolute/path`` or
+      ``file://relative/path`` for local files.
+    :type url: str
+    :param replaceExt: If True, (the default) any extension will be replace with
+      the default extension; if False, the default will extension will be 
+      appended to the path if it's not already there; if None, nothing will
+      be done to the path.
+    :type replaceExt: Optional[bool]
+    :param kwargs: A set of keyword arguments to be passed to concrete subclass.
+    :type kwargs: dict[str, Any]
+    :returns: An object read from *buf* 
+    :rtype: Any
+    :raises NotImlementedError: If the subclass failed to implement one of its
+      required methods.
+    
+    Converts a byte array to an object using *_decode_()* and 
+    *_speicializeBytes()*. 
+    '''
+    self._finalMethodsList = []
+    parsedUrl:ParseResult
+    url, parsedUrl = fixURL(url, replaceExt=replaceExt, mode=mode, extension=self.defaultExtension())
+  
+    scheme:str = parsedUrl.scheme.lower() if parsedUrl.scheme else "file"
+  
+    if scheme == "file":
+      localPath:str = parsedUrl.path if parsedUrl.path else url
+      localPath = unquote(localPath)
+      with open(localPath, "r", encoding="utf-8") as f:
+        contents:str = f.read()      
+    elif scheme in ("http", "https"):
+      with urllib.request.urlopen(url) as response:
+        rawBytes: bytes = response.read()
+      contents = rawBytes.decode(encoding="utf-8")
+    else:
+      raise ValueError(f"Unsupported URL scheme: '{scheme}'. Use 'file', 'http', or 'https'.")    
+    
+    ret = self.fromstring(contents, **kwargs)
+    
+    for finalMethod in self._finalMethodsList:
+      finalMethod()
+    self._finalMethodsList = []
+    
+    return ret
+  
+  def tostring(self, obj:SerializableType, *, wrap:Union[bool,dict]=False, assume:list[Any]=[], **kwargs) -> str:
+    """
+    Return the data as a strategy-specific formatted string.
+  
+    :param obj: The object to serialise and returned.
+    :type obj: SerializableType
+    :param wrap: If *wrap* is False there is not wrapping, if True or a *dict* a
+      dictionary is created containing keys "header" (which is mapped to *wrap* if
+      it's a *dict* or a default header if it's *True*) and "root" (which maps
+      to (*obj).  The *fromstring()* method will automatically unwrap and save
+      the header info (if it's there) as the property *self.header:dict*.
+    :type wrap: Union[bool,dict[
+    :returns: The serialized object as a string.
+    :rtype: str
+    """
+    self.writeDB:dict[int, Optional[T]] = dict()
+    for o in assume:
+      self.writeDB[id(o)] = None
+
+    if wrap:
+      if isinstance(wrap, dict):
+        header = wrap
+      else:
+        header = strdict({
+                  "application": self.appName,
+                  "applicaitonVersion": self.appVerion,
+                  "serializationStrategyVersion": self.serializationStrategyVersion,
+                  "protocol": self.protocolName(),
+                  "protocolVersion": self.protocolVersion(),
+                  "protocolClass": getFullClassName(self.__class__),
+                  "version": self.version,
+                  TAG_FILETYPE: self.defaultExtension(),
+                  })
+      obj = strdict({"header": header, 
+                     "root": obj})
+
+    ret = self._tostring(self._encode_(obj), kwargs)
+  
+    self.writeDB = dict()
+    
+    return ret
+
+    
+  def fromstring(self, string:str, **kwargs) -> SerializableType:
+    """
+    Return an object made from a strategy-specific formatted string.
+  
+    :param string: The string to interpret.
+    :type string: str
+    :param kwargs: A set of keyword arguments to be passed to concrete subclass.
+    :type kwargs: dict[str, Any]
+    :returns: The object interpreted from *string*.
+    :rtype: SerializableType
+    """
+    self.readDB:dict[int, SerializableType] = dict() 
+    self._finalMethodsList = []
+    
+    obj = self._decode_(self._fromstring(string, kwargs))
+    if isinstance(obj, dict) and "header" in obj and "root" in obj:
+      self.header = obj["header"]
+      obj = obj["root"]
+    else:
+      self.header = dict() 
+
+    for finalMethod in self._finalMethodsList:
+      finalMethod()
+
+    self._finalMethodsList = []
+    self.readDB = dict() 
+    
+    return obj
+  
+    
+  ### PRIVATE METHODS _MUST_ BE IMPLEMENTED BY CONCRETE SUBCLASSES #####################
+  
+  @abstractmethod
+  def _tostring(self, obj:T, kwargs:dict[str,Any]) -> str:
+    """
+    :param obj: The object to be serialized.
+    :type obj: SerializableType
+    :param kwargs: A set of keyword arguments to be passed to concrete subclass.
+      This is passed as dict rather than with the ** syntax so that concrete
+      subclasses can ignore unexpected arguments gracefully (as they should).
+    :type kwargs: dict[str, Any]
+    :returns: The serialized object as a string. 
+    :rtype: str
+
+    Return the data as a strategy-specific formatted string. Called by 
+    :py:meth:`tostring() <SerializationStrategy.tostring>`.
+  
+    """
+    raise NotImplementedError("Call on abstract method SerializationStrategy._tostring()")
+    
+  @abstractmethod
+  def _fromstring(self, string:str, kwargs:dict[str,Any]) -> T:
+    """
+    Return an object made from a strategy-specific formatted string. Called by 
+    :py:meth:`fromstring() <SerializationStrategy.fromstring>`.
+  
+    :param string: The string to interpret.
+    :type string: str
+    :param kwargs: A set of keyword arguments to be passed to concrete subclass.
+      This is passed as dict rather than with the ** syntax so that concrete
+      subclasses can ignore unexpected arguments gracefully (as they should).
+    :type kwargs: dict[str, Any]
+    :returns: The object interpreted from *string*.
+    :rtype: SerializableType
+    """
+    raise NotImplementedError("Call on abstract method SerializationStrategy._fromstring()")
+  
+  @abstractmethod
+  def _encodeStr(self, obj:str) -> T:
+    raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _encodeStr().')
+    
+  @abstractmethod
+  def _decodeStr(self, readerObj:T) -> str:
+    raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _decodeStr().')
+    
+  @abstractmethod
+  def _encodeList(self) -> T:
+    raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _encodeList().')
+    
+  @abstractmethod
+  def _decodeList(self, readerObj:T) -> list[T]:
+    raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _decodeList().')
+    
+  ## PRIMITIVES USED BY OTHER OPTIONAL IMPLEMENTATIONS
+  # It may not be necessary to implement them if you override the methods the use them.
+  
+  @abstractmethod
+  def _setAttr(self, elem:T, name:str, value:str) -> None:
+    '''
+    Contract: _setAttr(elem, name, value) -> _getAttr(elem, naem) == value
+    
+    This method **must** be implemented if any of *_encodeInt(), _encodeFloat(), 
+    _encodeBool(), _encodeTuple(), _encodeSet()*, or *_encodeSerializable()*
+    are left the default implementations in this class. 
+    
+    May be called for ANY type.
+    '''
+    raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _addAttr().')
+    
+  @abstractmethod
+  def _getAttr(self, elem:T, name:str, default:Any=KeyError) -> Any:
+    '''
+    Contract: _setAttr(elem, name, value) -> _getAttr(elem, naem) == value
+    
+    This method **must** be implemented if any of *_decodeInt(), _decodeFloat(), 
+    _decodeBool(), _decodeTuple(), _decodeSet()*, or *_decodeSerializable()*
+    are left the default implementations in this class.
+    
+    May be called for ANY type. 
+    '''
+    raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _getAttr().')
+    
+  @abstractmethod
+  def _appendItem(self, elem:T, newItem:T) -> None:
+    '''
+    May be called for list, tuple, and set types only. 
+    '''
+    raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _appendItem().')
+  
+  @abstractmethod
+  def _getItems(self, elem:T) -> list[T]:
+    '''
+    May be called for list, tuple, and set types only. 
+    '''
+    raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _getItems().')
+  
+  @abstractmethod
+  def _setKVPair(self, elem:T, key:T|str, value:T) -> None:
+    '''
+    :param elem: The T object to add the *key/value pair to. Must be a *dict* type, 
+      *strdict* type, or a subtype of *Serializable* representation. 
+    :type elem: T
+    :param key: The key part, not that if *elem* is a regular *dict* representation,
+      key must be a T type; but if *elem* is a *strdict* or subtype of *Serializable*,
+      key must be a *str*.
+    :type key: T|str
+    :param value: The value part.
+    :type value: T
+    
+    May be called for dict types, strdict types, and Serializable subtypes only. 
+    '''
+    raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _setKVPair().')
+  
+  @abstractmethod
+  def _getKVPairs(self, elem:T) -> list[tuple[T,T]]|dict[str,T]:
+    '''
+    :param elem: The T object to deserialize to a *key/value pair. Must be a *dict* type, 
+      *strdict* type, or a subtype of *Serializable* representation. 
+    :type elem: T
+    :returns: If elem represents a *dict* object, then the return must be a *tuple*;
+      if *elem* represents a *strdict* or a subtype of *Serializable*, then
+      the return must be a dict.
+    :rtype: list[tuple[T,T]]|dict[str,T]
+    
+    May be called for dict types, strdict types, and Serializable subtypes only. 
+    '''
+    raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _getKVPair().')
+  
+  ## PRIVATE METHODS IMPLEMENTED HERE, BUT SHOULD PROBABLY BE IMPLEMENTED MORE
+  ## EFFICIENTLY IN THE SUBCLASS
+
+  def _getKVPair(self, elem:T, key:str) -> Optional[T]:
+    '''
+    May be called for strdict types Serializable subtypes only. 
+    '''
+    props = self._getKVPairs(elem)
+    for k,v in props if isinstance(props, list) else props.items():
+      if k == key:
+        return v
+    return None
+  
+  def _encodeInt(self, obj:int) -> T:
+    ret = self._encodeStr(str(obj))
+    self._setAttr(ret, ATTR_TYPE, "int")
+    return ret
+    
+  def _decodeInt(self, elem:T) -> int:
+    assert self._getAttr(elem, ATTR_TYPE) == "int"
+    self._setAttr(elem, ATTR_TYPE, "str")
+    return int(self._decodeStr(elem))
+    
+  def _encodeNone(self) -> T:
+    ret = self._encodeStr("None")
+    self._setAttr(ret, ATTR_TYPE, "NoneType")
+    return ret
+    
+  def _decodeNone(self, elem:T) -> None:
+    assert self._getAttr(elem, ATTR_TYPE) == "NoneType"
+    return None
+    
+  def _encodeFloat(self, obj:float) -> T:
+    ret = self._encodeStr(str(obj))
+    self._setAttr(ret, ATTR_TYPE, "float")
+    return ret
+    
+  def _decodeFloat(self, elem:T) -> float:
+    assert self._getAttr(elem, ATTR_TYPE) == "float"
+    self._setAttr(elem, ATTR_TYPE, "str")
+    return float(self._decodeStr(elem))
+    
+  def _encodeBool(self, obj:bool) -> T:
+    ret = self._encodeStr(str(obj))
+    self._setAttr(ret, ATTR_TYPE, "bool")
+    return ret
+    
+  def _decodeBool(self, elem:T) -> bool:
+    assert self._getAttr(elem, ATTR_TYPE) == "bool"
+    self._setAttr(elem, ATTR_TYPE, "str")
+    return self._decodeStr(elem) != "False"
+    
+  def _encodeTuple(self) -> T:
+    elem:T = self._encodeList()
+    self._setAttr(elem, ATTR_TYPE, "tuple")
+    return elem
+    
+  def _decodeTuple(self, elem:T) -> tuple[T,...]:
+    assert self._getAttr(elem, ATTR_TYPE) == "tuple"
+    self._setAttr(elem, ATTR_TYPE, "list")
+    lst = self._decodeList(elem)
+    return tuple(lst)
+    
+  def _encodeSet(self) -> T:
+    elem:T = self._encodeList()
+    self._setAttr(elem, ATTR_TYPE, "set")
+    return elem
+    
+  def _decodeSet(self, elem:T) -> set[T]:
+    assert self._getAttr(elem, ATTR_TYPE) == "set"
+    self._setAttr(elem, ATTR_TYPE, "list")
+    lst = self._decodeList(elem)
+    return set(lst)
+    
+  def _encodeDict(self) -> T:
+    elem = self._encodeList()
+    self._setAttr(elem, ATTR_TYPE, "dict")
+    return elem
+    
+  def _decodeDict(self, elem:T) -> list[tuple[T,T]]:
+    assert self._getAttr(elem, ATTR_TYPE) == "dict"
+    ret = self._getKVPairs(elem)
+    assert isinstance(ret, list)
+    return ret
+    
+  def _encodeStrdict(self) -> T:
+    elem = self._encodeList()
+    self._setAttr(elem, ATTR_TYPE, strdict_className)
+    return elem
+    
+  def _decodeStrdict(self, elem:T) -> dict[str,T]:
+    assert self._getAttr(elem, ATTR_TYPE) == strdict_className
+    ret = self._getKVPairs(elem)
+    assert isinstance(ret, dict)
+    return ret
+    
+  def _encodeSerializable(self) -> T:
+    ret = self._encodeStrdict()
+    self._setAttr(ret, ATTR_TYPE, getFullClassName(Serializable))
+    return ret
+    
+  def _decodeSerializable(self, elem:T) -> dict[str,T]:
+    typeName = self._getAttr(elem, ATTR_TYPE)
+    typ = getFullyQualifiedClass(typeName)
+    assert typ is not None
+    assert issubclass(typ, Serializable)
+    self._setAttr(elem, ATTR_TYPE, strdict_className)
+    ret = self._decodeStrdict(elem)
+    self._setAttr(elem, ATTR_TYPE, typeName)
+    return ret
+    
+  ### METHODS THE MOST NOT BE OVERRIDDEN BY CONCRETE SUBCLASSES ################
+
+  def _encode_(self, obj:SerializableType, unique:bool=False) -> T:
+    '''
+    ..note:
+      Tuple members referencing the tuple **are NOT** supported.
+    '''
+    def encodeClass(obj:Serializable, unique:bool) -> T:
+      elem = self._encodeSerializable()
+      if not isinstance(obj, _Reference):
+        #self.writeDB[id(obj)] = elem
+        registerMaybe(obj, elem, unique)
+      self._setAttr(elem, ATTR_TYPE, getFullClassName(type(obj)))
+      
+      info:InstantiationInfo = obj.getInstantiationInfo()
+      for lists in (info.conArgs, info.conKWArgs):
+        for pinfo in lists:
+          sub = pinfo.getter(obj)
+          try:
+            e = self._encode_(sub, pinfo.unique)
+          except Exception as ex:
+            print(ex)
+          self._setKVPair(elem, pinfo.name, e)
+
+      for props in (info.postconSetters, info.finalSetters):
+        for pinfo2 in props:
+          sub = pinfo2.getter(obj)
+          e = self._encode_(sub, pinfo2.unique)
+          self._setKVPair(elem, pinfo2.name, e)
+      return elem
+    
+    def registerMaybe(obj:SerializableType, elem:T, unique:bool):
+      if not unique:
+        self.writeDB[id(obj)] = elem
+    #------     
+    # interned types: we don't have to worry about multiple references... 
+    if obj is None:
+      return self._encodeNone()
+    elif type(obj) is int:
+      return self._encodeInt(obj)
+    elif type(obj) is float:
+      return self._encodeFloat(obj)
+    elif type(obj) is str:
+      return self._encodeStr(obj)
+    elif type(obj) is bool:
+      return self._encodeBool(obj)
+
+    # non-interned types: There might be multiple references to these, 
+    # so we need to keep track and subsitute a reference if necessary
+    id_ = id(obj)
+    value = self.writeDB.get(id_, 0)
+    elem:T
+    if value == 0:
+      # there is no entry, so record its id and make the T object,
+      # or this is a reference to a previously stored object so always record those
+      if isinstance(obj, Serializable):
+        elem = encodeClass(obj, unique)
+      elif type(obj) is list:
+        elem = self._encodeList()
+        #self.writeDB[id_] = elem
+        registerMaybe(obj, elem, unique)
+        for o in obj:
+          self._appendItem(elem, self._encode_(o, unique))
+      elif type(obj) is tuple:
+        elem = self._encodeTuple()
+        #self.writeDB[id_] = elem
+        registerMaybe(obj, elem, unique)
+        for o in obj:
+          self._appendItem(elem, self._encode_(o))
+      elif type(obj) is set:
+        elem = self._encodeSet()
+        #self.writeDB[id_] = elem
+        registerMaybe(obj, elem, unique)
+        for o in obj:
+          self._appendItem(elem, self._encode_(o))
+      elif isinstance(obj, strdict):
+        elem = self._encodeStrdict()
+        #self.writeDB[id_] = elem
+        registerMaybe(obj, elem, unique)
+        for k,v in obj.items():
+          self._setKVPair(elem, k, self._encode_(v))
+      elif type(obj) is dict:
+        elem = self._encodeDict()
+        #self.writeDB[id_] = elem
+        registerMaybe(obj, elem, unique)
+        for k,v in obj.items():
+          self._setKVPair(elem, self._encode_(k), self._encode_(v))
+      else:
+        raise TypeError(f'Unsupported type: "{obj.__class__.__name__}".') 
+    else: # we have seen this object before: make a reference to it
+      assert not isinstance(obj, _Reference)
+      if value is not None: # this is the first reference seen (after the original)
+        self._setAttr(cast(T, value), "id", str(id_))
+        #self.writeDB[id_] = None # clear the element so that we don't record it's id again
+      elem = self._encode_(_Reference(id_), True) # return a reference object referring to the original   
+    return elem
+    
+  def _decode_(self, elem:T) -> SerializableType:
+
+    def decodeClass(elem:T):
+
+      def getParams(desc:list[ParamInfo]) -> list[tuple[str, SerializableType]]: 
+        ret:list[tuple[str, SerializableType]] = []
+        pinfo:ParamInfo
+        for pinfo in desc:
+          sub:Optional[T] = self._getKVPair(elem, pinfo.name)
+          if sub is None:
+            raise LookupError(f'Subelement parameter named "{pinfo.name}" not found.')# in Element "{elem.tag}" of type {elem.attrib[ATTR_TYPE]}.')
+          assert pinfo.typ is None or \
+                 issubclass(cast(type, getFullyQualifiedClass(self._getAttr(sub, ATTR_TYPE))), pinfo.typ) \
+                 or self._getAttr(sub, ATTR_TYPE) == REF_CLASSNAME, \
+                 f'not ({getFullClassName(pinfo.typ)} <: {self._getAttr(sub, ATTR_TYPE)})'
+          value = self._decode_(sub)
+          assert not isinstance(value, _Reference)
+          ret.append((pinfo.name, pinfo.setter(value)))
+        return ret
+      
+      def getSetters(desc:list[PropertyInfo]) -> list[tuple[str, Callable[[Serializable], None]]]: 
+        ret:list[tuple[str, Callable[[Serializable], None]]] = []
+        pinfo:PropertyInfo
+        for pinfo in desc:
+          if pinfo.name == '_':
+            sub:Optional[T] = None
+          else:
+            sub = self._getKVPair(elem, pinfo.name)
+            if sub is None:
+              raise LookupError(f'Subelement property named "{pinfo.name}" not found.')# in Element "{elem.tag}" of type {elem.attrib[ATTR_TYPE]}.')
+          assert pinfo.typ is None or sub is None or \
+                 issubclass(cast(type, getFullyQualifiedClass(self._getAttr(sub, ATTR_TYPE))), pinfo.typ) \
+                 or self._getAttr(sub, ATTR_TYPE) == REF_CLASSNAME, \
+                 f'not ({getFullClassName(pinfo.typ)} <: {self._getAttr(sub, ATTR_TYPE)})'
+          value = self._decode_(sub) if sub is not None else None
+          assert not isinstance(value, _Reference)
+          # if isinstance(value, _Reference):
+          #   self._decode_(sub)
+          ret.append((pinfo.name, \
+                      lambda slf, method=pinfo.setter, # type: ignore[misc]
+                        value=value: 
+                          method(slf, value))) 
+        return ret
+      
+      className = self._getAttr(elem, ATTR_TYPE)
+      cls = getClassFromFullyQualifiedName(className)
+      if cls is None:
+        raise TypeError(f'Could not find type "{className}"')
+      
+      info:InstantiationInfo = getInstantiationInfo(className)
+      
+      
+      params = getParams(info.conArgs)
+      args:list = [x[1] for x in params] # convert from (name,setter) pairs to list of setters
+      params = getParams(info.conKWArgs)
+      kwargs:dict[str,Any] = dict(params) # convert from (name,setter) pairs to dict of {name:setter}
+      
+      try:
+        ret = cls(*args, **kwargs) # call the constructor
+        # if this object has an id attribute, put it's address in the readDB
+        registerMaybe(elem, ret)
+       
+        setters = getSetters(info.postconSetters)
+        for _, meth in setters:
+          meth(ret) 
+        setters = getSetters(info.finalSetters)
+        for _, meth in setters: 
+          self._finalMethodsList.append(lambda slf=ret, method=meth : method(slf))
+        return ret
+      except Exception as ex:
+        #these exceptions will be trapped by argparse and will be dumped, so log them here.
+        className = cls.__name__
+        if "getInstantiationInfo" in cls.__dict__:
+          logger.exception(ex)
+          raise ex.__class__(f'Failed to instantiate object of class {className}: {ex}')
+        else:
+          logger.exception(ex)
+          raise NotImplementedError(f'Failed to instantiate object of class {className}: {ex.__class__.__name__}: {ex}.\n  Did you forget to implement the {className}.getInstantiationInfo() method?')
+    
+    def registerMaybe(elem:T, obj:SerializableType):
+      # if this object has an id attribute, put it's address in the readDB
+      id_ = self._getAttr(elem, "id", None)
+      if id_ is not None:
+        if isinstance(obj, _Reference):
+          assert False
+        self.readDB[int(id_)] = obj      
+    
+    #---------
+    
+    className = self._getAttr(elem, ATTR_TYPE)
+    cls = getClassFromFullyQualifiedName(className)
+    if cls is None:
+      raise TypeError(f'Could not find type "{className}"')
+  
+    # interned types: we don't have to worry about multiple references... 
+    if cls is NoneType:
+      return self._decodeNone(elem) # type: ignore[func-returns-value]
+    elif cls is int:
+      return self._decodeInt(elem)
+    elif cls is float:
+      return self._decodeFloat(elem)
+    elif cls is str:
+      return self._decodeStr(elem)
+    elif cls is bool:
+      return self._decodeBool(elem)
+    
+    # non-interned types: There might be multiple references to these, so we need to keep track.
+    obj:SerializableType
+    if issubclass(cls, Serializable):
+      obj = decodeClass(elem)#self._decodeSerializable(elem)
+      if isinstance(obj, _Reference):
+        try:
+          ret = self.readDB[obj.referenceID]
+          if isinstance(ret, _Reference): # make sure a ref doesn't refer to another ref
+            assert False
+          return ret
+        except KeyError:
+          raise KeyError(f'Cannot find key "{obj.referenceID}" in {self.readDB}')
+        
+    elif cls is list:
+      obj = []
+      registerMaybe(elem, obj)
+      elems:list = self._decodeList(elem)
+      obj.extend([self._decode_(e) for e in elems])
+    elif cls is tuple:
+      # objects within tuples referencing the tuple ARE NOT SUPPORTED!
+      obj = tuple([self._decode_(e) for e in self._decodeTuple(elem)])
+      registerMaybe(elem, obj) # not helpful for the contained objects, but needed for the rare interned tuple 
+    elif cls is set:
+      obj = set()
+      registerMaybe(elem, obj)
+      elemsSet:set = self._decodeSet(elem)
+      obj.update([self._decode_(e) for e in elemsSet])
+    elif cls is dict:
+      obj = dict()
+      registerMaybe(elem, obj)
+      pairs = self._decodeDict(elem)
+      for k,v in pairs:
+        obj[self._decode_(k)] = self._decode_(v)
+    elif cls is strdict:
+      obj = dict()
+      registerMaybe(elem, obj)
+      dic:dict[str,T] = self._decodeStrdict(elem)      
+      for k1,v1 in dic.items():
+        obj[k1] = self._decode_(v1)
+    else:
+      raise TypeError(f'Unsupported type: "{className}".')
+    
+    return obj
+
+
+class _Reference(Serializable):
+  def __init__(self, referenceID:int) -> None:
+    super().__init__()
+    self.referenceID:int = referenceID
+    
+  @override
+  @classmethod
+  def getInstantiationInfo(cls)->InstantiationInfo:
+    return InstantiationInfo(cls, [ParamInfo("referenceID", int)])
+  
+  @override
+  def __repr__(self) -> str:
+    return f'_Reference({self.referenceID})@{id(self)}'
+
+
+REF_CLASSNAME = getFullClassName(_Reference)
+
