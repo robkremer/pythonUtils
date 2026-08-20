@@ -1012,8 +1012,11 @@ Type "<cmd...> -h" or "help <cmd...>" for more detail on each command."""
     - if it creates a command, execute it either on the doList if we have one or otherwise
     - return the result of the execution  
     '''
-    result = None
     assert self.parser._subparsers is not None
+    if len(argsList) == 0:
+      return None
+    
+    result = None
     
     # allow abbreviateions
     for action in self.parser._subparsers._actions: # desperately try to make it do abbreviations...

@@ -28,8 +28,11 @@ from typing import Callable, Optional
 import tkinter as tk
 import builtins
 import sys
+import io
 import itertools
+import traceback
 import util
+import logging
 
 logger:util.Logger = util.getLogger(__name__)
 
@@ -120,6 +123,12 @@ class PlainTextTerminal(AbstractTerminal):
       **_kwargs,
     ) -> None:
     '''
+    Run a plain text REPL interface. 
+    
+    Possible values for the various colour parameters are: default, underline, black, 
+    red, green, yellow, blue, magenta, cyan, white, boldblack, boldred, boldgreen, 
+    boldyellow, boldblue, boldmagenta, boldcyan, boldwhite.
+    
     :param onLine: Callback invoked (on a background thread) for each submitted line.
     :type onLine: Callable[[str], None]
     :param prompt: The prompt string shown before each new command line.
@@ -187,463 +196,6 @@ class PlainTextTerminal(AbstractTerminal):
 
 
 
-class TerminalWidget(AbstractTerminal, tk.Text):
-  """
-  A Text widget that behaves like a simple terminal input.
-  
-  The terminal automatically defaults to the following styles for the
-  different categories of output, which may be modified using the 
-  *registerStyle()* method:
-  
-    - stdout: text coming from sys.out
-    - stderr: text coming from sys.err
-    - prompt: the style of the command line prompt
-    - query: the style of text coming from the builtin.input() prompt.
-  
-  :param master: The parent Tk widget.
-  :type master: tk.Widget
-  :param onLine: Callback invoked (on a background thread) for each submitted line.
-  :type onLine: Callable[[str], None]
-  :param prompt: The prompt string shown before each new command line.
-  :type prompt: str
-  """
-  def __init__(
-      self,
-      master: tk.Widget,
-      onLine: Callable[[str], None],
-      prompt: str|Callable[[],str] = "> ",
-      resultToStringFun: Callable[[Any], str]=str,
-      stderrfg:str="red",
-      stdoutfg:str="black",
-      promptfg:str="yellow",
-      queryfg:str="green",
-      resultfg:str="lightblue",
-      **kwargs
-    ) -> None:
-    '''
-    kwargs keys can be: background, borderwidth, cursor,
-    exportselection, font, foreground,
-    highlightbackground, highlightcolor,
-    highlightthickness, insertbackground,
-    insertborderwidth, insertofftime,
-    insertontime, insertwidth, padx, pady,
-    relief, selectbackground,
-    selectborderwidth, selectforeground,
-    setgrid, takefocus,
-    xscrollcommand, yscrollcommand,
-    autoseparators, height, maxundo,
-    spacing1, spacing2, spacing3,
-    state, tabs, undo, width, wrap.
-    
-    :param master: The parent Tk widget.
-    :type master: tk.Widget
-    :param onLine: Callback invoked (on a background thread) for each submitted line.
-    :type onLine: Callable[[str], None]
-    :param prompt: The prompt string shown before each new command line.
-    :type prompt: str|Callable[[],str]
-    :param stderrfg: The colour of text from stderr. Default "red".
-    :param stdoutfg: The colour of text from stdout. Default "" (terminal default).
-    :param promptfg: The colour of text for the prompt. Default "yellow".
-    :param queryfg: The colour of text prompts from self.input(). Default "green".
-    :param resultfg: The colour of text for command returned results. Default "lightblue".
-    '''
-    tk.Text.__init__(self, master, **kwargs)
-    AbstractTerminal.__init__(self, onLine, prompt=prompt, resultToStringFun=resultToStringFun)
-    self.history: list[str] = []
-    self.historyIndex: Optional[int] = None
-    self.inputStart: str = "1.0"
-    self.styleTags: dict[str, str] = {}
-    self.adHocTagCache: dict[tuple, str] = {}
-    self._tagCounter = itertools.count()
-
-    self._workerThread: Optional[threading.Thread] = None
-    self._replyQueue: "queue.Queue[str]" = queue.Queue()
-    self._awaitingReply: bool = False
-    self._capturingIO:int=0 # depth-flag for self._captureSysIO() and self._releaseSysIO()
-
-    # Create the mark before the first _writePrompt() call needs it.
-    self.mark_set("inputStart", "1.0")
-    self.mark_gravity("inputStart", "left")
-
-    self.bind("<Return>", self._handleReturn)
-    self.bind("<Up>", self._handleUp)
-    self.bind("<Down>", self._handleDown)
-    self.bind("<BackSpace>", self._handleBackspace)
-    self.bind("<Key>", self._guardEditableRegion)
-    self.bind("<Control-d>", self._handleCtrlD)
-
-    self.registerStyle("stderr", fg=stderrfg)#, bg, font)
-    self.registerStyle("stdout", fg=stdoutfg)#, bg, font)
-    self.registerStyle("prompt", fg=promptfg)#, bg, font)
-    self.registerStyle("query",  fg=queryfg)#, bg, font)
-    self.registerStyle("result", fg=resultfg)#, bg, font)
-    
-    self._writePrompt()
-    
-  # ---- prompt / line plumbing (main thread only) -------------------------
-  
-  def _writePrompt(self, text: Optional[str] = None) -> None:
-    """Write a prompt and mark the start of the editable input region.
-  
-    :param text: Prompt text to use. Defaults to self.prompt.
-    :type text: Optional[str]
-    :rtype: None
-    """
-    tagName:str|None = None
-    if text is None and "prompt" in self.styleTags:
-      tagName = self.styleTags["prompt"]
-    if text is not None and "query" in self.styleTags:
-      tagName = self.styleTags["query"]
-
-    self.insert("end", self.prompt if text is None else text, tagName if tagName else ())
-    self.inputStart = self.index("end-1c")
-    self.mark_set("inputStart", self.inputStart)
-    self.mark_gravity("inputStart", "left")
-    self.see("end")
-  
-  def _currentLine(self) -> str:
-    """Get the text the user has typed on the current input line.
-
-    :returns: The current (uncommitted) input line.
-    :rtype: str
-    """
-    return self.get("inputStart", "end-1c")
-
-  def _replaceCurrentLine(self, text: str) -> None:
-    """Replace the current input line with new text (used for history recall).
-
-    :param text: The text to place on the input line.
-    :type text: str
-    :rtype: None
-    """
-    self.delete("inputStart", "end-1c")
-    self.insert("inputStart", text)
-
-  # ---- command dispatch (spawns/feeds worker thread) ----------------------
-
-  def _handleReturn(self, _event: tk.Event) -> str:
-    """Handle Enter: feed a pending input() request, or start a new command.
-  
-    :rtype: str
-    """
-    line = self._currentLine()
-    self.insert("end", "\n")
-    self.mark_set("inputStart", "end")  # nothing is "pending" until the next prompt
-  
-    if self._awaitingReply:
-      self._awaitingReply = False
-      self._replyQueue.put(line)
-      return "break"
-  
-    if self._workerThread is not None and self._workerThread.is_alive():
-      return "break"
-  
-    if line.strip():
-      self.history.append(line)
-    self.historyIndex = None
-  
-    if line.strip():
-      self._workerThread = threading.Thread(target=self._runCommand, args=(line,), daemon=True)
-      self._workerThread.start()
-    else:
-      self._writePrompt()
-    return "break"
-
-  def _runCommand(self, line: str) -> None:
-    """Run onLine on a background thread, with stdout/stderr and input() redirected
-    to the terminal, then restore the prompt.
-  
-    :param line: The submitted command line.
-    :type line: str
-    :rtype: None
-    """
-    self._captureSysIO()
-    try:
-      self.lastExecutionResult = self.onLine(line)
-    except Exception:
-      #import traceback
-      #traceback.print_exc()
-      logger.error(f'While running command "{line}"', exc_info=True)
-    finally:
-      sys.stdout.flush()
-      sys.stderr.flush()
-      self._releaseSysIO()
-      self.after(0, self._finishCommand)
-      
-  def _captureSysIO(self):
-    self._capturingIO += 1
-    if self._capturingIO > 1:
-      return
-    assert self.oldOut is None
-    self.oldOut, self.oldErr = sys.stdout, sys.stderr
-    self.oldInput = builtins.input
-    sys.stdout = _StreamToTerminal(self, style="stdout" if "stdout" in self.styleTags else None)
-    sys.stderr = _StreamToTerminal(self, style="stderr" if "stderr" in self.styleTags else None)
-    builtins.input = self._inputBuiltinReplacement
-    
-  def _releaseSysIO(self):
-    self._capturingIO -= 1
-    if self._capturingIO > 0:
-      return
-    assert self.oldOut is not None
-    sys.stdout, sys.stderr = self.oldOut, self.oldErr
-    self.oldOut, self.oldErr = None, None 
-    if self.oldInput is not None:
-        builtins.input = self.oldInput #type: ignore[assignment]
-    self.oldInput = None
-    
-  def _finishCommand(self) -> None:
-    """Clear the current (empty) line and write a fresh command prompt.
-  
-    Runs on the main thread via after().
-  
-    :rtype: None
-    """
-    self.delete("inputStart linestart", "end")
-    if self.lastExecutionResult is not None:
-      self.printLine(self._resultToStringFun(self.lastExecutionResult), style="result")
-      self.lastExecutionResult = None
-    self._writePrompt()
-  
-  def _inputBuiltinReplacement(self, prompt: object = "") -> str:
-    """Drop-in replacement for builtins.input(), routed through the terminal.
-
-    Matches input()'s signature: the prompt argument is optional and, per the
-    standard library, is str()-converted rather than type-checked.
-
-    :param prompt: The prompt to display, as with builtins.input().
-    :type prompt: object
-    :returns: The line the user typed.
-    :rtype: str
-    """
-    return self.input(str(prompt))  
-      
-  @override
-  def input(self, prompt: str = "") -> str:
-    """Block and return a line of input, input()-style. Call only from onLine
-    (or a function it calls) — i.e. from the command worker thread, never from
-    the main/GUI thread.
-
-    :param prompt: The prompt text to display.
-    :type prompt: str
-    :returns: The line the user typed.
-    :rtype: str
-    """
-    if threading.current_thread() is threading.main_thread():
-      raise RuntimeError("TerminalWidget.input() must be called from onLine's worker thread")
-    self.after(0, self._showInputPrompt, prompt)
-    return self._replyQueue.get()  # blocks this worker thread only, GUI stays live
-
-  def _showInputPrompt(self, prompt: str) -> None:
-    """Display an input() prompt and mark that the next Enter is a reply, not a command.
-  
-    Runs on the main thread via after().
-  
-    :param prompt: The prompt text.
-    :type prompt: str
-    :rtype: None
-    """
-    self.delete("inputStart linestart", "end")
-    self._writePrompt(prompt)
-    self._awaitingReply = True
-  
-  # ---- history navigation --------------------------------------------------
-
-  def _handleUp(self, _event: tk.Event) -> str:
-    """Recall the previous history entry.
-
-    :rtype: str
-    """
-    if self._awaitingReply or not self.history:
-      return "break"
-    if self.historyIndex is None:
-      self.historyIndex = len(self.history) - 1
-    elif self.historyIndex > 0:
-      self.historyIndex -= 1
-    self._replaceCurrentLine(self.history[self.historyIndex])
-    return "break"
-
-  def _handleDown(self, _event: tk.Event) -> str:
-    """Recall the next history entry, or clear the line at the end of history.
-
-    :rtype: str
-    """
-    if self._awaitingReply or self.historyIndex is None:
-      return "break"
-    if self.historyIndex < len(self.history) - 1:
-      self.historyIndex += 1
-      self._replaceCurrentLine(self.history[self.historyIndex])
-    else:
-      self.historyIndex = None
-      self._replaceCurrentLine("")
-    return "break"
-
-  def _handleBackspace(self, _event: tk.Event) -> Optional[str]:
-    """Prevent backspacing past the start of the input region.
-
-    :rtype: Optional[str]
-    """
-    if self.compare("insert", "<=", "inputStart"):
-      return "break"
-    return None
-  
-  def _handleCtrlD(self, _event: tk.Event) -> str:
-    '''
-    Close the window.
-    '''
-    self.winfo_toplevel().destroy()
-    return "break"
-    
-  def _guardEditableRegion(self, event: tk.Event) -> Optional[str]:
-    """Block edits (other than at/after inputStart) to protect prior output.
-
-    :rtype: Optional[str]
-    """
-    if self.compare("insert", "<", "inputStart") and event.keysym not in (
-      "Left", "Right", "Up", "Down", "Home", "End",
-    ):
-      self.mark_set("insert", "end")
-    return None
-
-  # ---- styled output ("print()"-like), thread-safe -------------------------
-
-  def registerStyle(
-    self, name: str, fg: Optional[str] = None, bg: Optional[str] = None,
-    font: Optional[tuple[str, int, str]] = None,
-  ) -> None:
-    """Pre-register a named style for reuse across multiple printLine calls.
-
-    :param name: Style name, e.g. "error".
-    :type name: str
-    :param fg: Foreground color.
-    :type fg: Optional[str]
-    :param bg: Background color.
-    :type bg: Optional[str]
-    :param font: Font spec as (family, size, style).
-    :type font: Optional[tuple[str, int, str]]
-    :rtype: None
-    """
-    tagName = f"style_{name}"
-    tagOptions: dict[str, Any] = {}
-    if fg is not None:
-      tagOptions["foreground"] = fg
-    if bg is not None:
-      tagOptions["background"] = bg
-    if font is not None:
-      tagOptions["font"] = font
-    self.tag_configure(tagName, **tagOptions)
-    self.styleTags[name] = tagName
-
-  def _getAdHocTag(
-    self, fg: Optional[str], bg: Optional[str], font: Optional[tuple[str, int, str]],
-  ) -> str:
-    """Get (creating/caching) a tag for an unnamed style combo.
-
-    :rtype: str
-    """
-    key = (fg, bg, font)
-    if key in self.adHocTagCache:
-      return self.adHocTagCache[key]
-    tagName = f"adhoc_{next(self._tagCounter)}"
-    tagOptions: dict[str, Any] = {}
-    if fg is not None:
-      tagOptions["foreground"] = fg
-    if bg is not None:
-      tagOptions["background"] = bg
-    if font is not None:
-      tagOptions["font"] = font
-    self.tag_configure(tagName, **tagOptions)
-    self.adHocTagCache[key] = tagName
-    return tagName
-
-  @override
-  def printLine(
-    self,
-    text: str,
-    style: Optional[str] = None,
-    fg: Optional[str] = None,
-    bg: Optional[str] = None,
-    font: Optional[tuple[str, int, str]] = None,
-    **_kwargs
-  ) -> None:
-    """Write a line of output above the current prompt. Safe to call from onLine's
-    worker thread or the main thread.
-  
-    :param text: The text to print.
-    :type text: str
-    :param style: Registered style name; takes precedence over fg/bg/font.
-    :type style: Optional[str]
-    :param fg: Foreground color, used only if style is not given.
-    :type fg: Optional[str]
-    :param bg: Background color, used only if style is not given.
-    :type bg: Optional[str]
-    :param font: Font spec, used only if style is not given.
-    :type font: Optional[tuple[str, int, str]]
-    :rtype: None
-    """
-    if threading.current_thread() is not threading.main_thread():
-      self.after(0, self.printLine, text, style, fg, bg, font)
-      return
-  
-    self.delete("inputStart linestart", "end")
-  
-    tagName: Optional[str] = None
-    if style is not None:
-      if style not in self.styleTags:
-        raise ValueError(f"Unregistered style: {style!r}")
-      tagName = self.styleTags[style]
-    elif fg is not None or bg is not None or font is not None:
-      tagName = self._getAdHocTag(fg, bg, font)
-  
-    self.insert("end", text + "\n", tagName if tagName else ())
-    self.mark_set("inputStart", "end")  # no prompt written here — see() below only
-    self.see("end")    
-
-# class _StreamToTerminal(io.TextIOBase):
-#   """A file-like object that redirects writes to a TerminalWidget as printed lines.
-#
-#   :param terminal: The terminal widget to write to.
-#   :type terminal: TerminalWidget
-#   :param style: Registered style name to apply to each line (e.g. "stderr").
-#   :type style: Optional[str]
-#   """
-#
-#   def __init__(self, terminal: "TerminalWidget", **kwargs) -> None: #style: Optional[str] = None) -> None:
-#     self.terminal = terminal
-#     #self.style = style
-#     self.kwargs = kwargs
-#     self._buffer = ""
-#
-#   @override
-#   def write(self, text: str) -> int:
-#     """Buffer written text and flush complete lines to the terminal.
-#
-#     :param text: Text written by print() or similar.
-#     :type text: str
-#     :returns: Number of characters written.
-#     :rtype: int
-#     """
-#     self._buffer += text
-#     while "\n" in self._buffer:
-#       line, self._buffer = self._buffer.split("\n", 1)
-#       self.terminal.printLine(line, **self.kwargs) #style=self.style)
-#     return len(text)
-#
-#   @override
-#   def flush(self) -> None:
-#     """Flush any partial (no trailing newline) buffered text as a final line.
-#
-#     :rtype: None
-#     """
-#     if self._buffer:
-#       self.terminal.printLine(self._buffer, **self.kwargs) #style=self.style)
-#       self._buffer = ""
-    
-
-import io
-from typing import Callable, Optional
-
-
 class LineBufferedStream(io.TextIOBase):
   """Base class for file-like stream wrappers that buffer writes by line and
   hand each complete line to a subclass for emission.
@@ -690,31 +242,6 @@ class LineBufferedStream(io.TextIOBase):
     raise NotImplementedError
 
 
-# for GUI back end
-class _StreamToTerminal(LineBufferedStream):
-  """Redirects writes to a TerminalWidget as styled printed lines.
-
-  :param terminal: The terminal widget to write to.
-  :type terminal: TerminalWidget
-  :param style: Registered style name to apply to each line (e.g. "stderr").
-  :type style: Optional[str]
-  """
-
-  def __init__(self, terminal: "TerminalWidget", style: Optional[str] = None) -> None:
-    super().__init__()
-    self.terminal = terminal
-    self.style = style
-
-  def _emitLine(self, line: str, end:str="\n") -> None:
-    """Write the line to the terminal widget with this stream's style.
-
-    :param line: The line to emit.
-    :type line: str
-    :rtype: None
-    """
-    self.terminal.printLine(line, style=self.style)
-
-
 # for pure text-based terminal back end
 class LineFilteringStream(LineBufferedStream):
   """Applies a transform to each complete line, then forwards it to an
@@ -758,31 +285,11 @@ class LineFilteringStream(LineBufferedStream):
     self.target.flush()
     
     
-def onLine(line: str) -> Any:
-  """Runs on the worker thread — argparse dispatch as usual.
-
-  :param line: The submitted command line.
-  :type line: str
-  :rtype: None
-  """
-  # try:
-  #   args = parser.parse_args(shlex.split(line))
-  # except SystemExit:
-  #   return
-  # if hasattr(args, "func"):
-  #   args.func(args, terminal) 
-        
-  # print(f'got line: "{line}"')
-  # print('A second line', file=sys.stderr)
-  # x = input("What? ")
-  # print(f'got reply: "{x}"')
-  return eval(line)
-
 ####################################################################################
 '''
 TerminalWidget: a Text-based terminal emulator for Tkinter, designed to be
 used as a mixin alongside a plain-object command-context class (see
-SNTerminalWidget(SNAbstractTerminal, TerminalWidget) for the real usage
+TerminalWidget(SNAbstractTerminal, TerminalWidget) for the real usage
 pattern this is built to support).
 
 Responsibilities:
@@ -798,20 +305,290 @@ Responsibilities:
     command regardless of which window has keyboard focus by the time output
     actually happens
 '''
-# from __future__ import annotations
-#
-# import sys
-# import queue
-# import threading
-# import itertools
-# import tkinter as tk
-# from typing import Any, Callable, Optional, Union
+
+
+# =============================================================================
+# Terminal routing: resolves, for any stdout/stderr write, log record, or
+# input() call, which TerminalWidget it should go to. A thread that has been
+# explicitly bound (e.g. a window's command worker, or a background task
+# launched by the graphics editor) always routes to its bound terminal,
+# regardless of what has focus later. An unbound main-thread call (interactive
+# typing, or a stray print()) routes to whichever window currently has focus.
+# =============================================================================
+
+
+class TerminalRegistry:
+  """Routes stdio/logging/input() output to the correct TerminalWidget.
+
+  :rtype: None
+  """
+
+  def __init__(self) -> None:
+    self._byThread: dict[int, TerminalWidget] = {}
+    self._focusedMainThreadTarget: Optional[TerminalWidget] = None
+    self._lock = threading.Lock()
+
+  def bindThreadToTerminal(self, terminal: TerminalWidget, thread: Optional[threading.Thread]=None) -> None:
+    """Associate a thread with a specific terminal for the lifetime of its work.
+    Call this from the code that STARTS the thread (e.g. a window's command
+    dispatch, or the graphics editor launching a background computation).
+
+    :param terminal: The terminal that output from this thread should route to.
+    :type terminal: TerminalWidget
+    :param thread: The thread to bind. Defaults to the current thread.
+    :type thread: Optional[threading.Thread]
+    :rtype: None
+    """
+    targetThread = thread or threading.current_thread()
+    with self._lock:
+      self._byThread[id(targetThread)] = terminal
+
+  def unbindThread(self, thread: Optional[threading.Thread]=None) -> None:
+    """Remove a thread's routing entry once its work is done.
+
+    :param thread: The thread to unbind. Defaults to the current thread.
+    :type thread: Optional[threading.Thread]
+    :rtype: None
+    """
+    targetThread = thread or threading.current_thread()
+    with self._lock:
+      self._byThread.pop(id(targetThread), None)
+
+  def resolveTerminal(self) -> Optional[TerminalWidget]:
+    """Determine which terminal the current call should route to.
+
+    :returns: The bound terminal for this thread, or the focused terminal for
+      the main thread if unbound, or None if nothing resolves.
+    :rtype: Optional[TerminalWidget]
+    """
+    threadId = id(threading.current_thread())
+    with self._lock:
+      bound = self._byThread.get(threadId)
+    if bound is not None:
+      return bound
+    if threading.current_thread() is threading.main_thread():
+      return self._focusedMainThreadTarget
+    return None
+
+  def onFocusIn(self, terminal: TerminalWidget) -> None:
+    """Set the default routing target for interactive (main-thread) actions.
+
+    :param terminal: The terminal belonging to the window that gained focus.
+    :type terminal: TerminalWidget
+    :rtype: None
+    """
+    self._focusedMainThreadTarget = terminal
+
+  def onFocusOut(self, terminal: TerminalWidget) -> None:
+    """Clear the default target if this terminal's window is the one losing focus.
+
+    :param terminal: The terminal belonging to the window that lost focus.
+    :type terminal: TerminalWidget
+    :rtype: None
+    """
+    if self._focusedMainThreadTarget is terminal:
+      self._focusedMainThreadTarget = None
+
+
+class LineBufferedRoutingStream(io.TextIOBase):
+  """A file-like object that buffers writes by line and routes each complete
+  line to whichever terminal the TerminalRegistry resolves to at write time.
+
+  :param registry: The shared registry used to resolve the target terminal.
+  :type registry: TerminalRegistry
+  :param style: Style name to use when printing (e.g. "stdout", "stderr").
+  :type style: Optional[str]
+  """
+
+  def __init__(self, registry: TerminalRegistry, style: Optional[str]=None) -> None:
+    self.registry = registry
+    self.style = style
+    self._buffer = ""
+
+  def write(self, text: str) -> int:
+    """Buffer incoming text and route complete lines to the resolved terminal.
+
+    :param text: Text written by print() or similar.
+    :type text: str
+    :returns: Number of characters accepted.
+    :rtype: int
+    """
+    self._buffer += text
+    while "\n" in self._buffer:
+      line, self._buffer = self._buffer.split("\n", 1)
+      self._emit(line)
+    return len(text)
+
+  def flush(self) -> None:
+    """Emit any partial (no trailing newline) buffered text as a final line.
+
+    :rtype: None
+    """
+    if self._buffer:
+      self._emit(self._buffer)
+      self._buffer = ""
+
+  def _emit(self, line: str) -> None:
+    """Resolve the current target terminal and print the line to it.
+    Silently dropped if no terminal resolves (e.g. unbound background thread
+    with no window focused at all).
+
+    :param line: The line to emit.
+    :type line: str
+    :rtype: None
+    """
+    terminal = self.registry.resolveTerminal()
+    if terminal is not None:
+      terminal.printLine(line, style=self.style)
+
+
+class TerminalLogHandler(logging.Handler):
+  """A logging.Handler that routes formatted records to whichever terminal the
+  TerminalRegistry resolves to at emit time.
+
+  :param registry: The shared registry used to resolve the target terminal.
+  :type registry: TerminalRegistry
+  """
+
+  def __init__(self, registry: TerminalRegistry) -> None:
+    super().__init__()
+    self.registry = registry
+
+  def emit(self, record: logging.LogRecord) -> None:
+    """Format and route a log record to the resolved terminal, styled by level.
+
+    :param record: The log record to emit.
+    :type record: logging.LogRecord
+    :rtype: None
+    """
+    terminal = self.registry.resolveTerminal()
+    if terminal is None:
+      return
+    message = self.format(record)
+    style = "stderr" if record.levelno >= logging.WARNING else "stdout"
+    terminal.printLine(message, style=style)
+
+
+# Captured before installGlobalIORouting() ever redirects sys.stderr, so an
+# uncaught exception with nowhere else to go (see logUncaughtException below)
+# can still reach the real console as a last resort.
+_originalStderr:TextIO = sys.stderr
+
+# Tracks which registry (if any) installGlobalIORouting() has already wired
+# global stdout/stderr/input()/logging routing for. Makes the function
+# idempotent against repeat calls with the same registry, which is what lets
+# TerminalWidget call it itself (below) — so a simple, single-TerminalWidget
+# app never has to call it explicitly — while a multi-window app like
+# guiApp2.Application can still call it once, up front, before creating any
+# widgets, with no double-installation.
+_installedIORoutingRegistry: Optional["TerminalRegistry"] = None
+
+
+def installGlobalIORouting(registry: Optional["TerminalRegistry"] = None) -> None:
+  """Install stdout/stderr/input() redirection and logging routing ONCE, for
+  the lifetime of the application. Safe to call more than once with the same
+  registry — later calls are a no-op. TerminalWidget calls this itself, so a
+  simple, single-terminal app never has to call it explicitly.
+
+  :param registry: The shared registry that resolves which terminal each call routes
+    to. Defaults to the module-level singleton (terminalRegistry) — a simple,
+    single-terminal app doesn't need to know TerminalRegistry exists at all.
+  :type registry: Optional[TerminalRegistry]
+  :rtype: None
+  """
+  global _installedIORoutingRegistry
+  if registry is None:
+    registry = terminalRegistry
+
+  if _installedIORoutingRegistry is registry:
+    return  # already installed for this registry — nothing to do
+  _installedIORoutingRegistry = registry
+
+  sys.stdout = LineBufferedRoutingStream(registry, style="stdout")
+  sys.stderr = LineBufferedRoutingStream(registry, style="stderr")
+
+  def routedInput(prompt: object="") -> str:
+    """Global input() replacement, routed through the resolved terminal.
+
+    :param prompt: The prompt to display.
+    :type prompt: object
+    :returns: The line typed by the user.
+    :rtype: str
+    :raises RuntimeError: If no terminal can be resolved for this call.
+    """
+    terminal = registry.resolveTerminal()
+    if terminal is None:
+      raise RuntimeError("input() called with no bound thread and no focused terminal")
+    return terminal.input(str(prompt))
+
+  builtins.input = routedInput
+
+  root = logging.getLogger()
+
+  # util.setupLogger() (called at "sn" package import time) attaches a
+  # DynamicStderrHandler that always writes to whatever sys.stderr currently
+  # is. Now that sys.stderr has just been redirected above, that handler
+  # would ALSO deliver every log record to this terminal — on top of the
+  # TerminalLogHandler we're about to add below — producing a duplicate line
+  # per record. Evict any such plain StreamHandler (but not FileHandler,
+  # which IS a StreamHandler subclass and must keep writing to the log file)
+  # so TerminalLogHandler becomes the single route from logging into the
+  # terminal.
+  for h in list(root.handlers):
+    if isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler):
+      root.removeHandler(h)
+
+  handler = TerminalLogHandler(registry)
+  handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+  root.addHandler(handler)
+
+  def logUncaughtException(excType: type[BaseException], excValue: BaseException,
+                            excTraceback: object) -> None:
+    """Guarantee an uncaught exception reaches the log file, even if it
+    happens before any window/terminal exists.
+
+    Python's default excepthook writes the traceback straight to sys.stderr —
+    but by the time this can fire, sys.stderr is a LineBufferedRoutingStream,
+    which silently drops output when no terminal is registered yet (e.g. a
+    crash while constructing the first window). That path never touches the
+    logging module at all, so nothing reaches fileHandler either. Routing
+    through the root logger here fixes that: FileHandler doesn't depend on
+    any GUI state, so it reliably captures the traceback regardless of
+    whether a terminal exists. If a terminal does happen to exist,
+    TerminalLogHandler will additionally display it there like any other log
+    record; if not, fall back to the real console so it isn't invisible.
+
+    :param excType: The exception's type.
+    :type excType: type[BaseException]
+    :param excValue: The exception instance.
+    :type excValue: BaseException
+    :param excTraceback: The exception's traceback.
+    :type excTraceback: object
+    :rtype: None
+    """
+    if issubclass(excType, KeyboardInterrupt):
+      sys.__excepthook__(excType, excValue, excTraceback)  # type: ignore[arg-type]
+      return
+    logging.getLogger().critical("Uncaught exception", exc_info=(excType, excValue, excTraceback))  # type: ignore[arg-type]
+    if registry.resolveTerminal() is None:
+      traceback.print_exception(excType, excValue, excTraceback, file=_originalStderr)  # type: ignore[call-overload]
+
+  sys.excepthook = logUncaughtException
+
+
+# Single, app-wide registry. Created here so both AppWindow/AppPanedWidget and
+# TerminalWidget (once patched — see note below) can reach it via the
+# Application instance (self._root().terminalRegistry) or, more simply, this
+# module-level reference.
+terminalRegistry = TerminalRegistry()
+
+# =============================================================================
 
 
 PromptType = str|Callable[[], str]
 
 
-class TerminalWidget2(tk.Text):
+class TerminalWidget(tk.Text):
   """A Text widget that behaves like a simple terminal.
 
   :param master: The parent Tk widget.
@@ -828,8 +605,10 @@ class TerminalWidget2(tk.Text):
     Global streams (sys.stdout, sys.stderr, builtins.input) and logging are
     expected to already be installed once at app startup via
     installGlobalIORouting(registry) — this widget only binds/unbinds its
-    own worker thread against that registry.
-  :type registry: TerminalRegistry
+    own worker thread against that registry. Defaults to the module-level
+    singleton (terminalRegistry) — a simple, single-TerminalWidget app doesn't
+    need to know TerminalRegistry exists at all.
+  :type registry: Optional[TerminalRegistry]
   :param resultToStringFun: Converts a non-None onLine() return value to a
     string for display. Defaults to str().
   :type resultToStringFun: Optional[Callable[[Any], str]]
@@ -852,7 +631,7 @@ class TerminalWidget2(tk.Text):
     master: tk.Widget,
     onLine: Callable[[str], Any],
     prompt: PromptType,
-    registry: "TerminalRegistry",
+    registry: Optional["TerminalRegistry"] = None,
     resultToStringFun: Optional[Callable[[Any], str]] = None,
     stdoutfg: str = "black",
     stderrfg: str = "red",
@@ -861,10 +640,23 @@ class TerminalWidget2(tk.Text):
     resultfg: str = "purple4",
     **kwargs: object,
   ) -> None:
-    super().__init__(master, **kwargs)  # remaining kwargs (bg, fg, font, ...) go to tk.Text
+    super().__init__(master, kwargs)  # remaining kwargs (bg, fg, font, ...) go to tk.Text
     self.onLine = onLine
     self.prompt = prompt
-    self.registry = registry
+    # Defaulting here (rather than in the signature) keeps this a plain,
+    # ordinary default — module-level terminalRegistry is defined further
+    # down in this same file, so it can't be referenced directly as a
+    # parameter default above (that's evaluated at def time, before this
+    # module has finished loading).
+    self.registry:"TerminalRegistry" = registry if registry is not None else terminalRegistry
+
+    # Ensure stdout/stderr/input()/logging are routed globally. Idempotent —
+    # a multi-widget app (e.g. guiApp2.Application) that already called this
+    # explicitly before creating any widgets is unaffected; a simple,
+    # single-TerminalWidget app gets routing installed automatically here,
+    # with no registry boilerplate of its own.
+    installGlobalIORouting(self.registry)
+
     self.resultToStringFun = resultToStringFun if resultToStringFun is not None else str
 
     self.history: list[str] = []
@@ -909,10 +701,28 @@ class TerminalWidget2(tk.Text):
     """
     return self.prompt() if callable(self.prompt) else self.prompt
 
+  def _atLineStart(self) -> bool:
+    """Whether the widget is positioned at the start of a fresh line — either
+    because it's still empty, or because the last character written was a
+    newline.
+
+    :returns: True if a prompt can be written without first breaking onto a
+      new line of its own.
+    :rtype: bool
+    """
+    if self.index("end-1c") == "1.0":
+      return True  # widget is still empty — nothing to break onto a new line from
+    return self.get("end-2c", "end-1c") == "\n"
+
   def _writePrompt(self, text: Optional[str] = None, style: str = "prompt") -> None:
     """Write a prompt (styled) and mark the start of the editable input region.
     Only ever appends — callers that need to replace the current line
     (printLine, _showInputPrompt, _finishCommand) must delete it first.
+
+    If the most recently written character isn't a newline (e.g. output
+    printed from a background thread that didn't end its own line), a
+    newline is inserted first so the prompt always starts on its own line
+    rather than getting appended to whatever came before it.
 
     :param text: Prompt text to use. Defaults to the resolved self.prompt.
     :type text: Optional[str]
@@ -920,6 +730,8 @@ class TerminalWidget2(tk.Text):
     :type style: str
     :rtype: None
     """
+    if not self._atLineStart():
+      self.insert("end", "\n")
     promptText = self._resolvePrompt() if text is None else text
     tagName = self.styleTags.get(style)
     self.insert("end", promptText, tagName if tagName else ())
@@ -1028,7 +840,7 @@ class TerminalWidget2(tk.Text):
     result = self._replyQueue.get()  # blocks this thread only, GUI stays live
     if result is _EOF_SENTINEL:
       raise EOFError()
-    return result
+    return str(result)
 
   def _showInputPrompt(self, prompt: str) -> None:
     """Display an input() prompt (styled as a "query") and mark that the next
@@ -1132,7 +944,7 @@ class TerminalWidget2(tk.Text):
       tagOptions["background"] = bg
     if font is not None:
       tagOptions["font"] = font
-    self.tag_configure(tagName, **tagOptions)
+    self.tag_configure(tagName, **tagOptions) #type: ignore[call-overload]
     self.styleTags[name] = tagName
 
   def _getAdHocTag(
@@ -1163,7 +975,7 @@ class TerminalWidget2(tk.Text):
       tagOptions["background"] = bg
     if font is not None:
       tagOptions["font"] = font
-    self.tag_configure(tagName, **tagOptions)
+    self.tag_configure(tagName, **tagOptions) # type: ignore[call-overload]
     self.adHocTagCache[key] = tagName
     return tagName
 
@@ -1233,6 +1045,17 @@ _EOF_SENTINEL = _EofSentinel()
   
 if __name__ == "__main__":
   
+  def onLine(line: str) -> Any:
+    """Runs on the worker thread — argparse dispatch as usual.
+  
+    :param line: The submitted command line.
+    :type line: str
+    :rtype: None
+    """
+    line = line.strip()
+    if len(line) > 0:
+      return eval(line)
+
   n = 0
   def nprompt():
     global n
@@ -1240,12 +1063,12 @@ if __name__ == "__main__":
     return f'{n}> '
     
   if __name__ == "__main__":
-    gui = False
-    terminal:AbstractTerminal
+    gui = True
+    #terminal:AbstractTerminal
     if gui:
       root = tk.Tk()
-      terminal = TerminalWidget(root, onLine=onLine, prompt=nprompt, bg="black", fg="lime", insertbackground="lime") #type: ignore[arg-type]
-      terminal.pack(fill="both", expand=True)
+      terminal2 = TerminalWidget(root, onLine=onLine, prompt=nprompt) #type: ignore[arg-type]
+      terminal2.pack(fill="both", expand=True)
       root.mainloop()
     else:
       terminal = PlainTextTerminal(onLine, prompt=nprompt)
