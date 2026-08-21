@@ -50,7 +50,6 @@ def getLogger(name:str):
   
   # try to find a getLogger() method in the __init__.py module of the package of the main program. 
   topModule:types.ModuleType|None = _getTopLevelPackageModule()
-  print(f'topModule: {topModule}')
   if topModule is not None and topModule is not sys.modules[__name__]:
     getLogger = getattr(topModule, "getLogger", None)
     if callable(getLogger):

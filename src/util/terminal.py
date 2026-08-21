@@ -26,6 +26,7 @@ import threading
 import queue
 from typing import Callable, Optional
 import tkinter as tk
+import tkinter.font  # noqa: F401 — makes tk.font.* reliably available (see registerStyle, below)
 import builtins
 import sys
 import io
@@ -36,24 +37,40 @@ import logging
 
 logger:util.Logger = util.getLogger(__name__)
 
+# ---- Common types -------------------------------------------------
+PromptType = str|Callable[[], str]
+'''A prompt passed to a terminal can be either a string constant or 
+a function with no parameters returning a string.  Useful when you
+want to vary the prompt as unix shells often do.'''
+
+OnLineType = Callable[[str], Any|None]
+'''A function that a terminal will call to parse and execute a command
+whenever the user enters the command in the terminal's REPL.'''
+
+ResultToStringFunType = Callable[[Any], str]
+'''Since terminals are purely text based, and command can return ANY type,
+terminals will call a function of this type to translate the return value
+to a printable string. This is usually defaulted the builtin str() function,
+but more exotic functions can be passed in in the terminal's constructor.'''
 
 class AbstractTerminal:
   def __init__(
       self,
-      onLine: Callable[[str], None],
-      prompt: str|Callable[[],str] = "> ",
-      resultToStringFun: Callable[[Any], str]=str,
+      onLine:OnLineType,
+      prompt:PromptType = "> ",
+      resultToStringFun:ResultToStringFunType=str,
       **_kwargs,
     ) -> None:
     '''
     :param onLine: Callback invoked (on a background thread) for each submitted line.
     :type onLine: Callable[[str], None]
+    :type onLine: Callable[[str], None]
     :param prompt: The prompt string shown before each new command line.
     :type prompt: str|Callable[[],str]
     '''
-    self.onLine = onLine
-    self._prompt:str|Callable[[],str] = prompt
-    self._resultToStringFun: Callable[[Any], str] = resultToStringFun
+    self.onLine:OnLineType = onLine
+    self._prompt:PromptType = prompt
+    self.resultToStringFun:ResultToStringFunType = resultToStringFun
     self.oldOut:TextIO|None = None
     self.oldErr:TextIO|None = None
     self.oldInput:Callable[[object], str]|None = None
@@ -74,14 +91,46 @@ class AbstractTerminal:
     pass
   
   @abstractmethod
-  def printLine(self, text:str, **kwargs):
-    '''
-    Method to imitate *buildins.print()*. 
-    '''
+  def printLine(
+    self,
+    text: str,
+    style: Optional[str] = None,
+    fg: Optional[str] = None,
+    bg: Optional[str] = None,
+    font: Optional[tuple[str, int, str]] = None,
+  ) -> None:
+    """Write a line of output above the current prompt, with optional styling.
+    Safe to call from any thread — calls from off the main thread are
+    marshalled onto it via after().
+    
+    Concrete terminal implementations may ignore the optional parameters.
+
+    :param text: The text to print.
+    :type text: str
+    :param style: Registered style name (e.g. "stdout", "stderr", "result").
+      Takes precedence over fg/bg/font.
+    :type style: Optional[str]
+    :param fg: Foreground color, used only if style is not given.
+    :type fg: Optional[str]
+    :param bg: Background color, used only if style is not given.
+    :type bg: Optional[str]
+    :param font: Font spec, used only if style is not given.
+    :type font: Optional[tuple[str, int, str]]
+    :rtype: None
+    """
     pass
 
 
 class PlainTextTerminal(AbstractTerminal):
+  '''
+  Not really a terminal at all. This is a pure text interface (REPL -
+  Real, Evaluate, Print, Loop) that expects to operate called from
+  a command line on a regular terminal. It does VT terminal or emulator.
+  Colors are supported to the limited extent of the VT terminals.
+  
+  Instantiating this object runs the REPL, and the *__init__()* method
+  does not return until the user presses ctrl-D. 
+  '''
   TERMINAL_SEQUENCES:dict[str,str] = {
     "default": "0",
     "underline": "4",
@@ -104,17 +153,17 @@ class PlainTextTerminal(AbstractTerminal):
     }
   
   @staticmethod
-  def getStyleSeq(name:str) -> str:
+  def _getStyleSeq(name:str, default:str="") -> str:
     seq = PlainTextTerminal.TERMINAL_SEQUENCES.get(name, None)
     if seq is not None:
       return f'\033[{seq}m'
-    return ""
+    return default
   
   def __init__(
       self,
-      onLine: Callable[[str], None],
-      prompt: str|Callable[[],str] = "> ",
-      resultToStringFun: Callable[[Any], str]=str,
+      onLine:OnLineType,
+      prompt:PromptType = "> ",
+      resultToStringFun:ResultToStringFunType=str,
       stderrfg:str="red",
       stdoutfg:str="",
       promptfg:str="yellow",
@@ -141,11 +190,11 @@ class PlainTextTerminal(AbstractTerminal):
     '''
     super().__init__(onLine, prompt, resultToStringFun)
     self.styleTags: dict[str, str] = {
-      "prompt": self.getStyleSeq(promptfg),
-      "query": self.getStyleSeq(queryfg),
-      "result": self.getStyleSeq(resultfg),
-      "stderr": self.getStyleSeq(stderrfg),
-      "stdout": self.getStyleSeq(stdoutfg),
+      "prompt": self._getStyleSeq(promptfg, "green"),
+      "query": self._getStyleSeq(queryfg, "green"),
+      "result": self._getStyleSeq(resultfg, "black"),
+      "stderr": self._getStyleSeq(stderrfg, "red"),
+      "stdout": self._getStyleSeq(stdoutfg, "black"),
       }
     
     try: # REPL
@@ -164,11 +213,10 @@ class PlainTextTerminal(AbstractTerminal):
           sys.exit(0)
           break
         except Exception:
-          import traceback
           traceback.print_exc()
         else:
           if self.lastExecutionResult:
-            self.printLine(resultToStringFun(self.lastExecutionResult), style="result")
+            self.printLine(self.resultToStringFun(self.lastExecutionResult), style="result")
             self.lastExecutionResult = None
     finally:
       sys.stderr = oldSysErr
@@ -180,7 +228,33 @@ class PlainTextTerminal(AbstractTerminal):
     return input(f'{self.styleTags.get("prompt","")}{prompt}\033[0m')
 
   @override
-  def printLine(self, text:str, style="", **_kwargs):
+  def printLine(
+    self,
+    text: str,
+    style: Optional[str] = None,
+    fg: Optional[str] = None,
+    bg: Optional[str] = None,
+    font: Optional[tuple[str, int, str]] = None,
+  ) -> None:
+    """Write a line of output above the current prompt, with optional styling.
+    Safe to call from any thread — calls from off the main thread are
+    marshalled onto it via after().
+
+    :param text: The text to print.
+    :type text: str
+    :param style: Registered style name (e.g. "stdout", "stderr", "result").
+      Takes precedence over fg/bg/font.
+    :type style: Optional[str]
+    :param fg: Foreground color, used only if style is not given.
+    :type fg: Optional[str]
+    :param bg: Background color, used only if style is not given.
+    :type bg: Optional[str]
+    :param font: Font spec, used only if style is not given.
+    :type font: Optional[tuple[str, int, str]]
+    :rtype: None
+    """
+    if style is None:
+      style = ""
     if text is None:
       return
     if text.startswith("\033["): #if this has been escaped already, use that.
@@ -193,7 +267,6 @@ class PlainTextTerminal(AbstractTerminal):
       prefix = self.styleTags.get(style,"")
     for line in text.split("\n"):
       print(f'{prefix}{line}\033[0m')
-
 
 
 class LineBufferedStream(io.TextIOBase):
@@ -481,10 +554,10 @@ _originalStderr:TextIO = sys.stderr
 # app never has to call it explicitly — while a multi-window app like
 # guiApp2.Application can still call it once, up front, before creating any
 # widgets, with no double-installation.
-_installedIORoutingRegistry: Optional["TerminalRegistry"] = None
+_installedIORoutingRegistry: Optional[TerminalRegistry] = None
 
 
-def installGlobalIORouting(registry: Optional["TerminalRegistry"] = None) -> None:
+def installGlobalIORouting(registry: Optional[TerminalRegistry] = None) -> None:
   """Install stdout/stderr/input() redirection and logging routing ONCE, for
   the lifetime of the application. Safe to call more than once with the same
   registry — later calls are a no-op. TerminalWidget calls this itself, so a
@@ -584,11 +657,7 @@ terminalRegistry = TerminalRegistry()
 
 # =============================================================================
 
-
-PromptType = str|Callable[[], str]
-
-
-class TerminalWidget(tk.Text):
+class TerminalWidget(AbstractTerminal, tk.Text):
   """A Text widget that behaves like a simple terminal.
 
   :param master: The parent Tk widget.
@@ -622,6 +691,20 @@ class TerminalWidget(tk.Text):
   :type queryfg: str
   :param resultfg: Foreground color for onLine()'s returned result.
   :type resultfg: str
+  :param queryFont: Font spec (family, size, style) for input()-style query
+    prompts, e.g. ("Helvetica", 12, "bold"). Defaults to a bold variant of
+    the widget's own font, so a pending input() request stands out from
+    ordinary output even without any styling of your own.
+  :type queryFont: Optional[tuple[str, int, str]]
+  :param queryFlashColor: Background color the widget flashes to draw
+    attention to a pending input() request. Set to None to disable flashing
+    entirely.
+  :type queryFlashColor: Optional[str]
+  :param queryFlashCount: Number of on/off flashes to run when input() is
+    called. The flash stops early, automatically, once the reply arrives.
+  :type queryFlashCount: int
+  :param queryFlashIntervalMs: Milliseconds between flash transitions.
+  :type queryFlashIntervalMs: int
   :param kwargs: Forwarded to tk.Text (e.g. bg, fg, font, width, height).
   :type kwargs: object
   """
@@ -629,26 +712,30 @@ class TerminalWidget(tk.Text):
   def __init__(
     self,
     master: tk.Widget,
-    onLine: Callable[[str], Any],
-    prompt: PromptType,
-    registry: Optional["TerminalRegistry"] = None,
-    resultToStringFun: Optional[Callable[[Any], str]] = None,
+    onLine: OnLineType,
+    prompt: PromptType = "> ",
+    resultToStringFun: ResultToStringFunType = str,
+    registry: Optional[TerminalRegistry] = None,
     stdoutfg: str = "black",
     stderrfg: str = "red",
     promptfg: str = "darkgreen",
-    queryfg: str = "green",
+    queryfg: str = "violet red",
     resultfg: str = "purple4",
+    queryFont: Optional[tuple[str, int, str]] = None,
+    queryFlashColor: Optional[str] = "yellow",
+    queryFlashCount: int = 6,
+    queryFlashIntervalMs: int = 150,
     **kwargs: object,
   ) -> None:
-    super().__init__(master, kwargs)  # remaining kwargs (bg, fg, font, ...) go to tk.Text
-    self.onLine = onLine
-    self.prompt = prompt
+    tk.Text.__init__(self, master, kwargs)  # remaining kwargs (bg, fg, font, ...) go to tk.Text
+    AbstractTerminal.__init__(self, onLine, prompt, resultToStringFun, **kwargs)
+
     # Defaulting here (rather than in the signature) keeps this a plain,
     # ordinary default — module-level terminalRegistry is defined further
     # down in this same file, so it can't be referenced directly as a
     # parameter default above (that's evaluated at def time, before this
     # module has finished loading).
-    self.registry:"TerminalRegistry" = registry if registry is not None else terminalRegistry
+    self.registry:TerminalRegistry = registry if registry is not None else terminalRegistry
 
     # Ensure stdout/stderr/input()/logging are routed globally. Idempotent —
     # a multi-widget app (e.g. guiApp2.Application) that already called this
@@ -656,8 +743,6 @@ class TerminalWidget(tk.Text):
     # single-TerminalWidget app gets routing installed automatically here,
     # with no registry boilerplate of its own.
     installGlobalIORouting(self.registry)
-
-    self.resultToStringFun = resultToStringFun if resultToStringFun is not None else str
 
     self.history: list[str] = []
     self.historyIndex: Optional[int] = None
@@ -686,20 +771,24 @@ class TerminalWidget(tk.Text):
     self.registerStyle("stdout", fg=stdoutfg)
     self.registerStyle("stderr", fg=stderrfg)
     self.registerStyle("prompt", fg=promptfg)
-    self.registerStyle("query", fg=queryfg)
+    if queryFont is None:
+      # Bold variant of whatever font this widget is already using, so a
+      # pending input() request is visually distinct with zero configuration.
+      baseFont = tk.font.Font(font=self.cget("font"))
+      queryFont = (baseFont.actual("family"), baseFont.actual("size"), "bold")
+    self.registerStyle("query", fg=queryfg, font=queryFont)
     self.registerStyle("result", fg=resultfg)
+
+    # input()-attention-flash state — see _startQueryFlash/_flashTick/_stopQueryFlash.
+    self.queryFlashColor = queryFlashColor
+    self.queryFlashCount = queryFlashCount
+    self.queryFlashIntervalMs = queryFlashIntervalMs
+    self._flashJob: Optional[str] = None
+    self._normalBg = self.cget("bg")
 
     self._writePrompt()
 
   # ---- prompt resolution / line plumbing -----------------------------------
-
-  def _resolvePrompt(self) -> str:
-    """Resolve self.prompt to a concrete string, calling it if it's callable.
-
-    :returns: The current prompt text.
-    :rtype: str
-    """
-    return self.prompt() if callable(self.prompt) else self.prompt
 
   def _atLineStart(self) -> bool:
     """Whether the widget is positioned at the start of a fresh line — either
@@ -712,7 +801,7 @@ class TerminalWidget(tk.Text):
     """
     if self.index("end-1c") == "1.0":
       return True  # widget is still empty — nothing to break onto a new line from
-    return self.get("end-2c", "end-1c") == "\n"
+    return self.get("end-2c", "end-1c") == "\n" # doesn't work for some reason
 
   def _writePrompt(self, text: Optional[str] = None, style: str = "prompt") -> None:
     """Write a prompt (styled) and mark the start of the editable input region.
@@ -732,9 +821,10 @@ class TerminalWidget(tk.Text):
     """
     if not self._atLineStart():
       self.insert("end", "\n")
-    promptText = self._resolvePrompt() if text is None else text
+    #promptText = self._resolvePrompt() if text is None else text
     tagName = self.styleTags.get(style)
-    self.insert("end", promptText, tagName if tagName else ())
+    #self.insert("end", promptText, tagName if tagName else ())
+    self.insert("end", self.prompt if text is None else text, tagName if tagName else ())
     self.inputStart = self.index("end-1c")
     self.mark_set("inputStart", self.inputStart)
     self.mark_gravity("inputStart", "left")
@@ -771,6 +861,7 @@ class TerminalWidget(tk.Text):
 
     if self._awaitingReply:
       self._awaitingReply = False
+      self._stopQueryFlash()
       self._replyQueue.put(line)          # wakes the worker thread's input()
       return "break"
 
@@ -853,6 +944,49 @@ class TerminalWidget(tk.Text):
     self.delete("inputStart linestart", "end")
     self._writePrompt(prompt, style="query")
     self._awaitingReply = True
+    self._startQueryFlash()
+
+  def _startQueryFlash(self) -> None:
+    """Flash the widget's background a few times to draw attention to a
+    newly-shown input() prompt. No-ops if queryFlashColor is None. Stops
+    automatically as soon as the reply arrives — see _stopQueryFlash(),
+    called from _handleReturn()/_handleCtrlD() — so a fast typist never
+    sees it run past their answer.
+
+    :rtype: None
+    """
+    if self.queryFlashColor is None or self.queryFlashCount <= 0:
+      return
+    if self._flashJob is not None:
+      self.after_cancel(self._flashJob)  # a flash was already running — restart it
+    self._flashTick(self.queryFlashCount * 2)
+
+  def _flashTick(self, ticksRemaining: int) -> None:
+    """One step of the input() attention-flash. Alternates the widget's
+    background between queryFlashColor and its normal color; reschedules
+    itself via after() until ticksRemaining reaches 0 or the reply arrives.
+
+    :param ticksRemaining: Number of color alternations left.
+    :type ticksRemaining: int
+    :rtype: None
+    """
+    if not self._awaitingReply or ticksRemaining <= 0:
+      self.configure(bg=self._normalBg)
+      self._flashJob = None
+      return
+    self.configure(bg=self.queryFlashColor if ticksRemaining % 2 == 0 else self._normalBg)
+    self._flashJob = self.after(self.queryFlashIntervalMs, self._flashTick, ticksRemaining - 1)
+
+  def _stopQueryFlash(self) -> None:
+    """Cancel any in-progress input() attention-flash and restore the normal
+    background immediately. Safe to call even when no flash is running.
+
+    :rtype: None
+    """
+    if self._flashJob is not None:
+      self.after_cancel(self._flashJob)
+      self._flashJob = None
+    self.configure(bg=self._normalBg)
 
   def _handleCtrlD(self, event: tk.Event) -> str:
     """Signal EOF to a pending input() call, mimicking terminal Ctrl+D semantics.
@@ -861,6 +995,7 @@ class TerminalWidget(tk.Text):
     """
     if self._awaitingReply:
       self._awaitingReply = False
+      self._stopQueryFlash()
       self._replyQueue.put(_EOF_SENTINEL)
     return "break"
 
@@ -936,13 +1071,30 @@ class TerminalWidget(tk.Text):
     :type font: Optional[tuple[str, int, str]]
     :rtype: None
     """
+    def isValidColor(name: str) -> bool:
+      try:
+        self.winfo_rgb(name)
+        return True
+      except tk.TclError:
+        return False
     tagName = f"style_{name}"
     tagOptions: dict[str, object] = {}
     if fg is not None:
-      tagOptions["foreground"] = fg
+      if fg == "white": fg = "snow"
+      if isValidColor(fg):
+        tagOptions["foreground"] = fg
+      else:
+        logger.warning(f'Invalid foreground color name for style "{name}": "{fg}"')
     if bg is not None:
-      tagOptions["background"] = bg
+      if bg == "white": bg = "snow"
+      if isValidColor(bg):
+        tagOptions["background"] = bg
+      else:
+        logger.warning(f'Invalid background color name for style "{name}": "{bg}"')
     if font is not None:
+      # tk will silently use the default font if the font family name is wrong, so just warn...
+      if font[0] not in tk.font.families():
+        logger.warning(f'Invalid font family for style "{name}": "{font[0]}"')
       tagOptions["font"] = font
     self.tag_configure(tagName, **tagOptions) #type: ignore[call-overload]
     self.styleTags[name] = tagName
@@ -979,6 +1131,7 @@ class TerminalWidget(tk.Text):
     self.adHocTagCache[key] = tagName
     return tagName
 
+  @override
   def printLine(
     self,
     text: str,
