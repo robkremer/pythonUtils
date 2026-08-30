@@ -324,3 +324,4 @@ class DoList():
     "Returns the string representation of the next command to be redone."
     q = self.redoQueue()
     return None if len(q)==0 else q[0]
+  

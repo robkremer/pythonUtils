@@ -193,7 +193,7 @@ class Serializable:
 
 
 
-class strdict(dict[str, Any]): # should really be dict[str, SerializableType] but that runs into forward declaration problems...
+class strdict[T](dict[str, T]): # should really be dict[str, SerializableType] but that runs into forward declaration problems...
   '''
   A simple subclass of *dict* that restricts the type of keys to type *str*.
   '''

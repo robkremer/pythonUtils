@@ -80,39 +80,54 @@ ILLEGAL      = RestrictionTypes.ILLEGAL
 
 @dataclass
 class Restriction:
+  global RESTRICTION_TYPES
   individual:Optional[RestrictionTypes]
   type:Optional[RestrictionTypes]
   @classmethod
   def fromstring(cls, name:str) -> Restriction:
-    choices =[x for x in RESTRICTION_TYPES.keys() if x.startswith(name.upper())]
+    choices =[x for x in RESTRICTION_TYPES if x.startswith(name.upper())]
     if len(choices) > 1:
       if "VAR" in choices and len(choices)==2:
-        choices = ["VAR"]
+        choices = ["VAR_DEFAULTED"]
       elif "CONST" in choices and len(choices)==2:
-        choices = ["CONST"]
+        choices = ["CONST_TYPEOVERRIDE"]
       else:
         raise ValueError("Restriction string is not unique.")
     if len(choices) == 0:
       raise ValueError("Illegal restriction string.")
     return RESTRICTION_TYPES[choices[0]]
-    
-VAR                = Restriction(NOINHERIT, UNRESTRICTED)
-'Restriction: Normal variable, individuals must assign as value. Eg: name of an object.'
+  def tostring(self) -> str:
+    for k,v in RESTRICTION_TYPES.items():
+      if self == v:
+        return k
+    return f'ILLEGAL: {self}'
+  
 VAR_DEFAULTED      = Restriction(UNRESTRICTED, UNRESTRICTED)
 'Restriction: Normal variable with a default. Eg: "degree" field with default "None".'
-CONST              = Restriction(NOOVERRIDE, NOOVERRIDE) 
-'Restriction: Constant'
+VAR                = Restriction(NOINHERIT, UNRESTRICTED)
+'Restriction: Normal variable, individuals must assign as value. Eg: name of an object.'
 CONST_TYPEOVERRIDE = Restriction(NOOVERRIDE, UNRESTRICTED)
 'Restriction: Constant that types can change.'
+# ILLEGAL1           = Restriction(UNRESTRICTED, NOINHERIT)
+# 'Illegal'
+LOCAL              = Restriction(NOINHERIT, NOINHERIT)
+'Restriction: Types must change but individuals can\'t. Eg: name of a relation.'
 TYPENAME           = Restriction(NOOVERRIDE, NOINHERIT)
 'Restriction: Types must change but individuals can\'t. Eg: name of a relation.'
+# ILLEGAL2           = Restriction(UNRESTRICTED, NOOVERRIDE) 
+# 'Illegal'
+# ILLEGAL3           = Restriction(NOINHERIT, NOOVERRIDE) 
+# 'Illegal'
+CONST              = Restriction(NOOVERRIDE, NOOVERRIDE) 
+'Restriction: Constant'
 
 RESTRICTION_TYPES:dict[str,Restriction] = {
   "VAR": VAR,
   "VAR_DEFAULTED": VAR_DEFAULTED,
   "CONST": CONST,
   "CONST_TYPEOVERRIDE": CONST_TYPEOVERRIDE,
-  "TYPENAME": TYPENAME}    
+  "TYPENAME": TYPENAME,
+  "LOCAL": LOCAL}    
 
 class NoValue(Serializable): 
   '''
@@ -387,9 +402,17 @@ class Attribute(Serializable):
                                         lambda slf: saveRest(slf.restriction) if slf.restriction is not None else "None",  #type: ignore[attr-defined]
                                         lambda restStr: restoreRest(restStr) if restStr != "None" else None) #type: ignore[arg-type]
               ])
+    
+  @override
+  def __str__(self) -> str:
+    return f'{self.__class__.__name__}({self.value}, {self.type}, {self.restriction.tostring() if self.restriction is not None else "None"})'
+  
+  @override
+  def __repr__(self) -> str:
+    return f'{self.__class__.__name__}({self.value}, {self.type}, {self.restriction.tostring() if self.restriction is not None else "None"})'
 
 
-class AttributedObject(strdict, Serializable, Subject):
+class AttributedObject(Serializable, strdict[Attribute], Subject):
 
   @override
   @classmethod
@@ -491,7 +514,7 @@ class AttributedObject(strdict, Serializable, Subject):
     self.setAttr(key, Attribute(value=storeDefault, typ=storeType, restriction=VAR_DEFAULTED))
     return storeDefault
     
-  def getLocal(self, key:str, default:Any=NOVALUE) -> SerializableType | NoValue:
+  def getLocal(self, key:str, default:Any=NOVALUE) -> SerializableType | Any:
     '''
     Return the LOCAL (not inherited) *value* of the attribute at the key.
     
@@ -502,7 +525,57 @@ class AttributedObject(strdict, Serializable, Subject):
     :returns: The value field of the *Attribute* object at *key* if found.
     :rtype: SerializeableType|NoValue
     '''
-    return super().get(key, default)
+    attr:Attribute = super().get(key, None)
+    if attr is None:
+      return default
+    return attr.value if attr.value is not NOVALUE else default
+
+  def getLocalAttr(self, key:str) -> Attribute | None:
+    '''
+    Return the LOCAL (not inherited) *Attribute* of the attribute at the key.
+    
+    :param key: The key to access.
+    :type key: str
+    :param default: The value to return if *key* is not found. Default is *NoValue*.
+    :type default: Any
+    :returns: The value field of the *Attribute* object at *key* if found.
+    :rtype: Attribute
+    '''
+    return super().get(key, None)
+
+  def getInh(self, key:str, default:Any=NOVALUE) -> SerializableType | Any:
+    '''
+    Return the INHERITED (not local) *value* of the attribute at the key.
+    
+    :param key: The key to access.
+    :type key: str
+    :param default: The value to return if *key* is not found. Default is *NoValue*.
+    :type default: Any
+    :returns: The value field of the *Attribute* object at *key* if found.
+    :rtype: SerializeableType|NoValue
+    '''
+    attr:Attribute|None = self.getInhAttr(key)
+    if attr is None:
+      return default
+    return attr.value if attr.value is not NOVALUE else default
+
+  def getInhAttr(self, key:str) -> Attribute | None:
+    '''
+    Return the INHERITED (not local) *Attribute* of the attribute at the key.
+    
+    :param key: The key to access.
+    :type key: str
+    :param default: The value to return if *key* is not found. Default is *NoValue*.
+    :type default: Any
+    :returns: The value field of the *Attribute* object at *key* if found.
+    :rtype: Attribute
+    '''
+    p:AttributedObject
+    for p in self.getSupers():
+      r:Attribute = p.getAttr(key)
+      if r is not None:
+        return r
+    return None
 
   def getAttr(self, key:str) -> Attribute | None:
     '''
@@ -628,16 +701,17 @@ class AttributedObject(strdict, Serializable, Subject):
       yield k
       
   def items(self):
-    keys = list(self.keys())
     for k in self:
       yield k,self[k]
 
-  def setAttr(self, key:str, attr:Attribute) -> None:
+  def setAttr(self, key:str, attr:Attribute) -> Attribute:
     '''
     :param key: The attribute name.
     :type key: str
     :param attr: The candate attribute to associate with *key*.
     :type attr: Attribute
+    :returns: The parameter *attr*
+    :rtype: Attribute
     :raises:
     
     Set a local attribute if it passes validation rules. Throws if the rules 
@@ -646,7 +720,9 @@ class AttributedObject(strdict, Serializable, Subject):
     self._validateOverride(key, self.isIndividual(), attr, self._getSuperAttr(key)) # will throw if *attr* is not legal
     super().__setitem__(key, attr)
     self.setDirty()
-    self.notify(("new attribute", (key, attr.value)))
+    with self.ChangeMgr(self) as cm:
+      cm.registerTopics(("new attribute", (key, attr)))
+    return attr
     
   @abstractmethod
   def getSupers[T:AttributedObject](self) -> list[T]:
@@ -675,6 +751,36 @@ class AttributedObject(strdict, Serializable, Subject):
     :rtype: bool
     '''
     return not self.isIndividual()
+  
+  def isValueEditable(self, key:str) -> bool:
+    '''
+    :param key: The key for which to check.
+    :type key: str
+    :returns: *True* iff the value for that key is editable.
+    :rtype: bool
+    '''
+    #TODO: implement isValueEditable()
+    return True
+
+  def isTypeEditable(self, key:str) -> bool:
+    '''
+    :param key: The key for which to check.
+    :type key: str
+    :returns: *True* iff the type for that key is editable.
+    :rtype: bool
+    '''
+    #TODO: implement isTypeEditable()
+    return True
+
+  def isQualifierEditable(self, key:str) -> bool:
+    '''
+    :param key: The key for which to check.
+    :type key: str
+    :returns: *True* iff the restrictions for that key is editable.
+    :rtype: bool
+    '''
+    #TODO: implement isTypeEditable()
+    return True
 
   @classmethod
   def _validateOverride(cls, key:str, isIndividual:bool, attr:Attribute, superAttr:Optional[Attribute]):

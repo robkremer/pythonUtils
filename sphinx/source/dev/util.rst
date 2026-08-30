@@ -1,5 +1,5 @@
 util package
-==================
+============
 
 .. automodule:: util
    :members:
@@ -7,15 +7,20 @@ util package
    :show-inheritance:
    :undoc-members:
 
-Modules
-----------
+Modules and subpackages
+-----------------------
 
 .. toctree::
    :maxdepth: 2
 
+   util.persistence
+   util.attribute
+   util.command
+   util.commandParser
+   util.observer
+   util.prefs
+   util.rtValuesDialog
+   util.terminal
    util.tooltip
    util.utils
-   util.persistence.serialize
-   util.persistence.serializeXML
-   util.persistence.serializeJSON
-   util.persistence.pRef
+   util.validatedList

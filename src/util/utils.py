@@ -1,13 +1,3 @@
-'''
-Miscellaneous utility functions.
- 
-Created on Oct 14, 2024
-
-.. codeauthor:: Rob Kremer <robkremer@me.com>
-
--------------
-'''
-
 #################################################################################
 # (c) Copyright 2024-2026, Rob Kremer, MIT open source license.                 #
 #                                                                               #
@@ -29,6 +19,16 @@ Created on Oct 14, 2024
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
+'''
+Miscellaneous utility functions.
+ 
+Created on Oct 14, 2024
+
+.. codeauthor:: Rob Kremer <robkremer@me.com>
+
+-------------
+'''
+
 import os
 import sys
 from typing import Optional, Any, Iterable, Callable,\
@@ -58,146 +58,6 @@ import util
 #from docutils.nodes import description
 logger:util.Logger = util.getLogger(__name__)
 
-def getSubMenu(menu:tk.Menu, name:str, makeIfNone:Optional[int]=tk.END) -> Optional[tk.Menu]:
-  """
-  Find a submenu in *menu* with label *name* .
-  
-  :param menu: The menu to search
-  :param name: The label of the item we are searching for
-  :param makeIfNone: [default: tk.END (insert at end)] if an *int* and *menu* does not contain any
-      menu items named *name* then insert a new menu named *name* at position 
-      *makeIfNone* .
-  :return: Return a *tk.Menu* if it is found or created; if it is not found and
-      *makeIfNone* is *None*, return *None* .
-  """
-  submenu = None      
-  try:
-    index = menu.index(name)
-    assert menu.type(index) == "cascade"
-    submenu = menu.entrycget(index,'menu')
-    submenu = menu.winfo_toplevel().nametowidget(submenu)
-  except Exception as ex:
-    if makeIfNone is not None:
-      assert isinstance(makeIfNone, int)
-      submenu = tk.Menu(menu) #TODO: should probably make an effort to put this in the right place
-      menu.insert_cascade(makeIfNone, label=name, menu=submenu)
-  return submenu
-
-def isGuiAvailable() -> bool:
-  """Determine whether a graphical display environment appears to be available.
-
-  :returns: True if a GUI environment is likely usable, False otherwise.
-  :rtype: bool
-  """
-  if sys.platform.startswith("win") or sys.platform == "darwin":
-    return True
-  # On X11/Wayland Linux systems, check the relevant env vars.
-  return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
-
-
-def askViaTk(prompt: str, title: str = "Input required") -> Optional[str]:
-  """Prompt the user for input using a Tkinter dialog.
-
-  :param prompt: The message to display to the user.
-  :type prompt: str
-  :param title: The dialog window title.
-  :type title: str
-  :returns: The user's input, or None if the dialog could not be created or was cancelled.
-  :rtype: Optional[str]
-  """
-  try:
-    import tkinter as tk
-    from tkinter import simpledialog
-  except ImportError:
-    return None
-
-  try:
-    root = tk.Tk()
-    root.withdraw()
-    root.attributes("-topmost", True)
-    result = simpledialog.askstring(title, prompt, parent=root)
-    root.destroy()
-    return result
-  except tk.TclError:
-    # DISPLAY was set but no display server actually responded.
-    return None
-
-
-def askViaTerminal(prompt: str) -> Optional[str]:
-  """Prompt the user for input via stdin/stdout.
-
-  :param prompt: The message to display to the user.
-  :type prompt: str
-  :returns: The user's input, or None if stdin is not interactive.
-  :rtype: Optional[str]
-  """
-  if not sys.stdin.isatty():
-    return None
-  try:
-    return input(f"{prompt}: ")
-  except (EOFError, KeyboardInterrupt):
-    return None
-
-
-def askUser(prompt: str, title: str = "Input required") -> Optional[str]:
-  """Ask the user a question, using a GUI dialog if available and falling back to the terminal.
-
-  :param prompt: The message to display to the user.
-  :type prompt: str
-  :param title: The dialog window title, used only in GUI mode.
-  :type title: str
-  :returns: The user's input, or None if no input method succeeded.
-  :rtype: Optional[str]
-  """
-  if isGuiAvailable():
-    result = askViaTk(prompt, title)
-    if result is not None:
-      return result
-  return askViaTerminal(prompt)
-
-class VerticalScrolledFrame(ttk.Frame):
-    """
-    A pure Tkinter scrollable frame that actually works!
-    * Use the 'interior' attribute to place widgets inside the scrollable frame.
-    * Construct and pack/place/grid normally.
-    * This frame only allows vertical scrolling.
-    """
-    def __init__(self, parent, *args, **kw):
-        ttk.Frame.__init__(self, parent, *args, **kw)
-
-        # Create a canvas object and a vertical scrollbar for scrolling it.
-        vscrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL)
-        vscrollbar.pack(fill=tk.Y, side=tk.RIGHT, expand=tk.FALSE)
-        canvas = tk.Canvas(self, bd=0, highlightthickness=0,
-                           yscrollcommand=vscrollbar.set)
-        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=tk.TRUE)
-        vscrollbar.config(command=canvas.yview)
-
-        # Reset the view
-        canvas.xview_moveto(0)
-        canvas.yview_moveto(0)
-
-        # Create a frame inside the canvas which will be scrolled with it.
-        self.interior = interior = ttk.Frame(canvas)
-        interior_id = canvas.create_window(0, 0, window=interior,
-                                           anchor=tk.NW)
-
-        # Track changes to the canvas and frame width and sync them,
-        # also updating the scrollbar.
-        def _configure_interior(event):
-            # Update the scrollbars to match the size of the inner frame.
-            size = (interior.winfo_reqwidth(), interior.winfo_reqheight())
-            canvas.config(scrollregion="0 0 %s %s" % size)
-            if interior.winfo_reqwidth() != canvas.winfo_width():
-                # Update the canvas's width to fit the inner frame.
-                canvas.config(width=interior.winfo_reqwidth())
-        interior.bind('<Configure>', _configure_interior)
-
-        def _configure_canvas(event):
-            if interior.winfo_reqwidth() != canvas.winfo_width():
-                # Update the inner frame's width to fill the canvas.
-                canvas.itemconfigure(interior_id, width=canvas.winfo_width())
-        canvas.bind('<Configure>', _configure_canvas)
 
 def makeParserFromFunc(fn:Callable, 
                        ignoreParam:Callable[[str], bool]=lambda paramName: False, 
@@ -330,43 +190,6 @@ def makeParserFromFunc(fn:Callable,
 
   return parser
 
-def makeConcrete[T: ABC](abstract_cls: type[T], implementations: dict[str, Callable]) -> type[T]:
-  """
-  Dynamically create a concrete subclass from an ABC.
-
-  :param abstract_cls: The abstract base class to concretize.
-  :type abstract_cls: type[T]
-  :param implementations: A mapping of abstract method names to callables.
-  :type implementations: dict[str, Callable]
-  :returns: A new concrete subclass with all abstract methods implemented.
-  :rtype: type[T]
-  :raises TypeError: If you left out one or more abstract methods in *implementations*.
-
-  .. code-block:: python
-    :caption: **Usage**:
-  
-    class Shapes(ABC):
-      @abstractmethod
-      def area(self) -> float: ...
-    
-      @abstractmethod
-      def perimeter(self) -> float: ...
-    
-    circle = make_concrete(Shape, {
-      "area":      lambda self: 3.14159 * 5 ** 2,
-      "perimeter": lambda self: 2 * 3.14159 * 5,
-    })()
-    
-    print(circle.area())       # 78.53975
-    print(circle.perimeter())  # 31.4159
-  """
-  missing = abstract_cls.__abstractmethods__ - implementations.keys()
-  if missing:
-    raise TypeError(f"Missing implementations for: {missing}")
-
-  return type(f"_{abstract_cls.__name__}Impl", (abstract_cls,), implementations)
-
-
 def resolveAliases(x:str, table:dict[str,str], raiseOnError:bool=True) -> str:
   """
   :param x: The string to analyze.
@@ -475,7 +298,7 @@ def quoteIfNecessary(s:str) -> str:
   return s
    
 ################################################################################
-############################## Control keys ####################################
+# ---- Control keys ------------------------------------------------------------
 ################################################################################
 
 # State bits in events
@@ -510,7 +333,7 @@ def strToBool(b:str):
 
 
 ################################################################################
-###################################### URLs ####################################
+# ---- URLs --------------------------------------------------------------------
 ################################################################################
 
 def isValidURL(url:str) -> bool:
@@ -752,8 +575,45 @@ def changeUrlExtension(url, new_extension):
     return new_url
   
 ################################################################################
-########################### MUCKING WITH CLASSES ###############################
+# ---- MUCKING WITH CLASSES ----------------------------------------------------
 ################################################################################
+
+def makeConcrete[T: ABC](abstract_cls: type[T], implementations: dict[str, Callable]) -> type[T]:
+  """
+  Dynamically create a concrete subclass from an ABC.
+
+  :param abstract_cls: The abstract base class to concretize.
+  :type abstract_cls: type[T]
+  :param implementations: A mapping of abstract method names to callables.
+  :type implementations: dict[str, Callable]
+  :returns: A new concrete subclass with all abstract methods implemented.
+  :rtype: type[T]
+  :raises TypeError: If you left out one or more abstract methods in *implementations*.
+
+  .. code-block:: python
+    :caption: **Usage**:
+  
+    class Shapes(ABC):
+      @abstractmethod
+      def area(self) -> float: ...
+    
+      @abstractmethod
+      def perimeter(self) -> float: ...
+    
+    circle = make_concrete(Shape, {
+      "area":      lambda self: 3.14159 * 5 ** 2,
+      "perimeter": lambda self: 2 * 3.14159 * 5,
+    })()
+    
+    print(circle.area())       # 78.53975
+    print(circle.perimeter())  # 31.4159
+  """
+  missing = abstract_cls.__abstractmethods__ - implementations.keys()
+  if missing:
+    raise TypeError(f"Missing implementations for: {missing}")
+
+  return type(f"_{abstract_cls.__name__}Impl", (abstract_cls,), implementations)
+
 
 def getFullClassName(cls:type) -> str:
   "Unlike *obj.__class__.__name__* this returns the (period-deliminated) full class path of *subjectClass*"
@@ -935,7 +795,7 @@ def getCallerIdInfoStr(stack:int=1, includeArgs=True) -> str:
 
 
 ################################################################################
-############################ LIST MANIPULATION #################################
+# ---- LIST MANIPULATION -------------------------------------------------------
 ################################################################################
 
 def delOne[T](lst:list[T], val:T, 
@@ -1065,7 +925,7 @@ def treeSplit(tree:list, _omit:list=[]):
   
 
 ################################################################################
-###################################### FLAGS ###################################
+# ---- FLAGS -------------------------------------------------------------------
 ################################################################################
 
 class ExtendedEnumMeta(EnumMeta):
@@ -1102,7 +962,7 @@ class ExtendedFlag(Flag, metaclass=ExtendedEnumMeta):
     return result
     
 ################################################################################
-########## SOUNDS ##############################################################
+# ---- SOUNDS ------------------------------------------------------------------
 ################################################################################
 
 def play(soundFile:Optional[str]=None) -> None:
@@ -1124,9 +984,9 @@ def play(soundFile:Optional[str]=None) -> None:
   subprocess.Popen(["afplay", soundFile])
 
 
-##########################################################################################
-########## XML ###########################################################################
-##########################################################################################
+################################################################################
+# ---- XML ---------------------------------------------------------------------
+################################################################################
 
 def xmlEscape( strXML: str ) -> str:
   """
@@ -1181,9 +1041,9 @@ def xmlToStringIndented(elem:Element, **kwargs):
       logger.error("not sure what to do with '"+line+"'")
   return output
       
-##########################################################################################
-########## GRAPHIC UtiLItiES #############################################################
-##########################################################################################
+################################################################################
+# ----GRAPHIC UtiLItiES --------------------------------------------------------
+################################################################################
 
 PointIndici = float
 'Use this globally to choose if *Points* and *Rects* store indices as *int* or *float* values.'
@@ -1421,9 +1281,150 @@ def iterableToList(it: Iterable) -> list:
   # return ret
     
     
-##########################################################################################
-########## USER INTERFACE ################################################################
-##########################################################################################
+################################################################################
+# ---- TK USER INTERFACE ----------------------------------------------------------
+################################################################################
+
+def getSubMenu(menu:tk.Menu, name:str, makeIfNone:Optional[int]=tk.END) -> Optional[tk.Menu]:
+  """
+  Find a submenu in *menu* with label *name* .
+  
+  :param menu: The menu to search
+  :param name: The label of the item we are searching for
+  :param makeIfNone: [default: tk.END (insert at end)] if an *int* and *menu* does not contain any
+      menu items named *name* then insert a new menu named *name* at position 
+      *makeIfNone* .
+  :return: Return a *tk.Menu* if it is found or created; if it is not found and
+      *makeIfNone* is *None*, return *None* .
+  """
+  submenu = None      
+  try:
+    index = menu.index(name)
+    assert menu.type(index) == "cascade"
+    submenu = menu.entrycget(index,'menu')
+    submenu = menu.winfo_toplevel().nametowidget(submenu)
+  except Exception as ex:
+    if makeIfNone is not None:
+      assert isinstance(makeIfNone, int)
+      submenu = tk.Menu(menu) #TODO: should probably make an effort to put this in the right place
+      menu.insert_cascade(makeIfNone, label=name, menu=submenu)
+  return submenu
+
+def isGuiAvailable() -> bool:
+  """Determine whether a graphical display environment appears to be available.
+
+  :returns: True if a GUI environment is likely usable, False otherwise.
+  :rtype: bool
+  """
+  if sys.platform.startswith("win") or sys.platform == "darwin":
+    return True
+  # On X11/Wayland Linux systems, check the relevant env vars.
+  return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+
+
+def askViaTk(prompt: str, title: str = "Input required") -> Optional[str]:
+  """Prompt the user for input using a Tkinter dialog.
+
+  :param prompt: The message to display to the user.
+  :type prompt: str
+  :param title: The dialog window title.
+  :type title: str
+  :returns: The user's input, or None if the dialog could not be created or was cancelled.
+  :rtype: Optional[str]
+  """
+  try:
+    import tkinter as tk
+    from tkinter import simpledialog
+  except ImportError:
+    return None
+
+  try:
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    result = simpledialog.askstring(title, prompt, parent=root)
+    root.destroy()
+    return result
+  except tk.TclError:
+    # DISPLAY was set but no display server actually responded.
+    return None
+
+
+def askViaTerminal(prompt: str) -> Optional[str]:
+  """Prompt the user for input via stdin/stdout.
+
+  :param prompt: The message to display to the user.
+  :type prompt: str
+  :returns: The user's input, or None if stdin is not interactive.
+  :rtype: Optional[str]
+  """
+  if not sys.stdin.isatty():
+    return None
+  try:
+    return input(f"{prompt}: ")
+  except (EOFError, KeyboardInterrupt):
+    return None
+
+
+def askUser(prompt: str, title: str = "Input required") -> Optional[str]:
+  """Ask the user a question, using a GUI dialog if available and falling back to the terminal.
+
+  :param prompt: The message to display to the user.
+  :type prompt: str
+  :param title: The dialog window title, used only in GUI mode.
+  :type title: str
+  :returns: The user's input, or None if no input method succeeded.
+  :rtype: Optional[str]
+  """
+  if isGuiAvailable():
+    result = askViaTk(prompt, title)
+    if result is not None:
+      return result
+  return askViaTerminal(prompt)
+
+class VerticalScrolledFrame(ttk.Frame):
+    """
+    A pure Tkinter scrollable frame that actually works!
+    * Use the 'interior' attribute to place widgets inside the scrollable frame.
+    * Construct and pack/place/grid normally.
+    * This frame only allows vertical scrolling.
+    """
+    def __init__(self, parent, *args, **kw):
+        ttk.Frame.__init__(self, parent, *args, **kw)
+
+        # Create a canvas object and a vertical scrollbar for scrolling it.
+        vscrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL)
+        vscrollbar.pack(fill=tk.Y, side=tk.RIGHT, expand=tk.FALSE)
+        canvas = tk.Canvas(self, bd=0, highlightthickness=0,
+                           yscrollcommand=vscrollbar.set)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=tk.TRUE)
+        vscrollbar.config(command=canvas.yview)
+
+        # Reset the view
+        canvas.xview_moveto(0)
+        canvas.yview_moveto(0)
+
+        # Create a frame inside the canvas which will be scrolled with it.
+        self.interior = interior = ttk.Frame(canvas)
+        interior_id = canvas.create_window(0, 0, window=interior,
+                                           anchor=tk.NW)
+
+        # Track changes to the canvas and frame width and sync them,
+        # also updating the scrollbar.
+        def _configure_interior(event):
+            # Update the scrollbars to match the size of the inner frame.
+            size = (interior.winfo_reqwidth(), interior.winfo_reqheight())
+            canvas.config(scrollregion="0 0 %s %s" % size)
+            if interior.winfo_reqwidth() != canvas.winfo_width():
+                # Update the canvas's width to fit the inner frame.
+                canvas.config(width=interior.winfo_reqwidth())
+        interior.bind('<Configure>', _configure_interior)
+
+        def _configure_canvas(event):
+            if interior.winfo_reqwidth() != canvas.winfo_width():
+                # Update the inner frame's width to fill the canvas.
+                canvas.itemconfigure(interior_id, width=canvas.winfo_width())
+        canvas.bind('<Configure>', _configure_canvas)
 
 def bindRightMouse(window, func):
   if window.winfo_toplevel().tk.call("tk", "windowingsystem") == 'aqua':
@@ -1452,9 +1453,58 @@ def eventEqual(e1, e2):
       e1.y_root == e2.y_root and \
       e1.type   == e2.type
       
-##########################################################################################
-########## INTROSPECTION #################################################################
-##########################################################################################
+import traceback
+import tkinter as tk
+from tkinter import scrolledtext
+
+def showExceptionDialog(parent: tk.Misc | None = None, title: str = "Error") -> None:
+  """Display the currently-handled exception's traceback (as returned by
+  traceback.format_exc()) in a scrollable, resizable dialog. Call this
+  from within an `except:` block, the same place you'd call
+  traceback.print_exc().
+
+  :param parent: The parent widget/window this dialog is transient to.
+  :type parent: tk.Misc | None
+  :param title: The dialog's window title.
+  :type title: str
+  :rtype: None
+  """
+  text = traceback.format_exc()
+
+  dialog = tk.Toplevel(parent)
+  dialog.title(title)
+  # Only mark this dialog transient to *parent* if parent is actually an
+  # on-screen window. A dialog transient to a withdrawn window (e.g. an
+  # app's hidden root Tk instance, used only to host Toplevels — see
+  # guiApp2.Application) may itself never get mapped by the window manager,
+  # since some WMs treat "transient for a hidden window" as "also stay
+  # hidden." That's exactly the case when this is called to report an
+  # exception raised while constructing a new window: there's no finished
+  # window yet to be transient to, only the (permanently withdrawn) root.
+  if parent is not None and parent.winfo_viewable():
+    dialog.transient(parent)
+
+  body = scrolledtext.ScrolledText(dialog, width=100, height=25, font=("Courier", 10), wrap="none")
+  body.insert("1.0", text)
+  body.configure(state="disabled")
+  body.pack(fill="both", expand=True, padx=8, pady=8)
+
+  tk.Button(dialog, text="OK", command=dialog.destroy).pack(pady=(0, 8))
+
+  # grab_set() requires the dialog itself to already be mapped/viewable —
+  # force that now rather than relying on it happening to already be true.
+  dialog.update_idletasks()
+  try:
+    dialog.grab_set()    # modal — blocks interaction with parent
+  except tk.TclError:
+    # Extremely unlikely once update_idletasks() has run, but degrade to a
+    # non-modal dialog rather than losing the error report entirely.
+    logger.warning("showExceptionDialog(): grab_set() failed; showing non-modally", exc_info=True)
+  dialog.wait_window()   # blocks the caller until the dialog is closed
+          
+################################################################################
+# ---- INTROSPECTION -----------------------------------------------------------
+################################################################################
 
 def allSubclasses(cls) -> set:
   """Returns the set of all descendants of *subjectClass*"""
@@ -1465,9 +1515,9 @@ def allConcreteSubclasses(cls) -> set:
   subclasses = allSubclasses(cls)
   return set([c for c in subclasses if not inspect.isabstract(c)])
   
-##########################################################################################
-########## CATEGORIES ####################################################################
-##########################################################################################
+################################################################################
+# ---- CATEGORIES --------------------------------------------------------------
+################################################################################
 
 class Categories[T]:
   

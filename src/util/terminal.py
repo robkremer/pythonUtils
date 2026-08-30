@@ -390,6 +390,28 @@ Responsibilities:
 # =============================================================================
 
 
+def writeToRealConsole(text: str, style: Optional[str]=None) -> None:
+  """Last-resort output path: write directly to the real console, bypassing
+  routing entirely. Used when TerminalRegistry.resolveTerminal() can't find
+  ANY terminal to route to, so output is never silently dropped — just less
+  conveniently placed than it would be in a TerminalWidget.
+
+  Deliberately targets sys.__stdout__/__stderr__ (the interpreter's original
+  streams, unaffected by installGlobalIORouting()'s reassignment of
+  sys.stdout/sys.stderr) rather than the current sys.stdout/sys.stderr,
+  which would just loop back into routing and hit this same fallback again.
+
+  :param text: The text to write (a newline is appended).
+  :type text: str
+  :param style: "stderr" routes to sys.__stderr__; anything else (including
+    None) routes to sys.__stdout__.
+  :type style: Optional[str]
+  :rtype: None
+  """
+  stream = sys.__stderr__ if style == "stderr" else sys.__stdout__
+  print(text, file=stream)
+
+
 class TerminalRegistry:
   """Routes stdio/logging/input() output to the correct TerminalWidget.
 
@@ -399,7 +421,32 @@ class TerminalRegistry:
   def __init__(self) -> None:
     self._byThread: dict[int, TerminalWidget] = {}
     self._focusedMainThreadTarget: Optional[TerminalWidget] = None
+    self._windows: dict[tk.Misc, TerminalWidget] = {}
     self._lock = threading.Lock()
+
+  def registerWindow(self, window: tk.Misc, terminal: TerminalWidget) -> None:
+    """Record which terminal belongs to a given top-level window, so it can be
+    found by resolveTerminal()'s active-window fallback even if that window's
+    widgets never actually took Tk keyboard focus (e.g. a right-click that
+    only ever posts a popup menu). Call this once, when the window is built.
+
+    :param window: The Toplevel (or any of its ancestors' Tk path resolves to
+      it) that owns *terminal*.
+    :type window: tk.Misc
+    :param terminal: This window's terminal.
+    :type terminal: TerminalWidget
+    :rtype: None
+    """
+    self._windows[window] = terminal
+
+  def unregisterWindow(self, window: tk.Misc) -> None:
+    """Remove a window's entry once it's closed.
+
+    :param window: The window previously passed to registerWindow().
+    :type window: tk.Misc
+    :rtype: None
+    """
+    self._windows.pop(window, None)
 
   def bindThreadToTerminal(self, terminal: TerminalWidget, thread: Optional[threading.Thread]=None) -> None:
     """Associate a thread with a specific terminal for the lifetime of its work.
@@ -430,8 +477,11 @@ class TerminalRegistry:
   def resolveTerminal(self) -> Optional[TerminalWidget]:
     """Determine which terminal the current call should route to.
 
-    :returns: The bound terminal for this thread, or the focused terminal for
-      the main thread if unbound, or None if nothing resolves.
+    :returns: The bound terminal for this thread, or (for the main thread,
+      when unbound) the focused terminal, falling back to whichever
+      registered window's terminal is currently active per the window
+      manager if nothing has explicitly taken Tk focus. None if nothing
+      resolves.
     :rtype: Optional[TerminalWidget]
     """
     threadId = id(threading.current_thread())
@@ -440,7 +490,43 @@ class TerminalRegistry:
     if bound is not None:
       return bound
     if threading.current_thread() is threading.main_thread():
-      return self._focusedMainThreadTarget
+      return self._focusedMainThreadTarget or self._resolveActiveWindowTerminal()
+    return None
+
+  def _resolveActiveWindowTerminal(self) -> Optional[TerminalWidget]:
+    """Fallback for resolveTerminal(): find the terminal for whichever
+    registered window is currently frontmost, per the window manager's
+    stacking order — independent of Tk's logical keyboard focus.
+
+    This covers cases _focusedMainThreadTarget can't: a click that never
+    moves Tk focus (e.g. SNCanvas's right-click popup menu), or an exception
+    raised before the user has interacted with the window at all (e.g.
+    during initial model population). 'wm stackorder' reports windows
+    lowest-to-highest, so the LAST element is topmost.
+
+    Confirmed empirically (headless Tk) that 'wm stackorder' must be queried
+    THROUGH THE APPLICATION ROOT (_root()) to get the full sibling list —
+    querying it via one of the child Toplevels themselves returns only that
+    single window, not its siblings, presumably because stacking-group
+    membership is keyed off the group leader (the hidden root here), not off
+    each Toplevel's Python-level .master.
+
+    :rtype: Optional[TerminalWidget]
+    """
+    if not self._windows:
+      return None
+    root = next(iter(self._windows))._root()
+    try:
+      order = root.tk.call('wm', 'stackorder', root)
+    except tk.TclError:
+      return None
+    for path in reversed(order):  # topmost first
+      for window, terminal in self._windows.items():
+        try:
+          if str(window) == str(path) and window.winfo_viewable():
+            return terminal
+        except tk.TclError:
+          continue  # window was destroyed out from under us; skip it
     return None
 
   def onFocusIn(self, terminal: TerminalWidget) -> None:
@@ -503,8 +589,11 @@ class LineBufferedRoutingStream(io.TextIOBase):
 
   def _emit(self, line: str) -> None:
     """Resolve the current target terminal and print the line to it.
-    Silently dropped if no terminal resolves (e.g. unbound background thread
-    with no window focused at all).
+
+    Falls back to the real console (sys.__stdout__/__stderr__, per *style*)
+    if no terminal resolves at all — e.g. an unbound background thread with
+    no window ever focused or found active — so output is never silently
+    lost, just less conveniently placed.
 
     :param line: The line to emit.
     :type line: str
@@ -513,6 +602,8 @@ class LineBufferedRoutingStream(io.TextIOBase):
     terminal = self.registry.resolveTerminal()
     if terminal is not None:
       terminal.printLine(line, style=self.style)
+    else:
+      writeToRealConsole(line, style=self.style)
 
 
 class TerminalLogHandler(logging.Handler):
@@ -530,16 +621,22 @@ class TerminalLogHandler(logging.Handler):
   def emit(self, record: logging.LogRecord) -> None:
     """Format and route a log record to the resolved terminal, styled by level.
 
+    Falls back to the real console if no terminal resolves at all — this is
+    what previously let an exception logged from a Tk callback (e.g.
+    Subject._notify() catching an Observer's exception) vanish until the
+    separately-buffered log file eventually flushed.
+
     :param record: The log record to emit.
     :type record: logging.LogRecord
     :rtype: None
     """
-    terminal = self.registry.resolveTerminal()
-    if terminal is None:
-      return
     message = self.format(record)
     style = "stderr" if record.levelno >= logging.WARNING else "stdout"
-    terminal.printLine(message, style=style)
+    terminal = self.registry.resolveTerminal()
+    if terminal is not None:
+      terminal.printLine(message, style=style)
+    else:
+      writeToRealConsole(message, style=style)
 
 
 # Captured before installGlobalIORouting() ever redirects sys.stderr, so an
@@ -647,6 +744,40 @@ def installGlobalIORouting(registry: Optional[TerminalRegistry] = None) -> None:
       traceback.print_exception(excType, excValue, excTraceback, file=_originalStderr)  # type: ignore[call-overload]
 
   sys.excepthook = logUncaughtException
+
+
+def inputAsync(
+  prompt: object = "",
+  onResult: Optional[Callable[[str], None]] = None,
+  onError: Optional[Callable[[BaseException], None]] = None,
+  registry: Optional["TerminalRegistry"] = None,
+) -> None:
+  """Module-level counterpart to the routed builtin input() — but safe to
+  call from the main/GUI thread (e.g. a menu command or button handler,
+  as in SNCanvas.makeMenu()). Resolves the target terminal the same way the
+  routed input() does (the focused terminal, for main-thread callers), then
+  delegates to that terminal's TerminalWidget.inputAsync(). Use this from
+  code that doesn't hold a reference to any particular TerminalWidget; call
+  the method directly on a widget instead if you already have one.
+
+  :param prompt: The prompt to display.
+  :type prompt: object
+  :param onResult: Called on the main thread with the line the user typed.
+  :type onResult: Optional[Callable[[str], None]]
+  :param onError: Called on the main thread with any exception raised (e.g.
+    EOFError on Ctrl+D). If omitted, the exception is logged and swallowed.
+  :type onError: Optional[Callable[[BaseException], None]]
+  :param registry: Defaults to the module-level singleton (terminalRegistry).
+  :type registry: Optional[TerminalRegistry]
+  :rtype: None
+  :raises RuntimeError: If no terminal can be resolved (nothing focused).
+  """
+  if registry is None:
+    registry = terminalRegistry
+  terminal = registry.resolveTerminal()
+  if terminal is None:
+    raise RuntimeError("inputAsync() called with no bound thread and no focused terminal")
+  terminal.inputAsync(str(prompt), onResult=onResult, onError=onError)
 
 
 # Single, app-wide registry. Created here so both AppWindow/AppPanedWidget and
@@ -909,7 +1040,16 @@ class TerminalWidget(AbstractTerminal, tk.Text):
 
     :rtype: None
     """
-    self.delete("inputStart linestart", "end")
+    # Tk special-cases a delete whose end index is literally "end": if the
+    # start index is a line boundary, Tk ALSO deletes the newline preceding
+    # it (to avoid leaving a trailing empty line) — even though that newline
+    # is outside ["inputStart linestart", "end"). That silently merges the
+    # previous real output line into whatever gets inserted next (e.g. two
+    # printLine() calls in a row losing the newline between them). Using
+    # "end-1c" — the real end of content, excluding Tk's own ever-present
+    # final newline — isn't literally "end", so this special case doesn't
+    # trigger, and the preceding newline is left alone.
+    self.delete("inputStart linestart", "end-1c")
     self._writePrompt()
 
   # ---- input() — blocks the CALLING (worker) thread only --------------------
@@ -933,6 +1073,52 @@ class TerminalWidget(AbstractTerminal, tk.Text):
       raise EOFError()
     return str(result)
 
+  def inputAsync(
+    self,
+    prompt: str = "",
+    onResult: Optional[Callable[[str], None]] = None,
+    onError: Optional[Callable[[BaseException], None]] = None,
+  ) -> None:
+    """input(), but safe to call from the main/GUI thread — e.g. a menu
+    command or button handler. Returns immediately; spawns a short-lived
+    worker thread bound to this terminal that calls self.input(prompt), then
+    marshals the result (or any exception) back onto the main thread via
+    onResult/onError.
+
+    Calling input() directly and blocking for its return value is never safe
+    from the main thread, no matter how you get there (a plain thread spawn
+    included) — blocking the GUI callback on the worker thread's result would
+    freeze the event loop exactly as calling input() directly does. The fix
+    is this callback/continuation style: kick off the request, return, and
+    let onResult pick up the answer once it actually arrives.
+
+    :param prompt: The prompt text to display (uses the "query" style).
+    :type prompt: str
+    :param onResult: Called on the main thread with the line the user typed.
+    :type onResult: Optional[Callable[[str], None]]
+    :param onError: Called on the main thread with any exception input()
+      raised (e.g. EOFError on Ctrl+D). If omitted, the exception is logged
+      and otherwise swallowed.
+    :type onError: Optional[Callable[[BaseException], None]]
+    :rtype: None
+    """
+    def worker() -> None:
+      self.registry.bindThreadToTerminal(self)
+      try:
+        result = self.input(prompt)
+      except Exception as e:  # noqa: BLE001 — deliberately broad; handed to onError
+        self.registry.unbindThread()
+        if onError is not None:
+          self.after(0, onError, e)
+        else:
+          logger.error("inputAsync() worker failed", exc_info=True)
+        return
+      self.registry.unbindThread()
+      if onResult is not None:
+        self.after(0, onResult, result)
+
+    threading.Thread(target=worker, daemon=True).start()
+
   def _showInputPrompt(self, prompt: str) -> None:
     """Display an input() prompt (styled as a "query") and mark that the next
     Enter is a reply, not a command. Runs on the main thread via after().
@@ -941,7 +1127,16 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     :type prompt: str
     :rtype: None
     """
-    self.delete("inputStart linestart", "end")
+    # Tk special-cases a delete whose end index is literally "end": if the
+    # start index is a line boundary, Tk ALSO deletes the newline preceding
+    # it (to avoid leaving a trailing empty line) — even though that newline
+    # is outside ["inputStart linestart", "end"). That silently merges the
+    # previous real output line into whatever gets inserted next (e.g. two
+    # printLine() calls in a row losing the newline between them). Using
+    # "end-1c" — the real end of content, excluding Tk's own ever-present
+    # final newline — isn't literally "end", so this special case doesn't
+    # trigger, and the preceding newline is left alone.
+    self.delete("inputStart linestart", "end-1c")
     self._writePrompt(prompt, style="query")
     self._awaitingReply = True
     self._startQueryFlash()
@@ -1161,7 +1356,16 @@ class TerminalWidget(AbstractTerminal, tk.Text):
       self.after(0, self.printLine, text, style, fg, bg, font)
       return
 
-    self.delete("inputStart linestart", "end")
+    # Tk special-cases a delete whose end index is literally "end": if the
+    # start index is a line boundary, Tk ALSO deletes the newline preceding
+    # it (to avoid leaving a trailing empty line) — even though that newline
+    # is outside ["inputStart linestart", "end"). That silently merges the
+    # previous real output line into whatever gets inserted next (e.g. two
+    # printLine() calls in a row losing the newline between them). Using
+    # "end-1c" — the real end of content, excluding Tk's own ever-present
+    # final newline — isn't literally "end", so this special case doesn't
+    # trigger, and the preceding newline is left alone.
+    self.delete("inputStart linestart", "end-1c")
 
     tagName: Optional[str] = None
     if style is not None:
@@ -1183,6 +1387,9 @@ class TerminalWidget(AbstractTerminal, tk.Text):
       self._writePrompt()
 
     self.see("end")
+    
+  def wrap(self, on:bool=True):
+    self.config({"wrap": tk.WORD if on else tk.NONE})
 
 
 class _EofSentinel:

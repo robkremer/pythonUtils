@@ -77,6 +77,12 @@ The second way to get a notification is through a callback:
 In this case, the lambda function will be invoked whenever the topic event
 happens. It could also have been an independent function or a method call.
 
+There is an alternate version of *notify()*, *notifyLater()* that works similarly, 
+but deferred until the current call stack unwinds (e.g.
+until a constructor finishes) instead of firing observers synchronously,
+mid-construction. Use this anywhere notify() would otherwise let an
+Observer inspect a not-yet-fully-built object.
+
 Updates (The arguments to Subject.notify() and Observer.update() are expected 
 to be tuples with the first element being a "topic" of *str* type and the second
 element being a tuple "arguments" to the topic. 
@@ -94,18 +100,26 @@ Created on Sep 17, 2024
 '''
 
 from __future__ import annotations
+import sys
+import threading
 from abc import ABC, abstractmethod
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 import util
 import logging
 
 logger:util.Logger = util.getLogger(__name__)
 
-enabled = True
+enabled:bool = True
 '''
 Use the enabled flag if you must disable all notifications, for example, during
 initialization or reading in new data from a file.  Don't forget to restore it
 to *True*.
+'''
+
+alwaysLater:bool = False
+'''
+Set this to *True* for force (application wide) ALL calls to *notify* to behave
+as calls to *notifyLater*. 
 '''
 
 class Subject:
@@ -114,10 +128,18 @@ class Subject:
   """
 
   class ChangeMgr:
-    def __init__(self, owner:Subject):
+    def __init__(self, owner:Subject, later:bool=False):
+      '''
+      :param owner: The subject doing the calling.
+      :type owner: Subject
+      :param later: Iff this is True, use *notifyLater()* instead of *notify()*.
+        Default is False.
+      :type later: bool
+      '''
       assert isinstance(owner, Subject)
       self.owner:Subject = owner
-      self.cancelled = False
+      self.cancelled:bool = False
+      self.later:bool = later
       if self.owner._changeDepth == 0:
         self.owner._topics = [] # [(topic, params)]
         self.owner._confirmedCount = 0
@@ -131,10 +153,13 @@ class Subject:
       assert self.owner._changeDepth >= 0
       assert self.owner._confirmedCount >= 0
       if self.owner._changeDepth == 0 and self.owner._confirmedCount > 0:
-        self.owner.notify(*self.owner._topics)
+        if self.later:
+          self.owner.notifyLater(*self.owner._topics)
+        else:
+          self.owner.notify(*self.owner._topics)
     def cancel(self):
       self.cancelled = True
-    def registerTopics(self, topics:list[tuple[str, tuple[Any, ...]]]):
+    def registerTopics(self, topics:list[tuple[str, tuple[Any, ...]]]|tuple[str, tuple[Any, ...]]):
       if not isinstance(topics, list):
         topics = [topics]
       for t in topics:
@@ -214,6 +239,18 @@ class Subject:
     Trigger an update in each subscriber iff either it has no specific topics
     or one or more of it's topics matches.
     '''
+    if enabled:
+      return self.notifyLater(*topics) if alwaysLater else self._notify(*topics)
+    
+      
+  def _notify(self, *topics:tuple[str, tuple[Any, ...]]) -> None:
+    '''
+    :param topics: list[Tuple[str, Any, ...]]: A \\*list of topicName/info tuple 
+        describing the topic and any further info parameters.
+        
+    Trigger an update in each subscriber iff either it has no specific topics
+    or one or more of it's topics matches.
+    '''
     if not enabled:
       return
       
@@ -278,6 +315,57 @@ class Subject:
       i += 1
     for d in deleteList:
       self._callbacks.pop(d)
+
+  # Optional override: a callable(func, *args) -> None that arranges for
+  # func(*args) to run later rather than synchronously. Set at the class
+  # level (Subject.scheduler = ...) to force a strategy app-wide, or per
+  # instance if some Subjects live in a different environment than others.
+  scheduler: Optional[Callable[..., None]] = None
+
+  def notifyLater(self, *topics: tuple[str, tuple[Any, ...]]) -> None:
+    '''
+    Like notify(), but deferred until the current call stack unwinds (e.g.
+    until a constructor finishes) instead of firing observers synchronously,
+    mid-construction. Use this anywhere notify() would otherwise let an
+    Observer inspect a not-yet-fully-built object.
+
+    Tries, in order: an app-supplied scheduler (self.scheduler /
+    Subject.scheduler); tkinter's default root's after_idle(), if tkinter
+    is already imported and has a live root; an asyncio event loop's
+    call_soon()/call_soon_threadsafe(), if one is running; and finally a
+    threading.Timer(0, ...) as a last resort.
+
+    :param topics: Same as notify().
+    :rtype: None
+    '''
+    if not enabled:
+      return
+      
+    scheduler = self.scheduler or Subject.scheduler
+    if scheduler is not None:
+      scheduler(self._notify, *topics)
+      return
+
+    tk = sys.modules.get("tkinter")
+    if tk is not None and tk._default_root is not None:
+      tk._default_root.after_idle(self._notify, *topics)
+      return
+
+    aio = sys.modules.get("asyncio")
+    if aio is not None:
+      try:
+        loop = aio.get_running_loop()
+      except RuntimeError:
+        loop = None
+      if loop is not None:
+        if threading.current_thread() is threading.main_thread():
+          loop.call_soon(self._notify, *topics)
+        else:
+          loop.call_soon_threadsafe(self._notify, *topics)
+        return
+
+    threading.Timer(0, self._notify, args=topics).start()
+
 
 
 class Observer(ABC):
