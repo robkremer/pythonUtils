@@ -319,7 +319,7 @@ class AttrEditor(tk.Toplevel):
     i = 2
     keys = list(self.attrs.keys())
     keys = [k for k in keys if not k.startswith(".")] # filter out anything beginning with "."
-    keys.sort()
+    keys.sort(key=lambda k: ('\x00'+k if not '/' in k else k))
     for k in keys:
       try:
         v  = self.attrs.getAttr(k)
@@ -539,7 +539,9 @@ class AttrEditor(tk.Toplevel):
       if k not in self.attrs.keys(): # 
         continue
       origAttr:Attribute|None = self.attrs.getLocalAttr(k) if k in list(strdict.keys(self.attrs)) else None
-      assert origAttr is not None
+      if origAttr is None:
+        logger.debug(f'key "{k}" has not changed')
+        continue
       try:
         if self.hasChanged(k):
           logger.debug(f'save(): saving "{k}"')
@@ -604,7 +606,7 @@ class AttrEditor(tk.Toplevel):
   
   ### UTILITY METHODS ########################################################
   
-  def getEditorForType(self, parent:Any, key:str, typ:Union[type, str, NoneType], value:Any, keyExt) -> Any:
+  def getEditorForType(self, parent:Any, key:str, typ:Union[type, str, NoneType], value:Any, keyExt, inhType:str|type|None=None) -> Any:
     
     def getHeight(text:str):
       return min(text.count('\n')+1, 4)
@@ -612,6 +614,8 @@ class AttrEditor(tk.Toplevel):
     editor = None
 
     if typ is None:
+      typ = inhType
+    if typ is None:  
       typ = type(value)
       
     # Change the standard type string into actual types to save code below.
@@ -703,25 +707,31 @@ class AttrEditor(tk.Toplevel):
 
     return editor
 
-  def makeNewEntry(self, k, v, row, disabled, keyExt):
-    self.makeLabel(self.editorsListFrame, k, k+":", self.cLabel, row, foreground="grey" if disabled else "black")
-    ed = self.makeEditor(self.editorsListFrame, k, v, self.cEdit, row, disabled or not self.attrs.isValueEditable(k), keyExt)
+  def makeNewEntry(self, k, v, row, disabled, keyExt, inhType:type|str|None=None):
+    label = self.makeLabel(self.editorsListFrame, k, k+":", self.cLabel, row, foreground="grey" if disabled else "black")
+    self.addTooltip(label, v.note)
+    ed = self.makeEditor(self.editorsListFrame, k, v, self.cEdit, row, disabled or not self.attrs.isValueEditable(k), keyExt, inhType=inhType)
     frame = tk.Frame(self.editorsListFrame)
     frame.grid(column=self.cDel, row=row, sticky=tk.W, padx=0, pady=0)
     if not disabled:
       self.makeButton(frame, k, v, "delete", command=lambda b, k1=k, v1=v, ed1=ed, row=row: self.deleteAttr(k1, v1, ed1, row, b), width=4.2)
-    kind = self.makeKind(self.editorsListFrame, k, v.type, self.cKind, row, None, disabled or not self.attrs.isTypeEditable(k), keyExt)
+    kind = self.makeKind(self.editorsListFrame, k, v.type, self.cKind, row, None, disabled or not self.attrs.isTypeEditable(k), keyExt, inhType=inhType)
     #TODO: isn't this redundant?
     if disabled or not self.attrs.isTypeEditable(k):
       kind.configure(state=tk.DISABLED)
     
   def makeTitle(self, col:int, text:str, helpText:str, row:int, **kwargs):
-    longestLine = len(max(helpText.split("\n"), key=len))
-    width = min(longestLine * 7, 560)
     # Note: background= option doesn't work on aqua
     label = ttk.Label(self.editorsListFrame, text=text, font=('Helvetica', 12, 'bold'), relief=tk.GROOVE, anchor=tk.CENTER, background="blue", **kwargs)
     label.grid_configure(column=col, row=row, sticky=tk.W+tk.E)
-    CreateToolTip(label, helpText, background="yellow", wrapLength=width)
+    self.addTooltip(label, helpText)
+    
+  def addTooltip(self, widget:Widget, helpText:str):
+    if helpText is None or helpText == "":
+      return
+    longestLine = len(max(helpText.split("\n"), key=len))
+    width = min(longestLine * 7, 560)
+    CreateToolTip(widget, helpText, background="yellow", wrapLength=width)
 
   def makeHeader(self, row, **kwargs):
     self.makeTitle(self.cLabel, "ATTR NAME", f'The name of the Attribute (NOT the value).', row, **kwargs)
@@ -729,8 +739,8 @@ class AttrEditor(tk.Toplevel):
     self.makeTitle(self.cDel, "ACTIONS", f'The actions you can perform on the Attribute.', row, **kwargs)
     self.makeTitle(self.cKind, "TYPE", f'The type of the value.', row, **kwargs)
     
-  def makeEditor(self, parent, key, item, column, row, disabled, keyExt):
-    editor = self.getEditorForType(parent, key, item.type, item.value, keyExt)
+  def makeEditor(self, parent, key, item, column, row, disabled, keyExt, inhType:str|type|None=None):
+    editor = self.getEditorForType(parent, key, item.type, item.value, keyExt, inhType=inhType)
     editor.grid(column=column, row=row, sticky='EW', padx=0, pady=0)
     if disabled:
       self.conf(editor, state= "disabled")#, foreground="blue")
@@ -758,7 +768,7 @@ class AttrEditor(tk.Toplevel):
     label.grid(column=column, row=row, sticky=justify, ipadx=0, padx=0, pady=0)
     return label
 
-  def makeKind(self, parent, key, typ:Union[type,str], column, row, command, disabled, keyExt, **kwargs):
+  def makeKind(self, parent, key, typ:Union[type,str], column, row, command, disabled, keyExt, inhType:str|type|None=None, **kwargs):
     #typeDisabled = disabled
     command = None    
     if not disabled:
@@ -768,8 +778,12 @@ class AttrEditor(tk.Toplevel):
     #   typeDisabled = True      
     font = ('Helvetica', 8, 'bold') if typ=="unknown" else ('Helvetica', 8, 'normal')
     tname = getFullClassName(typ) if isinstance(typ, type) else str(typ)
+    if tname == "None": 
+      tname = inhType.__name__ if isinstance(inhType, type) else str(inhType) 
+      if inhType is not None:
+        disabled = True
     if disabled:
-      label = ttk.Label(parent, text=tname, width=KIND_WIDTH, **kwargs)
+      label = ttk.Label(parent, text=tname, width=KIND_WIDTH, foreground="grey50", **kwargs)
     else:
       label = ttk.Button(parent, text=tname, padding=-15, width=KIND_WIDTH, **kwargs)
       if command is not None:
@@ -906,14 +920,17 @@ class HierarchicalAttrEditor(AttrEditor):
     self.sepOffset = 2
   
   @override
-  def makeNewEntry(self, k, v, row, disabled, keyExt):
+  def makeNewEntry(self, k, v, row, disabled, keyExt, inhType:str|type|None=None):
     localRec = self.attrs.getLocalAttr(k)
     inhRec = self.attrs.getInhAttr(k)
     if self.editKey == k and localRec == None:
       self.attrs.setAttr(k, Attribute(None, None if inhRec is None else inhRec.type, None if inhRec is None else inhRec.restriction))
       localRec = self.attrs.getLocalAttr(k)
     if localRec is not None:
-      super().makeNewEntry(k, localRec, row+self.EntryOffset, disabled, keyExt="")
+      if localRec.note is None and inhRec is not None and inhRec.note is not None:
+        localRec.note = inhRec.note
+      super().makeNewEntry(k, localRec, row+self.EntryOffset, disabled, keyExt="", inhType=None if inhRec is None else inhRec.type)
+      #super().makeNewEntry(k, v, row+self.EntryOffset, disabled, keyExt="", inhType=None if inhRec is None else inhRec.type)
       #assert localRec.restriction is not None
       self.makeQuals(self.editorsListFrame, k, localRec.restriction, self.cQuals, row+self.EntryOffset, disabled=disabled or not self.attrs.isQualifierEditable(k), keyExt="")
     if inhRec is not None:
@@ -932,7 +949,7 @@ class HierarchicalAttrEditor(AttrEditor):
         #self.attrs.setRecord(attr)
         if not disabled:
           self.makeButton(frame, k, inhRec, "override", \
-                          command=lambda b, k=k, inhRec=inhRec, r=row: (self.makeNewEntry(k, self.attrs.setAttr(k, Attribute(inhRec.value, inhRec.type, inhRec.restriction)), r, disabled=False, keyExt=""), b.destroy()))
+                          command=lambda b, k=k, inhRec=inhRec, r=row, slf=self: (slf.makeNewEntry(k, slf.attrs.__setitem__(k, inhRec.value), r, disabled=False, keyExt="", inhType=inhRec.type), b.destroy()))
     ttk.Separator(self.editorsListFrame, orient=tk.HORIZONTAL) \
         .grid(column=0, row=row+self.sepOffset, columnspan=self.cspan, sticky=tk.W+tk.E, padx=0, pady=2)
    

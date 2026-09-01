@@ -61,6 +61,7 @@ from types import NoneType
 from enum import Flag
 from dataclasses import dataclass
 from abc import abstractmethod
+from collections.abc import KeysView, ValuesView, ItemsView
 from util.persistence.serialize import Serializable, SerializableType, strdict,\
   InstantiationInfo, ParamInfo, PropertyInfo
 from util.utils import getFullClassName, getFullyQualifiedClass, getClass,\
@@ -305,7 +306,8 @@ def typeAsCanonical(t:AttributeValueTypes, throw:bool=False) -> AttributeValueTy
 class Attribute(Serializable):
   def __init__(self, value:Union[SerializableType, NoValue], 
                      typ:Optional[AttributeValueTypes], 
-                     restriction:Optional[Restriction|tuple[int,int]|tuple[RestrictionTypes,RestrictionTypes]]):
+                     restriction:Optional[Restriction|tuple[int,int]|tuple[RestrictionTypes,RestrictionTypes]],
+                     note:str|None=None):
     assert value is NOVALUE or typ is None or isValidType(typ, value), f'Invalid Attribute type/value: {typ}/{value}.'
     self._value:Union[SerializableType, NoValue] = value
     self._type:Optional[AttributeValueTypes] = typ
@@ -316,6 +318,7 @@ class Attribute(Serializable):
     else:
       assert isinstance(restriction, (Restriction,NoneType)), f'Expected Restriction or NoneType type, got {type(restriction)}:{rest}'
       self._restriction = restriction
+    self.note = note
     self._dirty:bool = False
     
   @property
@@ -402,14 +405,6 @@ class Attribute(Serializable):
                                         lambda slf: saveRest(slf.restriction) if slf.restriction is not None else "None",  #type: ignore[attr-defined]
                                         lambda restStr: restoreRest(restStr) if restStr != "None" else None) #type: ignore[arg-type]
               ])
-    
-  @override
-  def __str__(self) -> str:
-    return f'{self.__class__.__name__}({self.value}, {self.type}, {self.restriction.tostring() if self.restriction is not None else "None"})'
-  
-  @override
-  def __repr__(self) -> str:
-    return f'{self.__class__.__name__}({self.value}, {self.type}, {self.restriction.tostring() if self.restriction is not None else "None"})'
 
 
 class AttributedObject(Serializable, strdict[Attribute], Subject):
@@ -443,20 +438,20 @@ class AttributedObject(Serializable, strdict[Attribute], Subject):
     assert type(value) is bool
     if not value:
       obj:Attribute
-      for obj in self.values():
+      for obj in super().values():  # LOCAL attributes only -- an inherited Attribute belongs to (and is tracked dirty by) its owning super object, not this one
         if obj.isDirty():
           obj.setDirty(False)
     self._dirty = value
-    
+
   def isDirty(self) -> bool:
     '''
-    Returns True iff the object (or an of it's contained *Attributes*) have 
-    been modified and should probably be saved on exit. 
+    Returns True iff the object (or an of it's contained *Attributes*) have
+    been modified and should probably be saved on exit.
     '''
     if self._dirty:
       return True
     obj:Attribute
-    for obj in self.values():
+    for obj in super().values():  # LOCAL attributes only -- see setDirty()
       if obj.isDirty():
         self._dirty = True
         return True
@@ -588,18 +583,24 @@ class AttributedObject(Serializable, strdict[Attribute], Subject):
     :rtype: Attribute|None
     '''
     myAttr:Optional[Attribute] = super().get(key)
-    if myAttr == None: # we only inherit
+    if myAttr is None: # we only inherit
       ret = self._getSuperAttr(key)
       if ret is None:
         return None
       myRest:Optional[RestrictionTypes]
       myRest, override = self._getRestriction(self.isIndividual(), ret.restriction, None)#ret.restriction.individual if self.isIndividual() else ret.restriction.type
       value = ret.value if myRest is None or not (myRest & NOINHERIT) else NOVALUE
-      return Attribute(value, ret.type, ret.restriction)
-    if myAttr.isComplete(): # we only have local
-      return myAttr
-    else: # we have a combination of local and inherited
-      superAttr:Optional[Attribute] = self._getSuperAttr(key)
+      return Attribute(value, ret.type, ret.restriction, ret.note)
+    
+    complete = myAttr.isComplete()
+    if complete and myAttr.note is not None: # we only have local
+      return Attribute(myAttr.value, myAttr.type, myAttr.restriction, myAttr.note)
+    
+    superAttr:Optional[Attribute] = self._getSuperAttr(key)
+    if complete:
+      return Attribute(myAttr.value, myAttr.type, myAttr.restriction, None if superAttr is None else superAttr.note)
+    else:  
+      note = myAttr.note if myAttr.note is not None else (None if superAttr is None else superAttr.note) 
       if not(superAttr is not None and superAttr.isComplete()):
         raise ValueError(f'Attribute "{key}": Inherited Attribute is not complete.')
       # type is invariant
@@ -620,7 +621,7 @@ class AttributedObject(Serializable, strdict[Attribute], Subject):
         value = myAttr.value
       else:
         value = superAttr.value if myAttr.value is NOVALUE else myAttr.value
-      return Attribute(value, typ, restriction) 
+      return Attribute(value, typ, restriction, note) 
 
   @override
   def __getitem__(self, key:str) -> SerializableType:
@@ -691,18 +692,77 @@ class AttributedObject(Serializable, strdict[Attribute], Subject):
 
   def __iter__(self):
     '''
-    Iterates over keys.
+    Iterates over the union of this object's LOCAL and INHERITED attribute
+    keys, each exactly once. (Order is otherwise unspecified — unlike a
+    plain *dict*, this isn't insertion order.)
     '''
     keys:set = set(super().keys())
     s:AttributedObject
     for s in self.getSupers():
-      keys.update(s.keys())
+      keys.update(s)  # iterates s itself, i.e. s.__iter__() -- s's own local+inherited keys
     for k in keys:
       yield k
-      
-  def items(self):
-    for k in self:
-      yield k,self[k]
+
+  def __len__(self) -> int:
+    '''
+    :returns: The number of distinct LOCAL + INHERITED attribute keys.
+    :rtype: int
+
+    Note this is *not* simply the number of items physically stored in this
+    *dict* (that would ignore inheritance) -- it agrees with
+    ``len(list(self))``, consistent with :py:meth:`__iter__`.
+    '''
+    return sum(1 for _ in self)
+
+  def __contains__(self, key:str) -> bool:
+    '''
+    :param key: The attribute name to test.
+    :type key: str
+    :returns: *True* iff *key* has an effective value, local or inherited.
+    :rtype: bool
+
+    Overridden because *dict*'s native ``__contains__`` only tests locally
+    stored keys, which would disagree with :py:meth:`__iter__`/
+    :py:meth:`__getitem__` (both of which account for inheritance).
+    '''
+    return self.getAttr(key) is not None
+
+  def keys(self) -> KeysView:
+    '''
+    :returns: A live, set-algebra-capable :py:class:`~collections.abc.KeysView`
+      over this object's LOCAL and INHERITED attribute keys.
+    :rtype: KeysView
+
+    Unlike plain *dict.keys()* (which reads the underlying storage directly
+    and so would silently ignore inheritance), this is backed by
+    :py:meth:`__iter__`/:py:meth:`__contains__`/:py:meth:`__len__`, so it
+    stays consistent with ``iter(self)``, ``key in self`` and ``len(self)``.
+    As with a real *dict.keys()*, the view is *live*: it reflects later
+    changes to this object (or its supers) rather than being a frozen
+    snapshot, and supports set operations (``&``, ``|``, ``-``, ``^``)
+    against other key sets/views.
+    '''
+    return KeysView(self)
+
+  def values(self) -> ValuesView:
+    '''
+    :returns: A live :py:class:`~collections.abc.ValuesView` over this
+      object's LOCAL and INHERITED attribute values -- each one fully
+      resolved through the inheritance lattice (i.e. via
+      :py:meth:`__getitem__`/:py:meth:`getAttr`, not the raw stored
+      *Attribute* record).
+    :rtype: ValuesView
+    '''
+    return ValuesView(self)
+
+  def items(self) -> ItemsView:
+    '''
+    :returns: A live :py:class:`~collections.abc.ItemsView` of
+      ``(key, value)`` pairs, *value* fully resolved through inheritance
+      (as with :py:meth:`values`).
+    :rtype: ItemsView
+    '''
+    return ItemsView(self)
 
   def setAttr(self, key:str, attr:Attribute) -> Attribute:
     '''
@@ -720,8 +780,7 @@ class AttributedObject(Serializable, strdict[Attribute], Subject):
     self._validateOverride(key, self.isIndividual(), attr, self._getSuperAttr(key)) # will throw if *attr* is not legal
     super().__setitem__(key, attr)
     self.setDirty()
-    with self.ChangeMgr(self) as cm:
-      cm.registerTopics(("new attribute", (key, attr)))
+    self.notify(("new attribute", (key, attr.value)))
     return attr
     
   @abstractmethod
