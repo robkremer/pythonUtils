@@ -64,7 +64,26 @@ class Prefs(AttributedObject):
     #   logger.warning(f'Preference file "{self.prefsFileName}" not found.')
     # except:
     #   logger.exception(f'Failed to read prefs file "{self.prefsFileName}"')
-    
+
+  @override
+  def getSupers(self) -> list[Prefs]:
+    '''
+    :returns: Always an empty list -- a *Prefs* object is a flat attribute
+      store with no ISA/inheritance lattice of its own.
+    :rtype: list[Prefs]
+    '''
+    return []
+
+  @override
+  def isIndividual(self) -> bool:
+    '''
+    :returns: Always *True* -- a *Prefs* object isn't a TYPE in
+      *AttributedObject*'s type/individual sense, it's just a single flat
+      attribute store, so it's treated as an individual throughout.
+    :rtype: bool
+    '''
+    return True
+
   @classmethod
   def read(cls, file:str) -> Prefs:
     ret = SerializationStrategy.readx(file)
