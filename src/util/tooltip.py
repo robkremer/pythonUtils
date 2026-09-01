@@ -138,6 +138,43 @@ class CreateToolTip:
 					   background=self.background, relief='solid', borderwidth=1,
 					   wraplength = self.wraplength)
 		label.pack(ipadx=1)
+		# An overrideredirect window is NOT managed by the window manager, so
+		# nothing protects its stacking position once created -- if anything
+		# else (the WM/window server itself, or this app raising/focusing
+		# another window shortly after, e.g. during the waitTime delay)
+		# restacks in the meantime, this window can end up behind it.
+		#
+		# -topmost alone asks the window manager/window server to keep this
+		# window above normal-level windows -- but that's not enough when
+		# *self.widget* lives in a dialog that itself holds an active grab
+		# (e.g. AttrEditor.show()'s grab_set_global() for the snPrefs
+		# editor): plain "-topmost" says "stay above normal windows" without
+		# reference to any particular one, and that's apparently not a
+		# strong enough claim while another window holds the grab. transient()
+		# is the more specific, and on Aqua more reliable, fix: it tells the
+		# window server this tooltip belongs directly above *this specific*
+		# window -- the tooltip's owning toplevel, i.e. the actual dialog the
+		# widget lives in (AttrEditor's Toplevel in the snPrefs case, an
+		# AppWindow in the ordinary case) -- not whatever this widget's
+		# ultimate root happens to be, which for a widget inside a dialog
+		# raised from a hidden/withdrawn root would otherwise be that hidden
+		# root. Guarded by winfo_viewable() for the same reason as the
+		# AttrEditor/exception-dialog fixes elsewhere in this codebase:
+		# marking a window transient-for something not actually viewable can
+		# misbehave on macOS/Aqua rather than just being a no-op.
+		owner = self.widget.winfo_toplevel()
+		if owner.winfo_viewable():
+			self.tw.transient(owner)
+		# -topmost must be requested BEFORE update_idletasks()/lift() are
+		# given a chance to process the window, or the request can silently
+		# fail to stick (verified empirically: requesting -topmost after
+		# those calls left it unset; requesting it first works reliably).
+		# lift() afterwards then puts it on top of the CURRENT stacking
+		# order too, in case -topmost/transient alone aren't honoured
+		# immediately.
+		self.tw.attributes('-topmost', True)
+		self.tw.update_idletasks()
+		self.tw.lift()
 
 	def hidetip(self):
 		tw = self.tw
