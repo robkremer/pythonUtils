@@ -22,6 +22,7 @@
 import util
 from util.persistence.serialize import SerializationStrategy, strdict
 from util import attribute
+from mypyc.primitives import str_ops
 '''
   .. inheritance-diagram:: 
         AttrEditor
@@ -49,7 +50,8 @@ from types import NoneType
 from copy import copy
 
 from util.attribute import AttributedObject, Attribute, \
-  KNOWN_TYPES, isValidType, TYPE_EQUIVALENTS, VAR_DEFAULTED, Restriction
+  KNOWN_TYPES, isValidType, TYPE_EQUIVALENTS, VAR_DEFAULTED, Restriction,\
+  NoValue, NOVALUE
 from util.persistence.pRef import Serializable, PRObject
 from util.utils import getFullClassName, xmlToStringIndented
 from util.utils import VerticalScrolledFrame
@@ -105,7 +107,10 @@ def applyEditAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes 
       #attrs.updateWith(attrChangeList)
       #topics = []
       for k,v in attrChangeList.items():
-        attrs.setAttr(k,v)
+        try:
+          attrs.setAttr(k,v)
+        except Exception as ex:
+          logger.exception(f'applyEditAttrsBox() failed to update attribute "{k}".')
         #topics.append(("setattr", k, v))
       #cm.registerTopics(topics)
       
@@ -319,7 +324,7 @@ class AttrEditor(tk.Toplevel):
     i = 2
     keys = list(self.attrs.keys())
     keys = [k for k in keys if not k.startswith(".")] # filter out anything beginning with "."
-    keys.sort(key=lambda k: ('\x00'+k if not '/' in k else k))
+    keys.sort(key=lambda k: ('\x00'+k.lower() if not '/' in k else k.lower()))
     for k in keys:
       try:
         v  = self.attrs.getAttr(k)
@@ -504,15 +509,35 @@ class AttrEditor(tk.Toplevel):
       return False
     
   def _saveKey(self, k:str, origAttr:Attribute):
-          v = self.vars[k]
-          self.updatedKeys[k] = copy(origAttr) if origAttr is not None else Attribute(k)
-          t = v.typeLabel["text"]
-          if t == "None":
-            t = None
-          self.updatedKeys[k]._typ = t
-          strValue = v.getValue()
-          value = v.saveMethod(strValue)
-          self.updatedKeys[k].value = value
+    logger.info(f'AttribueEditor changeing: "{k}"')
+    v:ChangeDescr = self.vars[k]
+    self.updatedKeys[k] = copy(origAttr) if origAttr is not None else Attribute(k)
+    a:Attribute = self.updatedKeys[k]
+    t = v.typeLabel["text"]
+    if t == "None":
+      t = None
+    a._type = t
+    strValue = v.getValue()
+    value = v.saveMethod(strValue)
+    a.value = value
+    if self.attrs.getInhAttr(k) is None: # we need to return a complete Attribute..
+      if a.value is NOVALUE:
+        logger.warning(f'AttrEditor adding None value for key "{k}".')
+        a.value = None
+      if a.type is None:
+        logger.warning(f'AttrEditor adding str type for key "{k}".')
+        a.type = str
+      if a.restriction is None:
+        logger.warning(f'AttrEditor adding VAR_DEFAULTED restriction for key "{k}".')
+        a.restriction = VAR_DEFAULTED
+    else:
+      if a.type is not None:
+        logger.warning(f'AttrEditor removing {a.type} type for key "{k}".')
+        a.type = None
+      if a.restriction is not None:
+        logger.warning(f'AttrEditor removing {a.restriction} restriction for key "{k}".')
+        a.restriction = None
+    logger.info(f'AttribueEditor changed: "{k}": {self.updatedKeys[k]}')
           
   def save(self):
     '''
@@ -547,7 +572,7 @@ class AttrEditor(tk.Toplevel):
           logger.debug(f'save(): saving "{k}"')
           self._saveKey(k, origAttr)
       except Exception as ex:
-        logger.exception(f'Failed on key {k}, value {v.getValue()}')
+        logger.exception(f'Failed on key {k}, value {v.getValue()}: {ex.__class__.__name__}: {ex}')
         
     if len(self.updatedKeys) == 0:
       self.updatedKeys = None
@@ -1017,9 +1042,9 @@ class HierarchicalAttrEditor(AttrEditor):
   @override
   def _saveKey(self, k:str, origAttr:Attribute):
     AttrEditor._saveKey(self, k, origAttr)
-    v = self.vars[k]
-    assert self.updatedKeys is not None
-    self.updatedKeys[k].restriction = v.qual
+    # v = self.vars[k]
+    # assert self.updatedKeys is not None
+    # self.updatedKeys[k].restriction = v.qual
               # AttributeFlags(
               # (AttributeFlags.FINAL if v.qualFinal is not None and v.qualFinal.get() else AttributeFlags.NIL) |
               # (AttributeFlags.INSTANCE_FINAL if v.qualInstanceFinal is not None and v.qualInstanceFinal.get() else AttributeFlags.NIL) |

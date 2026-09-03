@@ -449,7 +449,7 @@ class GenFromFunction(NonMutatingCommandGenerator):
     '''
     # This will add the attributes to the current parser.
     makeParserFromFunc(self.fun,
-                       ignoreParam=lambda name: name=="commandName" or name=="self", 
+                       ignoreParam=lambda name: name=="commandName" or name=="self" or name.startswith("_"), 
                        parser=self.parser,
                        typeHandlers=self.topParser.decoders)
     
@@ -536,7 +536,7 @@ class GenFromCommand(MutatingCommandGenerator):
     init = getattr(self.commandClass, "__init__", None)
     assert callable(init)
     makeParserFromFunc(init, 
-                       ignoreParam=lambda name: name=="commandName" or name=="self", 
+                       ignoreParam=lambda name: name=="commandName" or name=="self" or name.startswith("_"), 
                        parser=self.parser,
                        typeHandlers=self.topParser.decoders)
     
@@ -1080,7 +1080,6 @@ Type "<cmd...> -h" or "help <cmd...>" for more detail on each command."""
             break
                   
     def load(cls, log):
-      #classes = dict(inspect.getmembers(context.__class__, inspect.isclass))
       classes = dict(inspect.getmembers(cls, inspect.isclass))
       for funName, fun in inspect.getmembers(cls, inspect.isfunction):
         if not ignore(funName):# and not commandName in classes:
@@ -1091,19 +1090,6 @@ Type "<cmd...> -h" or "help <cmd...>" for more detail on each command."""
             else: 
               try:
                 c = GenFromCommand(classes[commandName], self) # the constructor will add the object to our self.commands list
-                # # for any declared synonyms, associate the parser according to the synonym dict
-                # for syn in cls.commandSynonyms.get(c.commandName, []):
-                #   c.immediateSuper.subparsers._name_parser_map[syn] = c.parser
-                #   print(f'added synonym {syn} to {c.immediateSuper.commandName}: {c.immediateSuper.subparsers._name_parser_map}')
-                #
-                #   # The subparsers _ChoicesPseudoAction entries are what show in help
-                #   for pseudoAction in c.immediateSuper.subparsers._choices_actions:
-                #       if pseudoAction.dest == c.commandName:
-                #           suffix = f' (also: {syn})'
-                #           if pseudoAction.help is None: pseudoAction.help = ""
-                #           if not pseudoAction.help.endswith(suffix):
-                #               pseudoAction.help = (pseudoAction.help or '') + suffix
-                #           break
                 addSynonyms(cls, c)
                             
                 if logger.getEffectiveLevel() <= logging.DEBUG:
@@ -1117,10 +1103,6 @@ Type "<cmd...> -h" or "help <cmd...>" for more detail on each command."""
             try:
               c1 = GenFromFunction(fun, self, containingClassObject=context) # the constructor will add the object to our self.commands list
               addSynonyms(cls, c1)
-              # # for any declared synonyms, associate the parser according to the synonym dict
-              # for syn in cls.commandSynonyms.get(c1.commandName, []):
-              #   c1.immediateSuper.subparsers._name_parser_map[syn] = c1.parser
-              #   print(f'added synonym {syn} to {c1.immediateSuper.commandName}: {c1.immediateSuper.subparsers._name_parser_map}')
               if logger.getEffectiveLevel() <= logging.DEBUG:
                 logger.print(f'  {funName:30} "{c1.commandName}"') #type: ignore[attr-defined]
             except Exception as ex:
@@ -1139,6 +1121,7 @@ Type "<cmd...> -h" or "help <cmd...>" for more detail on each command."""
     self.currentContextClass = None
         
 class CommandContext:
+  
   commandSynonyms:dict[str, Iterable[str]] = dict()
   'The methodname -> list[synonym] defining synonyms for commands'
   
@@ -1153,7 +1136,7 @@ class CommandContext:
 
   def __init__(self, parser:Optional[TopCommandParser]=None):
     
-    self.parser = parser if parser is not None else TopCommandParser("")
+    self.parser:TopCommandParser = parser if parser is not None else TopCommandParser("")
     'The associatated parser.'
     
     self.doList:DoList = self.parser.doList
@@ -1169,6 +1152,9 @@ class CommandContext:
     The command-name -> decoder-function dict for method parameter types in
     this context.
     '''
+  
+    self._capture:CompositeCommandMgr|None = None
+    'Used to capture commands to combine in a CompositeCommand.'
   
     self.parser.loadCommands(self)
     #print(f'CommandContext.__init__(): defaults@{id(self.defaults)}')
@@ -1201,9 +1187,13 @@ class CommandContext:
                              decoders=object.__getattribute__(self, "decoders"))
           #print(f'CommandContext.__getattribute__(): defaults@{id(self.defaults)}')
           command:Command = object.__getattribute__(self, className)(*pargs, **kwargs) # construct the command
-          ret = object.__getattribute__(self, "doList").do(command)
-          #print(f"{commandName} command wrapped, pargs={pargs}, kwargs={kwargs}")
-          return ret
+          if self._capture is None:
+            ret = object.__getattribute__(self, "doList").do(command)
+            #print(f"{commandName} command wrapped, pargs={pargs}, kwargs={kwargs}")
+            return ret
+          else:
+            self._capture._addCommand(command)
+            return lambda *args, **kwargs: None 
         
         def funWrapper(*args: Any, **kwargs: Any) -> Any:
           pargs, kwargs = fixKwargs(fun=object.__getattribute__(self, className if shouldUseCommand else name), 
@@ -1220,6 +1210,13 @@ class CommandContext:
       print(f'************ {ex.__class__.__name__} in __getattribute__(): {ex}')
     return attr
   
+  def _setCapture(self, capture:CompositeCommandMgr|None):
+    if capture is None:
+      self._capture = None
+    else:
+      assert self._capture is None
+      self._capture = capture
+      
   def help(self, topic:list[str]|None) -> None:
     '''
     Show a list of all commands pr help on a specific topic"
@@ -1382,7 +1379,50 @@ class CommandContext:
     def __str__(self) -> str:
       return f'{super().__str__()} {self.defName} {self.value}'
     
+class CompositeCommand(Command):
+  def __init__(self, commands:list[Command]):
+    super().__init__("<composite command>")
+    self.commands:list[Command] = commands
+
+  @override
+  def do(self)->Any:
+    ret = super().do()
+    for c in self.commands:
+      c.do()
+    return ret
+
+  @override
+  def undo(self)->Any:
+    ret = super().undo()
+    for c in self.commands:
+      c.undo()
+    return ret
+
+  @override
+  def delete(self):
+    super().delete()
+    self.commands = None #type: ignore[assignment]
+
+
+class CompositeCommandMgr:
+  def __init__(self, context:CommandContext):
+    self.commands:list[Command] = []
+    self.context:CommandContext = context
   
+  def __enter__(self):
+    self.context._setCapture(self)
+    return self
+        
+  def __exit__(self, exc_type, exc_val, exc_tb):
+    self.context._setCapture(None)
+    composite = CompositeCommand(self.commands)
+    self.context.doList.do(composite)
+    # Returning True would suppress exceptions if they occur
+    return False 
+      
+  def _addCommand(self, command:Command):
+    self.commands.append(command)
+
 def fixKwargs(fun:Callable, args:list[Any], kwargs:dict[str,Any], 
               defaults:dict[str,Any], 
               decoders:DecodersType) -> tuple[list[Any],dict[str,Any]]:

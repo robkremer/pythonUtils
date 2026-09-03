@@ -44,6 +44,7 @@ import re
 import logging
 from urllib3.util.url import parse_url
 import util
+from util.observer import Subject
 
 logger:util.Logger = util.getLogger(__name__)
 
@@ -179,7 +180,7 @@ class PRDbContainer[DBT:"PRDb"](PRContainer[DBT]):
     return self.db.name
   
   
-class PRDb[T:PRObject](Serializable):
+class PRDb[T:PRObject](Serializable, Subject):
   """
   A dict-like object whose keys are restricted to int and values to PRObject.
 
@@ -316,6 +317,9 @@ class PRDb[T:PRObject](Serializable):
     if hasattr(self, "_initialized"): # This means the __new__ method has returned an existing object, so don't truck over it!
       return
     
+    Serializable.__init__(self)
+    Subject.__init__(self)
+    
     self.reading:bool = _reading
     'Can be used by contained objects to determine if a read operation is taking place.'
      
@@ -423,11 +427,13 @@ class PRDb[T:PRObject](Serializable):
       key = self.nextID
       self.nextID += 1
       self._db[key] = value
-      return key
+      ret = key
     else:
       self._db[_id] = value
-      return _id
-
+      ret = _id
+    self.notify(("new", (ret, value)))
+    return ret
+  
   def _unregister(self, _id:int) -> None:
     '''
     :param value: The PRObject to be added to this DB.
@@ -448,6 +454,7 @@ class PRDb[T:PRObject](Serializable):
       raise PermissionError(f'DB "{self}" is write locked.')
     if self._db.get(_id, None) is None:
       raise ValueError(f'PRDB._unregister(): indici {_id} does not exist.')
+    self.notify(("del", (_id,)))
     del self._db[_id]
   
   # ── Name-resolution helper ────────────────────────────────────────────────
@@ -551,6 +558,9 @@ class PRDb[T:PRObject](Serializable):
 
   def items(self) -> ItemsView[int, T]:
     return self._db.items()
+  
+  def __len__(self) -> int:
+    return len(self._db)
 
   # ── Representation ────────────────────────────────────────────────────────
 

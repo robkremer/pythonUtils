@@ -209,7 +209,7 @@ def isValidType(typ, value=None) -> bool:
   if not ret:
     return False
     
-  if value is None:
+  if value is None or value is NOVALUE:
     return ret
 
   # test the string types
@@ -406,7 +406,9 @@ class Attribute(Serializable):
                                         lambda restStr: restoreRest(restStr) if restStr != "None" else None) #type: ignore[arg-type]
               ])
 
-
+  def __str__(self)->str:
+    return f'Attribute({self.value}, {self._type}, {self.restriction}, {self.note})'
+  
 class AttributedObject(Serializable, strdict[Attribute], Subject):
 
   @override

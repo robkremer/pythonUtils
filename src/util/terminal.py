@@ -858,6 +858,8 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     queryFlashIntervalMs: int = 150,
     **kwargs: object,
   ) -> None:
+    if "borderwidth" not in kwargs:
+      kwargs["borderwidth"] = 0
     tk.Text.__init__(self, master, kwargs)  # remaining kwargs (bg, fg, font, ...) go to tk.Text
     AbstractTerminal.__init__(self, onLine, prompt, resultToStringFun, **kwargs)
 
