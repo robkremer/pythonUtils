@@ -25,8 +25,6 @@ import logging
 from pathlib import Path
 import os
 from typing import Callable
-import importlib
-from types import ModuleType
 
 cachedGetLogger:Callable|None = None
 
@@ -47,9 +45,19 @@ def getLogger(name:str):
   global cachedGetLogger
   if cachedGetLogger is not None: # we've already cached the thing
     return cachedGetLogger(name)
-  
-  # try to find a getLogger() method in the __init__.py module of the package of the main program. 
-  topModule:types.ModuleType|None = _getTopLevelPackageModule()
+
+  # Try to find a getLogger() method in the __init__.py module of the package of the
+  # main program -- but only if that package has ALREADY been imported somewhere else
+  # in the normal course of the program. We deliberately do NOT try to import it
+  # ourselves here (see _getTopLevelPackageName()'s docstring): this function gets
+  # called from module-level code all over pythonUtils (e.g. util.persistence.serialize
+  # calls util.getLogger(__name__) at import time, before it's finished defining its own
+  # classes), so forcing an import of the caller's enclosing app package as a side effect
+  # of "just checking for a custom getLogger" can re-enter that very module's own
+  # still-in-progress import and blow up with a "partially initialized module"
+  # ImportError.
+  topLevelName:str|None = _getTopLevelPackageName()
+  topModule:types.ModuleType|None = sys.modules.get(topLevelName) if topLevelName else None
   if topModule is not None and topModule is not sys.modules[__name__]:
     getLogger = getattr(topModule, "getLogger", None)
     if callable(getLogger):
@@ -57,13 +65,20 @@ def getLogger(name:str):
       if isinstance(ret, logging.Logger):
         cachedGetLogger = getLogger
         return ret
-  
-  # We couldn't find a getLogger, so make our own. 
+
+  # We couldn't find a getLogger, so make our own for THIS call.
   # In the case of not being able to access the main module (python REPL),
   # the logger class might have been changed by the main module: if so,
   # just go with that.
   if type(_getLogger(__name__)) is logging.Logger:
     setupLogger()
+  if topLevelName is not None and topModule is None:
+    # There IS a plausible top-level package (e.g. "sn") -- it just hasn't
+    # finished importing yet (we're likely running very early during its own
+    # bootstrap). Don't lock this fallback in via cachedGetLogger: leave it
+    # uncached so a later call, once that package has actually loaded, can
+    # still find and delegate to its custom getLogger().
+    return _getLogger(name)
   cachedGetLogger = _getLogger
   return _getLogger(name)
 
@@ -131,30 +146,34 @@ class DynamicStderrHandler(logging.StreamHandler):
     """
     pass
 
-def _getTopLevelPackageModule() -> types.ModuleType|None:
-  """Get the module object of the top-level package's __init__.py, if __main__
-  was run as part of a package (e.g. via ``python -m pkg.sub.script``).
+def _getTopLevelPackageName() -> str|None:
+  """Determine the NAME of __main__'s top-level enclosing package, purely by
+  inspecting sys.modules and walking the file system -- this never imports
+  anything as a side effect.
 
-  :returns: The top-level package's module object, or None if __main__ was run
-    as a standalone script or from an interactive session with no enclosing package.
-  :rtype: types.ModuleType|None
+  This used to also resolve (and, if necessary, *import*) the module object
+  itself, but that's exactly what caused a nasty bootstrapping hazard: this
+  gets called (via getLogger()) from module-level code all over pythonUtils,
+  e.g. util.persistence.serialize calls ``util.getLogger(__name__)`` while
+  IT is still being imported, and if the app's own top-level package (e.g.
+  "sn") is the thing needing pythonUtils to finish loading in the first
+  place, forcing an import of "sn" right here re-enters that same
+  still-in-progress import chain and blows up with a "partially initialized
+  module" ImportError. Callers now do their own ``sys.modules.get(name)``
+  lookup (see getLogger()) so a not-yet-imported top-level package is simply
+  reported as "not available yet" rather than force-imported.
+
+  :returns: The top-level package's name, or None if __main__ was run as a
+    standalone script or from an interactive session with no enclosing
+    package.
+  :rtype: str|None
   """
-  def crawlUpDirs(currDir) -> ModuleType:
-    topLevelDir = currentDir
+  def crawlUpDirs(currDir) -> str:
+    topLevelDir = currDir
     while (topLevelDir.parent / "__init__.py").exists():
       topLevelDir = topLevelDir.parent
-  
-    topLevelName = topLevelDir.name
-    #print(f'topLevelName: {topLevelName}')
-    if topLevelName in sys.modules:
-      return sys.modules[topLevelName]
-  
-    # Make the parent of the top-level package dir importable, then import it.
-    parentDir = str(topLevelDir.parent)
-    if parentDir not in sys.path:
-      sys.path.insert(0, parentDir)
-    return importlib.import_module(topLevelName)
-    
+    return topLevelDir.name
+
   mainModule = sys.modules.get("__main__")
   if mainModule is None:
     return None
@@ -163,9 +182,8 @@ def _getTopLevelPackageModule() -> types.ModuleType|None:
   # but it will fail (__package__ is "") if this isn't the case.
   packageName = getattr(mainModule, "__package__", None)
   if packageName:
-    topLevelName = packageName.split(".")[0]
-    return sys.modules.get(topLevelName)
-  
+    return packageName.split(".")[0]
+
   # Try by crawling up the file system as far as we can find __init__.py files.
   mainFile = getattr(mainModule, "__file__", None)
   if mainFile is not None:
@@ -174,7 +192,7 @@ def _getTopLevelPackageModule() -> types.ModuleType|None:
       #print(f'__main__\'s own directory isn\'t a package at all: {currentDir}')
       return None  # __main__'s own directory isn't a package at all
     return crawlUpDirs(currentDir)
-  
+
   # Interactive REPL, frozen exe without a file, etc.
   #print('interactive REPL, frozen exe without a file, etc.')
   spec = getattr(mainModule, "__spec__", None)

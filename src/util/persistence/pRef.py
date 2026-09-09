@@ -284,12 +284,12 @@ class PRDb[T:PRObject](Serializable, Subject):
       ret.url = url
     return ret
   
-  def __new__(cls, url:str, mode="w", _reading:bool=False):
+  def __new__(cls, url:str, mode="w", memoryResident:bool=True, _reading:bool=False):
     assert issubclass(cls, PRDb)
     url = fixURL(url, extension=".xml", replaceExt=None, mode=mode)[0]
     if not isValidURL(url):
       raise ValueError(f'PRDb.__init__(): Malformed URL: "{url}"')
-    if url in PRDb.AllDBs:
+    if memoryResident and url in PRDb.AllDBs:
       setattr(PRDb.AllDBs[url], "_initialized", True)
       return PRDb.AllDBs[url]
     if urlExists(url) and not _reading:
@@ -299,7 +299,7 @@ class PRDb[T:PRObject](Serializable, Subject):
       return ret
     return super().__new__(cls)
   
-  def  __init__(self, url:str, mode="w", _reading:bool=False):
+  def  __init__(self, url:str, mode="w", memoryResident:bool=True, _reading:bool=False):
     '''
     :param url: The URL to associate with this object. Can be a filename, interpreted
       in the context of the current directory.
@@ -336,7 +336,8 @@ class PRDb[T:PRObject](Serializable, Subject):
     self.url:str = url
     self._db:dict[int, T] = dict()
     self.nextID:int = 1
-    PRDb.AllDBs[self.url] = self
+    if memoryResident:
+      PRDb.AllDBs[self.url] = self
     self._writeLocked = False
     
   @classmethod
@@ -382,10 +383,10 @@ class PRDb[T:PRObject](Serializable, Subject):
         raise FileExistsError(f'PRDb.save(): URL already exists. Did you mean to use the *overwrite* option?')
       oldURL = self.url 
       self.url = url
-      SerializationStrategy.writex(url, self, format)
+      SerializationStrategy.writex(url, self, format, replaceExt=None)
       self.url = oldURL
     else:
-      SerializationStrategy.writex(self.url, self, format)
+      SerializationStrategy.writex(self.url, self, format, replaceExt=None)
       
     
     
@@ -997,8 +998,9 @@ class PReference[T:PRObject]:
       path = fixURL(path, extension=".xml", replaceExt=None, mode="")[0]
       if not isValidURL(path):
         raise ValueError(f'Malformed url: "{path}"')
-      if path not in PRDb.AllDBs and not urlExists(path):
-        raise FileNotFoundError(f'path "{path}" does not exist.')
+      # This no longer applies as db's can be non-memory resident
+      # if path not in PRDb.AllDBs and not urlExists(path):
+      #   raise FileNotFoundError(f'path "{path}" does not exist.')
     
     raw_query:str|None = None
     raw_fragment:str|None = None

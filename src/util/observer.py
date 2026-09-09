@@ -101,6 +101,7 @@ Created on Sep 17, 2024
 
 from __future__ import annotations
 import sys
+from copy import copy
 import threading
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Optional
@@ -239,20 +240,36 @@ class Subject:
     Trigger an update in each subscriber iff either it has no specific topics
     or one or more of it's topics matches.
     '''
-    if enabled:
+    if enabled and (self._observers or self._callbacks):
       return self.notifyLater(*topics) if alwaysLater else self._notify(*topics)
     
       
-  def _notify(self, *topics:tuple[str, tuple[Any, ...]]) -> None:
+  def _notify(self, *topics:tuple[str, tuple[Any, ...]], 
+              observers:list[tuple[Observer, set[str]]]|None=None, 
+              callbacks:list[tuple[Callable, set[str], int]]|None=None) -> None:
     '''
-    :param topics: list[Tuple[str, Any, ...]]: A \\*list of topicName/info tuple 
+    :param topics: A \\*list of topicName/info tuple 
         describing the topic and any further info parameters.
+    :type topics: list[Tuple[str, Any, ...]]
+    :param observers: The list of observers to use.
+    :type observers: list[Observer]
+    :param callbacks: list[tuple[Callable, set[str], int]]
         
     Trigger an update in each subscriber iff either it has no specific topics
     or one or more of it's topics matches.
+    
+    NOTE: the observers and callbacks seem strange given that the object has them
+    already. But if this method is called "later" (usually on the tk event loop),
+    the observers and callbacks should be those AT THE TIME OF THE ORIGINAL NOTIFICATION,
+    not at the time the notification actually eventually happens.
     '''
     if not enabled:
       return
+      
+    if observers is None:
+      observers = self._observers
+    if callbacks is None:
+      callbacks = self._callbacks
       
     # check params
     for t in topics:
@@ -261,10 +278,10 @@ class Subject:
       assert isinstance(t[0], str), f'Expected a string topic name as first item in a topic tuple, but got tuple "{t}".'
       
     # do the regular Observer updates       
-    deleteList = []
-    i = 0
+    deleteList:list[int] = []
+    #i = 0
     tup:tuple[Observer, set[str]]
-    for tup in self._observers:
+    for tup in observers: # NOTE: this is the observers in the parameter, not from self.
       # collect the updates of interest for an Observer
       updates:list[tuple[str, tuple[Any, ...]]] = []
       obsTopics:set[str] = tup[1]
@@ -283,18 +300,22 @@ class Subject:
         except NameError:
           # the Observer is no longer responding, so mark it for removal from our list
           logger.exception(f'{self}: Observer at "{tup[0]}" appears to have been destroyed, removing it from observers list.')
-          deleteList.append(i)
+          deleteList.append(id(Observer))
         except Exception as ex:
           logger.exception(f'Supject.notify(): {ex}') # subject raised an exception, ignore it
-      i += 1
+      #i += 1
     for d in deleteList: # delete any unresponsive Observers from our list
-      self._observers.pop(d)
+      try: # this could fail because the lists may no longer be the same. Fail silently.
+        # NOTE: this is the observers from self, not the parameter line
+        self._observers[:] = [item for item in self._observers if id(item) != d]
+      except:
+        pass
     
     # do the callbacks
     deleteList = []
-    i = 0
+    #i = 0
     tup3:tuple[Callable, set[str], int]
-    for tup3 in self._callbacks:
+    for tup3 in callbacks: # NOTE: this is the callbacks in the parameter, not from self.
       updates = []
       if len(tup3[1]) == 0:
         updates = list(topics)
@@ -309,12 +330,16 @@ class Subject:
             tup3[0](u[0],u[1])
         except Exception as ex:
           logger.exception(f'{self}: Callback "{tup3[2]}" raised an exception and has been removed: {ex}')
-          deleteList.append(i)
+          deleteList.append(id(tup3))
         except Exception as ex:
           pass # subject raised an exception, ignore it
-      i += 1
+      #i += 1
     for d in deleteList:
-      self._callbacks.pop(d)
+      try: # this could fail because the lists may no longer be the same. Fail silently.
+        # NOTE: this is the observers from self, not the parameter line
+        self._callbacks[:] = [item for item in self._callbacks if id(item) != d]
+      except:
+        pass
 
   # Optional override: a callable(func, *args) -> None that arranges for
   # func(*args) to run later rather than synchronously. Set at the class
@@ -348,7 +373,8 @@ class Subject:
 
     tk = sys.modules.get("tkinter")
     if tk is not None and tk._default_root is not None:
-      tk._default_root.after_idle(self._notify, *topics)
+      # we need to call this later with the observers and callbacks we have *now*, not when the callback gets executed.
+      tk._default_root.after_idle(self._notify, *topics, observers=copy(self._observers), callbacks=copy(self._callbacks))
       return
 
     aio = sys.modules.get("asyncio")

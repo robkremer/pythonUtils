@@ -122,7 +122,7 @@ class ValidatedList[T](list[T]):
     self.setDirty()
 
   @override
-  def insert(self, index: int, i: T) -> None:
+  def insert(self, index: SupportsIndex, i: T) -> None:
     """
     :param index: Position to insert at.
     :type index: int
@@ -154,7 +154,7 @@ class ValidatedList[T](list[T]):
     self.setDirty()
 
   @override
-  def __iadd__(self, other: Iterable[T]) -> "ValidatedList[T]":
+  def __iadd__(self, other: list[T]) -> "ValidatedList[T]":
     """
     :param other: Items to append via ``+=``.
     :type other: Iterable[T]

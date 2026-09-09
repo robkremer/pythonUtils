@@ -55,18 +55,19 @@ Created on Oct 10, 2024
 ------------
 '''
 from __future__ import annotations
-from util.observer import Subject
-from typing import Optional, override, Union, Any, Sequence
+from typing import Optional, override, Union, Any
 from types import NoneType
+import importlib
 from enum import Flag
 from dataclasses import dataclass
 from abc import abstractmethod
 from collections.abc import KeysView, ValuesView, ItemsView
-from util.persistence.serialize import Serializable, SerializableType, strdict,\
-  InstantiationInfo, ParamInfo, PropertyInfo
+
 from util.utils import getFullClassName, getFullyQualifiedClass, getClass,\
   getClassFromFullyQualifiedName
-import importlib
+from util.observer import Subject
+from util.persistence.serialize import Serializable, SerializableType, strdict,\
+  InstantiationInfo, ParamInfo, PropertyInfo
 
 class RestrictionTypes(Flag):
   UNRESTRICTED = 0

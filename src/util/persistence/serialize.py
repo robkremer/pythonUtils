@@ -153,17 +153,15 @@ import urllib.request
 from urllib.parse import ParseResult, urlparse, unquote
 from abc import abstractmethod, ABC
 from typing import Any, Callable, Optional, Union, override, cast, Iterable,\
-  final, NamedTuple, Self
+  final, NamedTuple
 from types import NoneType
 from dataclasses import dataclass, field
+import weakref
 
+import util
 from util.utils import getFullClassName, getClassFromFullyQualifiedName,\
   fixURL, getFullyQualifiedClass, findConcreteSubclasses, \
   importSubmodules
-from collections import namedtuple
-import weakref
-import logging
-import util
 
 logger:util.Logger = util.getLogger(__name__)
 
@@ -174,6 +172,11 @@ TAG_FILETYPE = "filetype"
 ATTR_TYPE = "type"
 TAG_KVPAIR = "property"
 ATTR_NAME = "name"
+
+# from util.persistence.serialize import SerializationStrategy
+# SerializationStrategy.appName = f'{NAME} ({SHORT_NAME})'
+# SerializationStrategy.appVerion = VERSION
+
 
 
 class Serializable:
@@ -679,7 +682,7 @@ class SerializationStrategy[T](ABC):
       protocol-specific strategy (a concrete subclass of this class) to use to 
       encode *obj*. If *strategy* is an extension and there is more than one 
       strategy with that extension, the last matching one used will
-      be selected, of if this is the first one, the selection is unspecified. If
+      be selected, or if this is the first one, the selection is unspecified. If
       *strategy* is missing or None, the strategy will be inferred from the 
       extension in *url* as though it had been given in the *strategy* parameter.
     :type strategy: Optional[str] 
@@ -702,9 +705,22 @@ class SerializationStrategy[T](ABC):
       parsed = urlparse(url)
       filename = os.path.basename(parsed.path)
       ext = filename.split(".")[-1]
-      strat = cls.findStrategy('.'+ext)
-      if strat is None:
-        raise LookupError(f'No strategy matching ".{ext}" found.')
+      try:
+        strat = cls.findStrategy('.'+ext)
+      except:
+        pass
+      if strat is None: # can't find a strategy, so try opening with all the known strategies.
+        logger.debug(f'SerializationStrategy.readx(): LookupError: No strategy matching ".{ext}" found.')
+        for s in SerializationStrategy.knownStrategies:
+          try:
+            logger.debug(f'SerializationStrategy.readx(): Trying strategy {s.name}...')
+            ret = s.obj.read(url, replaceExt=replaceExt, mode=mode, **kwargs)
+          except Exception as ex:
+            logger.exception(f'SerializationStrategy.readx: {s.name}: failed: {ex}.')
+            continue
+          logger.debug('  ...success!')
+          return ret
+        raise LookupError(f'No read strategy succeeded.')
     return strat.read(url, replaceExt=replaceExt, mode=mode, **kwargs)
     
   @classmethod
@@ -782,7 +798,7 @@ class SerializationStrategy[T](ABC):
       ``file://relative/path`` for local files.
     :type url: str
     :param replaceExt: If True, (the default) any extension will be replace with
-      the default extension; if False, the default will extension will be 
+      the default extension; if False, the default extension will be 
       appended to the path if it's not already there; if None, nothing will
       be done to the path.
     :type replaceExt: Optional[bool]
@@ -1242,10 +1258,10 @@ class SerializationStrategy[T](ABC):
           sub:Optional[T] = self._getKVPair(elem, pinfo.name)
           if sub is None:
             raise LookupError(f'Subelement parameter named "{pinfo.name}" not found.')# in Element "{elem.tag}" of type {elem.attrib[ATTR_TYPE]}.')
-          assert pinfo.typ is None or \
+          if not (pinfo.typ is None or \
                  issubclass(cast(type, getFullyQualifiedClass(self._getAttr(sub, ATTR_TYPE))), pinfo.typ) \
-                 or self._getAttr(sub, ATTR_TYPE) == REF_CLASSNAME, \
-                 f'not ({getFullClassName(pinfo.typ)} <: {self._getAttr(sub, ATTR_TYPE)})'
+                 or self._getAttr(sub, ATTR_TYPE) == REF_CLASSNAME):
+            raise AssertionError(f'{pinfo.name}: not ({getFullClassName(pinfo.typ)} <: {self._getAttr(sub, ATTR_TYPE)})')
           value = self._decode_(sub)
           assert not isinstance(value, _Reference)
           ret.append((pinfo.name, pinfo.setter(value)))

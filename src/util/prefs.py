@@ -27,21 +27,19 @@ Created on Sep. 5, 2023
 -------------
 '''
 from __future__ import annotations
-from util.persistence.serialize import SerializationStrategy, SerializableType
-import logging
-import xml.etree.ElementTree as et
-from typing import Union, Callable, Any, override, Self
-import os
+from typing import Callable, Any, override
 
-from util.utils import getFullClassName, fixURL, isValidURL, urlExists
-from util.attribute import AttributedObject, Attribute, VAR_DEFAULTED
 import util
+import util.attribute
+from util.persistence.serialize import SerializableType
+
+from util.attribute import AttributedObject, Attribute, VAR_DEFAULTED
 
 logger:util.Logger = util.getLogger(__name__)
 
 PREFS_VERSION = "0.0"
 
-class Prefs(AttributedObject):
+class Prefs(util.attribute.AttributedObject):
   '''
   classdocs
   '''
@@ -66,7 +64,7 @@ class Prefs(AttributedObject):
     #   logger.exception(f'Failed to read prefs file "{self.prefsFileName}"')
 
   @override
-  def getSupers(self) -> list[Prefs]:
+  def getSupers[Prefs](self) -> list[Prefs]:
     '''
     :returns: Always an empty list -- a *Prefs* object is a flat attribute
       store with no ISA/inheritance lattice of its own.
@@ -86,6 +84,7 @@ class Prefs(AttributedObject):
 
   @classmethod
   def read(cls, file:str) -> Prefs:
+    from util.persistence.serialize import SerializationStrategy
     ret = SerializationStrategy.readx(file)
     assert isinstance(ret, Prefs)
     ret.prefsFileName = file
@@ -129,6 +128,8 @@ class Prefs(AttributedObject):
       logger.warning(f'Prefs.removeCallback("{key}", {str(ID)}): Unexpected exception occurred: {ex.__class__.__name__}: {str(ex)}')
   
   def save(self, saveas:str|None=None, overwrite=True, format:str="XML") -> None:
+    from util.persistence.serialize import SerializationStrategy
+    from util.utils import fixURL, isValidURL, urlExists
     if saveas is None:
       filename = self.prefsFileName
     else:

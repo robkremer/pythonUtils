@@ -370,7 +370,10 @@ class AttrEditor(tk.Toplevel):
     except:
       pass
     #self.grab_set()       # ensure all input goes to our window
-    self.grab_set_global() #   used this version because grab_set() doesn't actually work.
+    try:
+      self.grab_set_global() #   used this version because grab_set() doesn't actually work.
+    except:
+      logger.exception("AttrEditor.show() failed on grab_set_global():")
     # Only set transient if *parent* is actually viewable. On macOS/Aqua,
     # marking an already-mapped window transient-for a withdrawn window (e.g.
     # a hidden root Tk() used only as an app-wide anchor) can make the window
@@ -378,15 +381,24 @@ class AttrEditor(tk.Toplevel):
     # dialog appears but shows empty. See the identical guard (and the "why")
     # in util.utils.showExceptionDialog.
     if self.parent.winfo_viewable():
-      self.transient(self.parent) # dialog window is related to main
+      try:
+        self.transient(self.parent) # dialog window is related to main
+      except:
+        logger.exception("AttrEditor.show() failed on transient():")
     
-    if self.editKey is None:
-      self.focus_set()
-    else:
-      self.editWidget = self.vars[self.editKey].editor
-      self.editWidget.focus_set()
+    try:
+      if self.editKey is None:
+        self.focus_set()
+      else:
+        self.editWidget = self.vars[self.editKey].editor
+        self.editWidget.focus_set()
+    except:
+      logger.exception("AttrEditor.show() failed on focus_set():")
       
-    self.wait_window()     # block until window is destroyed
+    try:
+      self.wait_window()     # block until window is destroyed
+    except:
+      logger.exception("AttrEditor.show() failed on wait_window():")
     
   def dismiss(self):
     '''

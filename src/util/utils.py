@@ -54,9 +54,8 @@ import importlib
 from abc import ABC
 import argparse
 from pickle import NONE
-import util
 #from docutils.nodes import description
-logger:util.Logger = util.getLogger(__name__)
+#logger:util.Logger = util.getLogger(__name__)
 
 
 def makeParserFromFunc(fn:Callable, 
@@ -403,8 +402,8 @@ def fixURL(url:str, extension:Optional[str]=None, replaceExt:Optional[bool]=None
   :param url: the URL to examine.
   :type url: str
   :param replaceExt: If True, any extension will be replace with
-    the default extension; if False, the default will extension will be 
-    appended to the path if it's not already there; if None (the default), 
+    the default extension; if False, the default extension will be 
+    appended to the path even there's already another extension; if None (the default), 
     the extension will only be added it the file does not already have an 
     extension.
   :type replaceExt: Optional[bool] (default: None)
@@ -554,6 +553,33 @@ def addDefaultExtToURL(url:str, ext:str=".xml"):
   if len(fileparts) == 1:
     url = urlunparse((parts.scheme, parts.netloc, parts.path+ext, parts.params, parts.query, parts.fragment))
   return url
+
+def getNameAndExtFromURL(url:str, extension:str|None = None):
+  '''
+  :param url: a legal url, or if that fails will try to parse as a path.
+  :param extension: (default:None) if the url does not have a file extension,
+    use this one if it's given.  If there is an extension on the URL already,
+    *extension* is ignored.
+  :return: Just the filename (no path) and extension.
+  '''
+  try: # try to parse as a url
+    parts = urlparse(url)
+    path = parts.path
+  except: # failed as a url, so try to parse as a path
+    path = url
+  file = os.path.basename(path)
+  fileparts = file.rsplit(".",1)
+  if len(fileparts) == 1:
+    if extension is None:
+      ext = ""
+    else:
+      ext = extension 
+      if not ext.startswith('.'):
+        ext = '.'+ext
+  else:
+    ext = '.'+fileparts[1]
+  filename = fileparts[0]
+  return filename+ext
 
 def changeUrlExtension(url, new_extension):
     """
@@ -1038,7 +1064,7 @@ def xmlToStringIndented(elem:Element, **kwargs):
       output += line
       indent -= tabWidth
     else:
-      logger.error("not sure what to do with '"+line+"'")
+      print("not sure what to do with '"+line+"'")
   return output
       
 ################################################################################
@@ -1499,7 +1525,7 @@ def showExceptionDialog(parent: tk.Misc | None = None, title: str = "Error") -> 
   except tk.TclError:
     # Extremely unlikely once update_idletasks() has run, but degrade to a
     # non-modal dialog rather than losing the error report entirely.
-    logger.warning("showExceptionDialog(): grab_set() failed; showing non-modally", exc_info=True)
+    print("showExceptionDialog(): grab_set() failed; showing non-modally")#, exc_info=True)
   dialog.wait_window()   # blocks the caller until the dialog is closed
           
 ################################################################################
