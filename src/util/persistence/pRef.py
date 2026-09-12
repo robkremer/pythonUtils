@@ -38,13 +38,14 @@ from util.utils import openUrl, urlExists, isValidURL, fixURL
 from urllib.parse import unquote, quote, urlparse
 #import xml.etree.ElementTree as ET
 from util.persistence.serialize import Serializable, InstantiationInfo,\
-  ParamInfo, PropertyInfo, SerializationStrategy, strdict
+  ParamInfo, PropertyInfo, SerializationStrategy, strdict, SerializableType
 from pathlib import Path
 import re
 import logging
 from urllib3.util.url import parse_url
 import util
 from util.observer import Subject
+from util.dirtyable import Dirtyable
 
 logger:util.Logger = util.getLogger(__name__)
 
@@ -54,25 +55,48 @@ class DuplicateNameError(Exception):
 class MalformedIDError(Exception):
   """Raised a PReference is syntactically incorrect."""
 
+class CircularReferenceError(Exception):
+  """Raised when a PRDb document (directly or via a chain of other documents
+  currently being read) ends up referencing its own URL while that URL's
+  *PRDb._read()* is still in progress. Without this check, such a document
+  would otherwise send *PRDb.__new__()* into unbounded recursion -- each
+  nested attempt to load the same not-yet-finished URL passing every earlier
+  guard (it's not yet in *AllDBs*; the file exists; it's not the top-level
+  *_reading* call) -- until the interpreter's call stack is exhausted."""
 
-class PRObject[DBT:"PRDb"](Serializable):
+
+class PRObject[DBT:"PRDb"](Serializable, Dirtyable):
   '''
   An object with an immutable integer ID and a mutable name.
   '''
 
-  def __init__(self, db:DBT) -> None:
+  def __init__(self, db:DBT, **kwargs) -> None:
     '''
     :param db: The db to which this object will belong.
     :type db: PRDb
+    :param kwargs: Passed on to *super().__init__()*. *PRObject* is often one
+      link in a longer chain of cooperative *__init__* calls -- eg: a class
+      combining *AbstractGraph*'s *AGRelation* with a sibling class via
+      multiple inheritance (see *sn.model.model.Relation*) reaches *PRObject*
+      through more than one base. Calling *super().__init__(**kwargs)* here
+      (instead of simply returning) ensures whatever comes after *PRObject* in
+      that particular class's MRO -- eg: *AttributedObject*, for a *Relation*
+      or plain *GraphObject* -- still gets initialized, exactly once, with the
+      constructor arguments meant for it, even though *PRObject* itself has no
+      use for them.
+    :type kwargs: Any
     :raises PermissionError: If the DB is write locked.
     :raises TypeError: If the *value* is not of type *PRObject*.
     :raises MemoryError: if the DB has been deleted.
     '''
+    Serializable.__init__(self)
+    Dirtyable.__init__(self)
     if not isinstance(db, PRDb):
       raise TypeError(f"db must be an PRDb, got {type(id).__name__}")
     self._db:ReferenceType = ref(db) # weak reference as the db will maintain references to this object
     self._url = self.db.url
     self._id: int = db._register(self)
+    super().__init__(**kwargs)
 
   @override
   @classmethod
@@ -180,7 +204,7 @@ class PRDbContainer[DBT:"PRDb"](PRContainer[DBT]):
     return self.db.name
   
   
-class PRDb[T:PRObject](Serializable, Subject):
+class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
   """
   A dict-like object whose keys are restricted to int and values to PRObject.
 
@@ -197,22 +221,33 @@ class PRDb[T:PRObject](Serializable, Subject):
   """
   
   AllDBs:ClassVar[dict[str, PRDb]] = dict()
-  
+
+  _readingURLs:ClassVar[set[str]] = set()
+  '''URLs for which a *PRDb._read()* call is currently in progress (see
+  *__new__()* below). A URL is added just before its *_read()* starts and
+  removed as soon as that call returns or raises. *__new__()* checks this
+  set before starting a new read so that a document which (directly, or
+  through a chain of other documents it references) ends up loading its own
+  URL again fails fast with a *CircularReferenceError* instead of recursing
+  until the stack overflows: *AllDBs* alone can't catch this, since a URL is
+  only added there *after* its read completes.'''
+
   @classmethod
   def _initCache(cls):
     '''
-    Re-initializes the cache. 
-    
+    Re-initializes the cache.
+
     .. Warning::
-    
+
        This should only be used for testing purposes (eg: unit testing) as it wipes
        the DB cache and could cause bad pointers in any interface applications.
-    
+
     .. Note::
-    
+
       Subclasses should override to do whatever needs to be done for "blank" cache.
     '''
     cls.AllDBs = dict()
+    cls._readingURLs = set()
     
   @classmethod
   def getDB(cls, url:str, mode="w") -> Self:
@@ -272,7 +307,19 @@ class PRDb[T:PRObject](Serializable, Subject):
       raise ValueError(f'Malformed URL: "{url}"')
     if url in PRDb.AllDBs:
       raise DuplicateNameError(f'PRDb._read(): A DB with name "{url}" already exists.')
-    read = SerializationStrategy.readx(url, mode=mode)
+    # replaceExt=None is essential here (and not merely SerializationStrategy.readx()'s
+    # own default -- that default is True): *url* commonly carries a subclass-specific
+    # extension (.snm/.snv for sn.model.model.Model/sn.view.graphics.sngView.SNGView;
+    # plain .xml for a generic PRDb) that no registered SerializationStrategy's
+    # defaultExtension() matches. readx() then falls back to trying every known
+    # strategy's .read() in turn, and .read() unconditionally rewrites the path via
+    # fixURL(url, replaceExt=replaceExt, extension=<that strategy's own extension>)
+    # before ever opening the file. Leaving replaceExt at readx()'s True default would
+    # silently replace e.g. "temp2.snv" with "temp2.xml" -- opening (or creating) a
+    # completely different file instead of raising -- the moment the XML strategy
+    # happens to be tried. Passing None here preserves *url*'s actual extension, same
+    # as every other read/write call site in this codebase already does.
+    read = SerializationStrategy.readx(url, replaceExt=None, mode=mode)
     assert isinstance(read, cls)
     ret:Self = read
     if not isinstance(ret, PRDb):
@@ -293,13 +340,24 @@ class PRDb[T:PRObject](Serializable, Subject):
       setattr(PRDb.AllDBs[url], "_initialized", True)
       return PRDb.AllDBs[url]
     if urlExists(url) and not _reading:
-      ret = cls._read(url)
+      if url in PRDb._readingURLs:
+        raise CircularReferenceError(
+          f'PRDb.__new__(): "{url}" references itself -- directly, or through a '
+          f'cycle of other documents currently being loaded ({", ".join(sorted(PRDb._readingURLs))}) '
+          f'-- while its own read is still in progress. Refusing to recurse further; '
+          f'check that document\'s persisted references for a bad/self URL.'
+        )
+      PRDb._readingURLs.add(url)
+      try:
+        ret = cls._read(url)
+      finally:
+        PRDb._readingURLs.discard(url)
       PRDb.AllDBs[url] = ret
       setattr(ret, "_initialized", True)
       return ret
     return super().__new__(cls)
   
-  def  __init__(self, url:str, mode="w", memoryResident:bool=True, _reading:bool=False):
+  def  __init__(self, url:str, mode:str="w", memoryResident:bool=True, _reading:bool=False):
     '''
     :param url: The URL to associate with this object. Can be a filename, interpreted
       in the context of the current directory.
@@ -319,6 +377,7 @@ class PRDb[T:PRObject](Serializable, Subject):
     
     Serializable.__init__(self)
     Subject.__init__(self)
+    Dirtyable.__init__(self)
     
     self.reading:bool = _reading
     'Can be used by contained objects to determine if a read operation is taking place.'
@@ -353,10 +412,15 @@ class PRDb[T:PRObject](Serializable, Subject):
       for k,v in d.items():
         ret[int(k)] = v
       return ret
-    def fixDBElems(slf:PRDb, d:strdict):
+    def fixDBElems(slf:Serializable, d:SerializableType):
+      assert isinstance(d, dict), f'Expected strdict for param 2, got {type(d)}.'
+      assert isinstance(slf, PRDb), f'Expected PRDb for param 1, got {type(slf)}.'
       slf._db = convertStrdictToDict(cast(strdict,d))
       for k,v in slf._db.items():
         v._id = k
+    def clearReading(slf:Serializable, _:SerializableType):
+      assert isinstance(slf, PRDb), f'Expected PRDb for param 1, got {type(slf)}.'
+      slf.reading = False
     return InstantiationInfo(
             cls, 
             conArgs=[ParamInfo("url", str)],
@@ -364,7 +428,9 @@ class PRDb[T:PRObject](Serializable, Subject):
             postconSetters=[PropertyInfo("nextID", int),
                             PropertyInfo("_db", strdict, 
                                          lambda slf: convertDictToStrdict(cast(PRDb, slf)._db),
-                                         fixDBElems)])#lambda slf, d: setattr(slf, "_db", convertStrdictToDict(cast(strdict,d))))])
+                                         fixDBElems)],
+            finalSetters=[PropertyInfo("_", bool, setter=clearReading)]
+            )
 
   @property
   def name(self):
@@ -432,6 +498,7 @@ class PRDb[T:PRObject](Serializable, Subject):
     else:
       self._db[_id] = value
       ret = _id
+    self.setDirty()
     self.notify(("new", (ret, value)))
     return ret
   
@@ -455,8 +522,44 @@ class PRDb[T:PRObject](Serializable, Subject):
       raise PermissionError(f'DB "{self}" is write locked.')
     if self._db.get(_id, None) is None:
       raise ValueError(f'PRDB._unregister(): indici {_id} does not exist.')
+    self.setDirty()
     self.notify(("del", (_id,)))
     del self._db[_id]
+  
+  @override
+  def setDirty(self, dirty:bool=True) -> None:
+    '''
+    An object is dirty if it has been modified and should probably be
+    saved on exit.  This should be called from all methods that modify
+    the state of this object.
+    
+    If *dirty* is False, resets all the contained *Attributes* to False.
+    
+    :param dirty: (default True) The dirty to set *dirty* to.
+    :type dirty: bool
+    '''
+    assert type(dirty) is bool
+    if not dirty:
+      obj:PRObject
+      for obj in self._db.values():  # LOCAL attributes only -- an inherited Attribute belongs to (and is tracked dirty by) its owning super object, not this one
+        if obj.isDirty():
+          obj.setDirty(False)
+    super().setDirty(dirty)
+
+  @override
+  def isDirty(self) -> bool:
+    '''
+    Returns True iff the object (or an of it's contained *Attributes*) have
+    been modified and should probably be saved on exit.
+    '''
+    if super().isDirty():
+      return True
+    obj:PRObject
+    for obj in self._db.values():  # LOCAL attributes only -- see setDirty()
+      if obj.isDirty():
+        super().setDirty(True)
+        return True
+    return False
   
   # ── Name-resolution helper ────────────────────────────────────────────────
 
@@ -535,6 +638,8 @@ class PRDb[T:PRObject](Serializable, Subject):
       ret = [self[key]]
     elif isinstance(key, str):
       ret = [v for v in self._db.values() if v.name == key]
+      if len(ret) > 1:
+        print([f'{id}: {obj.name}' for id,obj in self._db.items()])
     else:
       raise TypeError(f"PRDb._resolve(): Key must be int or str, got {type(key).__name__}")
     ret = [o for o in ret if filtr(o)] #type: ignore[arg-type]
@@ -747,7 +852,6 @@ class PReference[T:PRObject]:
           return ret
       raise KeyError(text)
       
-    #ret = db.getall(theID, filtr=filtr, throw=True) # can throw KeyError
     ret = search([db])
     
     if len(ret) > 1:

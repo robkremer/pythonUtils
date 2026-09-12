@@ -1311,7 +1311,7 @@ def iterableToList(it: Iterable) -> list:
 # ---- TK USER INTERFACE ----------------------------------------------------------
 ################################################################################
 
-def getSubMenu(menu:tk.Menu, name:str, makeIfNone:Optional[int]=tk.END) -> Optional[tk.Menu]:
+def getSubMenu(menu:tk.Menu, name:str, makeIfNone:Optional[str]=tk.END) -> Optional[tk.Menu]:
   """
   Find a submenu in *menu* with label *name* .
   
@@ -1326,8 +1326,9 @@ def getSubMenu(menu:tk.Menu, name:str, makeIfNone:Optional[int]=tk.END) -> Optio
   submenu = None      
   try:
     index = menu.index(name)
-    assert menu.type(index) == "cascade"
-    submenu = menu.entrycget(index,'menu')
+    # let exceptions occur...
+    assert menu.type(index) == "cascade" #type: ignore[arg-type]
+    submenu = menu.entrycget(index,'menu') #type: ignore[arg-type]
     submenu = menu.winfo_toplevel().nametowidget(submenu)
   except Exception as ex:
     if makeIfNone is not None:
@@ -1440,7 +1441,7 @@ class VerticalScrolledFrame(ttk.Frame):
         def _configure_interior(event):
             # Update the scrollbars to match the size of the inner frame.
             size = (interior.winfo_reqwidth(), interior.winfo_reqheight())
-            canvas.config(scrollregion="0 0 %s %s" % size)
+            canvas.config(scrollregion=(0, 0, size[0] ,size[1]))
             if interior.winfo_reqwidth() != canvas.winfo_width():
                 # Update the canvas's width to fit the inner frame.
                 canvas.config(width=interior.winfo_reqwidth())
@@ -1483,7 +1484,7 @@ import traceback
 import tkinter as tk
 from tkinter import scrolledtext
 
-def showExceptionDialog(parent: tk.Misc | None = None, title: str = "Error") -> None:
+def showExceptionDialog(parent: tk.Toplevel | None = None, title: str = "Error") -> None:
   """Display the currently-handled exception's traceback (as returned by
   traceback.format_exc()) in a scrollable, resizable dialog. Call this
   from within an `except:` block, the same place you'd call

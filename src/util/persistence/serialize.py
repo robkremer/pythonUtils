@@ -446,10 +446,14 @@ class SerializationStrategy[T](ABC):
     name:str
     extension:str
     cls:type
-    obj:weakref.ReferenceType[SerializationStrategy]|SerializationStrategy
+    obj:SerializationStrategy # weakref.ReferenceType[SerializationStrategy]|SerializationStrategy
     
   knownStrategies:list[SerializationStrategy._MemStrategy] = []
-  'The list of known persistent strategies.'
+  '''The list of known persistent strategies. Populated incrementally as
+  strategies are constructed (see *__init__()* below) -- but also, as of
+  module load time, pre-populated with every concrete strategy findable in
+  this package (*util.persistence*), even ones nothing has imported yet.
+  See *_populateKnownStrategiesAtLoad()* at the bottom of this module.'''
     
   def __init__(self):
     '''
@@ -460,7 +464,7 @@ class SerializationStrategy[T](ABC):
     self.header:dict[str, Any] = dict()
     'The header information from the last file, url, or string read.'
     
-    self.knownStrategies.insert(0, self._MemStrategy(self.protocolName(), self.defaultExtension(), type(self), weakref.ref(self)))
+    self.knownStrategies.insert(0, self._MemStrategy(self.protocolName(), self.defaultExtension(), type(self), self)) # weakref.ref(self)))
     
   ### PUBLIC METHODS ###########################################################
   
@@ -673,7 +677,7 @@ class SerializationStrategy[T](ABC):
     return strat.write(url, obj, replaceExt=replaceExt, wrap=wrap, **kwargs)
   
   @classmethod
-  def readx(cls, url:str, strategy:Optional[str]=None, replaceExt:bool=True, mode="w", **kwargs) -> SerializableType:
+  def readx(cls, url:str, strategy:Optional[str]=None, replaceExt:bool|None=True, mode="w", **kwargs) -> SerializableType:
     '''
     :param url: The destination URL. Use ``file:///absolute/path`` or
       ``file://relative/path`` for local files.
@@ -700,7 +704,7 @@ class SerializationStrategy[T](ABC):
     if strategy is not None:
       strat = cls.findStrategy(strategy)
       if strat is None:
-        raise LookupError(f'No strategy matching "{strategy}" found.')
+        raise LookupError(f'SerializationStrategy.readx({url}): No strategy matching "{strategy}" found.')
     else:
       parsed = urlparse(url)
       filename = os.path.basename(parsed.path)
@@ -710,19 +714,77 @@ class SerializationStrategy[T](ABC):
       except:
         pass
       if strat is None: # can't find a strategy, so try opening with all the known strategies.
-        logger.debug(f'SerializationStrategy.readx(): LookupError: No strategy matching ".{ext}" found.')
+        logger.debug(f'SerializationStrategy.readx({url}): LookupError: No strategy matching ".{ext}" found.')
+        tried:str = ""
         for s in SerializationStrategy.knownStrategies:
           try:
-            logger.debug(f'SerializationStrategy.readx(): Trying strategy {s.name}...')
+            logger.debug(f'SerializationStrategy.readx({url}): Trying strategy {s.name}...')
             ret = s.obj.read(url, replaceExt=replaceExt, mode=mode, **kwargs)
           except Exception as ex:
-            logger.exception(f'SerializationStrategy.readx: {s.name}: failed: {ex}.')
+            logger.exception(f'SerializationStrategy.readx({url}): {s.name}: failed: {ex}.')
+            tried += f'\n  {s.name}: {ex}'
             continue
           logger.debug('  ...success!')
           return ret
-        raise LookupError(f'No read strategy succeeded.')
+        raise LookupError(f'SerializationStrategy.readx({url}): No read strategy succeeded. Tried:{tried}')
     return strat.read(url, replaceExt=replaceExt, mode=mode, **kwargs)
-    
+
+  @classmethod
+  def peekTypex(cls, url:str, strategy:Optional[str]=None, mode:str="w", **kwargs) -> type:
+    '''
+    :param url: The URL to inspect. Use ``file:///absolute/path`` or
+      ``file://relative/path`` for local files.
+    :type url: str
+    :param strategy: (default=None) The name or extension (starting with a dot) of some
+      protocol-specific strategy to use. If missing or *None*, the strategy is
+      inferred from *url*'s extension -- falling back to trying every known
+      strategy in turn, exactly as :py:meth:`readx() <SerializationStrategy.readx>`
+      does -- since a URL using a domain-specific extension (e.g. ".snv") won't
+      match any registered strategy's own extension.
+    :type strategy: Optional[str]
+    :param kwargs: A set of keyword arguments to be passed to *_fromstring()*.
+    :type kwargs: dict[str, Any]
+    :returns: The class of the top-level object stored at *url*.
+    :rtype: type
+    :raises LookupError: If no strategy matches (or, when none is named, if
+      every known strategy fails to peek at *url*).
+
+    Classmethod counterpart to :py:meth:`readx() <SerializationStrategy.readx>`:
+    resolves which strategy to use the same way, but calls
+    :py:meth:`peekType() <SerializationStrategy.peekType>` instead of
+    :py:meth:`read() <SerializationStrategy.read>` -- returning the top-level
+    object's class WITHOUT constructing it (or anything it contains).
+    '''
+    strat:Optional[SerializationStrategy] = None
+    if strategy is not None:
+      strat = cls.findStrategy(strategy)
+      if strat is None:
+        raise LookupError(f'SerializationStrategy.peekTypex({url}): No strategy matching "{strategy}" found.')
+      return strat.peekType(url, mode=mode, **kwargs)
+    else:
+      parsed = urlparse(url)
+      filename = os.path.basename(parsed.path)
+      ext = filename.split(".")[-1]
+      try:
+        strat = cls.findStrategy('.'+ext)
+      except:
+        pass
+      if strat is None: # can't find a strategy by extension, so try peeking with all the known strategies.
+        logger.debug(f'SerializationStrategy.peekTypex({url}): LookupError: No strategy matching ".{ext}" found.')
+        tried:str = ""
+        for s in SerializationStrategy.knownStrategies:
+          try:
+            logger.debug(f'SerializationStrategy.peekTypex({url}): Trying strategy {s.name}...')
+            ret = s.obj.peekType(url, mode=mode, **kwargs)
+          except Exception as ex:
+            logger.exception(f'SerializationStrategy.peekTypex({url}): {s.name}: failed: {ex}.')
+            tried += f'\n  {s.name}: {ex}'
+            continue
+          logger.debug('  ...success!')
+          return ret
+        raise LookupError(f'SerializationStrategy.peekTypex({url}): No strategy succeeded at peeking. Tried:{tried}')
+    return strat.peekType(url, mode=mode, **kwargs)
+
   @classmethod
   @abstractmethod
   def defaultExtension(self) -> str:
@@ -792,7 +854,7 @@ class SerializationStrategy[T](ABC):
     with urllib.request.urlopen(request):
       pass
     
-  def read(self, url:str, replaceExt:bool=True, mode="w", **kwargs) -> SerializableType:
+  def read(self, url:str, replaceExt:bool|None=True, mode="w", **kwargs) -> SerializableType:
     '''
     :param url: The source URL. Use ``file:///absolute/path`` or
       ``file://relative/path`` for local files.
@@ -809,34 +871,111 @@ class SerializationStrategy[T](ABC):
     :raises NotImlementedError: If the subclass failed to implement one of its
       required methods.
     
-    Converts a byte array to an object using *_decode_()* and 
-    *_speicializeBytes()*. 
+    Converts a byte array to an object using *_decode_()* and
+    *_speicializeBytes()*.
     '''
     self._finalMethodsList = []
     parsedUrl:ParseResult
     url, parsedUrl = fixURL(url, replaceExt=replaceExt, mode=mode, extension=self.defaultExtension())
-  
+    contents:str = self._fetchContents(url, parsedUrl)
+
+    ret = self.fromstring(contents, **kwargs)
+
+    for finalMethod in self._finalMethodsList:
+      finalMethod()
+    self._finalMethodsList = []
+
+    return ret
+
+  def _fetchContents(self, url:str, parsedUrl:ParseResult) -> str:
+    '''
+    :param url: A URL already normalized by *fixURL()*.
+    :type url: str
+    :param parsedUrl: Its parsed form, as returned alongside it by *fixURL()*.
+    :type parsedUrl: ParseResult
+    :returns: The raw text found at *url*.
+    :rtype: str
+    :raises ValueError: If the URL's scheme isn't "file", "http", or "https".
+
+    Shared by *read()* and *peekType()*: fetches the raw text a URL points
+    to, with no interpretation of its content at all -- not even far enough
+    to know what strategy it's meant for.
+    '''
     scheme:str = parsedUrl.scheme.lower() if parsedUrl.scheme else "file"
-  
+
     if scheme == "file":
       localPath:str = parsedUrl.path if parsedUrl.path else url
       localPath = unquote(localPath)
       with open(localPath, "r", encoding="utf-8") as f:
-        contents:str = f.read()      
+        return f.read()
     elif scheme in ("http", "https"):
       with urllib.request.urlopen(url) as response:
         rawBytes: bytes = response.read()
-      contents = rawBytes.decode(encoding="utf-8")
+      return rawBytes.decode(encoding="utf-8")
     else:
-      raise ValueError(f"Unsupported URL scheme: '{scheme}'. Use 'file', 'http', or 'https'.")    
-    
-    ret = self.fromstring(contents, **kwargs)
-    
-    for finalMethod in self._finalMethodsList:
-      finalMethod()
-    self._finalMethodsList = []
-    
-    return ret
+      raise ValueError(f"Unsupported URL scheme: '{scheme}'. Use 'file', 'http', or 'https'.")
+
+  def peekType(self, url:str, mode:str="w", **kwargs) -> type:
+    '''
+    :param url: The source URL to inspect.
+    :type url: str
+    :param mode: Passed through to *fixURL()* exactly as *read()* does.
+    :type mode: str
+    :param kwargs: Passed through to *_fromstring()*.
+    :type kwargs: dict[str, Any]
+    :returns: The class of the top-level ("root") object stored at *url*.
+    :rtype: type
+    :raises TypeError: If the declared type name can't be resolved to an
+      actual class.
+    :raises ValueError: If the URL's scheme isn't "file", "http", or "https".
+
+    Learns what's stored at *url* WITHOUT constructing it -- or anything it
+    contains: parses just far enough to read the top-level object's declared
+    "type" attribute, using exactly the same structural primitives
+    (*_fromstring()*, *_getKVPair()*, *_getAttr()*) that *_decode_()* itself
+    uses for that same lookup; it simply stops there instead of going on to
+    call any constructor. *_fromstring()* returns a lightweight
+    strategy-specific representation of the parsed document (an
+    *ElementTree.Element* for XML, a plain *dict* for JSON) -- turning
+    *bytes* into that shape, not into *Serializable* objects, so nothing in
+    this method has any side effect on the object graph the document
+    describes.
+
+    This exists so callers who only need to know what a file *is* (e.g.
+    :py:meth:`Application.openWindow() <sn.view.graphics.guiApp.Application.openWindow>`,
+    which must tell a Model file from a SNGView file before deciding what to
+    do) don't have to fully read -- and thereby construct and register --
+    the object just to find out.
+
+    .. Important::
+      This default implementation is only correct for a strategy whose
+      *_fromstring()* returns a representation that doesn't itself construct
+      any *Serializable* object -- true of :py:class:`XMLSerializationStrategy
+      <util.persistence.serializeXML.XMLSerializationStrategy>` and
+      :py:class:`JSONSerializationStrategy
+      <util.persistence.serializeJSON.JSONSerializationStrategy>`, both of
+      which only ever produce an inert data structure at the *_fromstring()*
+      stage. A strategy for which parsing and object construction are
+      inherently fused -- e.g. one based on Python's *pickle* protocol,
+      where finding a class name ordinarily means unpickling -- MUST
+      override this method with its own cheap, format-specific technique
+      (for *pickle*, overriding *Unpickler.find_class()* to record the class
+      and raise before any GLOBAL/REDUCE opcode actually builds anything is
+      the standard trick). Inheriting this default for such a strategy would
+      silently make *peekType()* just as expensive, and just as
+      side-effecting, as a full *read()* -- defeating its purpose.
+    '''
+    url, parsedUrl = fixURL(url, replaceExt=None, mode=mode, extension=self.defaultExtension())
+    contents:str = self._fetchContents(url, parsedUrl)
+    root:T = self._fromstring(contents, kwargs)
+    rootObj:Optional[T] = self._getKVPair(root, "root")
+    if rootObj is None:
+      rootObj = root # not a "header"/"root"-wrapped document (e.g. hand-written) -- the top-level element IS the object.
+    className:str = self._getAttr(rootObj, ATTR_TYPE)
+    cls:Optional[type] = getClassFromFullyQualifiedName(className)
+    if cls is None:
+      raise TypeError(f'SerializationStrategy.peekType({url}): Could not find type "{className}".')
+    return cls
   
   def tostring(self, obj:SerializableType, *, wrap:Union[bool,dict]=False, assume:list[Any]=[], **kwargs) -> str:
     """
@@ -1396,6 +1535,53 @@ class SerializationStrategy[T](ABC):
       raise TypeError(f'Unsupported type: "{className}".')
     
     return obj
+
+
+def _populateKnownStrategiesAtLoad() -> None:
+  '''
+  Discover and instantiate every concrete :py:class:`SerializationStrategy`
+  subclass in this package (*util.persistence*) right now, at module load
+  time -- so :py:attr:`SerializationStrategy.knownStrategies` already lists
+  e.g. *JSONSerializationStrategy* and *XMLSerializationStrategy* the
+  moment this module finishes importing, rather than only lazily, the
+  first time something calls :py:meth:`getAvailableStrategies()
+  <SerializationStrategy.getAvailableStrategies>` or constructs a strategy
+  directly.
+
+  Delegates entirely to :py:meth:`getAvailableStrategies()
+  <SerializationStrategy.getAvailableStrategies>` for the actual package
+  scan -- it already does exactly the "import every not-yet-loaded module
+  in *util.persistence* whose name starts with 'serialize', then collect
+  every concrete *SerializationStrategy* subclass" work this needs (e.g.
+  *serializeJSON.py*/*serializeXML.py*, sibling modules of this one that
+  subclass *SerializationStrategy* but, at this point in loading THIS
+  module, haven't been imported by anything yet). Modules like
+  *x_persistenceXML.py*, whose name doesn't start with "serialize", are
+  left alone, same as they are for *getAvailableStrategies()* itself.
+
+  Each discovered class is instantiated once. Its own *__init__()* has
+  already inserted a record for it at *knownStrategies[0]* holding a
+  *weak* reference (see *__init__()* above) -- which, with nothing else
+  in the program yet holding a reference to this just-created instance,
+  would make it eligible for garbage collection the instant this function
+  returns, silently emptying the record back out from under
+  *knownStrategies*. So that record's *obj* is upgraded here to hold the
+  instance directly instead -- the same "keep this strat in memory" idiom
+  *findStrategy()*'s own fallback path above already uses when IT
+  discovers and instantiates a strategy this way.
+
+  Called once, immediately below, then discarded -- this is a one-shot
+  module-load bootstrap step, not part of the class's ongoing API.
+
+  :rtype: None
+  '''
+  for strat in SerializationStrategy.getAvailableStrategies():
+    assert isinstance(strat, SerializationStrategy.Strategy)
+    instance = strat.cls()
+    SerializationStrategy.knownStrategies[0].obj = instance
+
+_populateKnownStrategiesAtLoad()
+del _populateKnownStrategiesAtLoad
 
 
 class _Reference(Serializable):

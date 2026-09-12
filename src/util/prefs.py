@@ -49,19 +49,9 @@ class Prefs(util.attribute.AttributedObject):
     Constructor
     '''
     super().__init__()
-#    self.owner = owner
-#    self.openFiles:List[FileData] = []
     self.prefsFileName:str # = f'{os.path.expanduser("~")}/.{appname}.xml'
-    #self.xmlTag = f"{tygra.APP_SHORT_NAME.lower()}-prefs"
-    self._dirty = False
     self.callbacks:dict[str, dict[int, Callable[[str, Any], None]]] = dict()
     self.nextCallbackID = 0
-    # try:
-    #   self.read()
-    # except FileNotFoundError:
-    #   logger.warning(f'Preference file "{self.prefsFileName}" not found.')
-    # except:
-    #   logger.exception(f'Failed to read prefs file "{self.prefsFileName}"')
 
   @override
   def getSupers[Prefs](self) -> list[Prefs]:
@@ -144,59 +134,6 @@ class Prefs(util.attribute.AttributedObject):
     SerializationStrategy.writex(filename, self, format)
     self.setDirty(False)
       
-  # def save(self):
-  #   """
-  #   Saves preferences **and** for each open file, brings up an "save file"
-  #   dialog to give the user a chance to save the file before closing. Then
-  #   saves each of files and the window geometry for it's file window and
-  #   each of its open view windows.
-  #   """
-  #   topElem = et.Element(self.xmlTag)
-  #   topElem.set("version", PREFS_VERSION)
-  #
-  #   # # open files
-  #   # openFiles = et.Element("openfiles")
-  #   # #for viewWindow in TygraContainer._instances:
-  #   # children = loggingPanedWindow.APP_WINDOW.winfo_children()
-  #   # viewChildren = [child for child in children if isinstance(child, loggingPanedWindow.TGViewWindow)]
-  #   # for viewWindow in viewChildren: # all the subwindows (TopLevel) of the AppWindow
-  #   #   viewWindow.saveFile() 
-  #   #   if viewWindow.filename is None:
-  #   #     continue
-  #   #   fileInfo = et.Element("file")
-  #   #   fileInfo.set("name", os.path.abspath(viewWindow.filename))
-  #   #   fileInfo.set("geometry", viewWindow.geometry())
-  #   #   for dirViewID, dirViewRec in viewWindow.getViewsFromDirectory().items():
-  #   #     if isinstance(dirViewRec.viewData, TGView):
-  #   #       viewInfo = et.Element("openview")
-  #   #       viewInfo.set("id", dirViewID)
-  #   #       viewInfo.set("geometry", dirViewRec.viewData.winfo_toplevel().geometry())
-  #   #       fileInfo.append(viewInfo)
-  #   #   openFiles.append(fileInfo)
-  #   # topElem.append(openFiles)
-  #
-  #   # prefs
-  #   topElem.append(super().serializeXML())
-  #
-  #   tree = et.ElementTree(element=topElem)
-  #   et.indent(tree, space='  ', level=0)
-  #   tree.write(self.prefsFileName, xml_declaration=True, encoding="utf-8")
-  #   logger.debug(f'Prefs.save(): saved "{self.prefsFileName}"')
-  #   self._dirty = False
-    
-
-  # def read(self):
-  #   if not os.path.isfile(self.prefsFileName):
-  #     raise FileNotFoundError(f'Prefs.read(): {self.prefsFileName} not found.')
-  #   SerializationStrategy.readx(self.prefsFileName)
-  #   # tree = et.parse(self.prefsFileName)
-  #   # root = tree.getroot()
-  #   # if root.tag != self.xmlTag:
-  #   #   raise TypeError(f'Prefs.read(): {self.prefsFileName} is not a {self.xmlTag} file.')
-  #   # elemTag = getFullClassName(self.__class__)
-  #   # elem = root.find(elemTag)
-  #   # self.unserializeXML(elem)
-    
   @override
   def __setitem__(self, key:str, value:SerializableType):
     '''
@@ -232,16 +169,5 @@ class Prefs(util.attribute.AttributedObject):
       if len(entries) == 0:
         del self.callbacks[key]
   
-#   def edit(self, parentWindow, title=None):
-#     """
-#     Put up a GUI dialog to edit the *Attributes*
-#
-#     :param parentWindow: A parent for dialog.
-#     :param title: A title to put on the dialog window.
-#     """
-#     editor = PrefsEditor(parentWindow, self, self.prefs, title=title)
-#     editor.show()
-# #    editor.destroy()
-    
 
     

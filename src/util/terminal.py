@@ -515,7 +515,7 @@ class TerminalRegistry:
     """
     if not self._windows:
       return None
-    root = next(iter(self._windows))._root()
+    root = next(iter(self._windows))._root() # type: ignore[attr-defined]
     try:
       order = root.tk.call('wm', 'stackorder', root)
     except tk.TclError:
@@ -913,7 +913,7 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     self.registerStyle("result", fg=resultfg)
 
     # input()-attention-flash state — see _startQueryFlash/_flashTick/_stopQueryFlash.
-    self.queryFlashColor = queryFlashColor
+    self.queryFlashColor:str = "yellow" if queryFlashColor is None else queryFlashColor
     self.queryFlashCount = queryFlashCount
     self.queryFlashIntervalMs = queryFlashIntervalMs
     self._flashJob: Optional[str] = None

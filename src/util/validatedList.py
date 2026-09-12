@@ -21,6 +21,7 @@
 #################################################################################
 import inspect
 from typing import SupportsIndex, override
+from util.dirtyable import Dirtyable
 '''
 Created on Jul 13, 2026
 
@@ -31,7 +32,7 @@ Created on Jul 13, 2026
 from collections.abc import Callable, Iterable
 
 
-class ValidatedList[T](list[T]):
+class ValidatedList[T](list[T], Dirtyable):
   """
   A list subclass that enforces a predicate on every item inserted.
 
@@ -43,32 +44,14 @@ class ValidatedList[T](list[T]):
   """
 
   def __init__(self, f: Callable[[T], bool], iterable: Iterable[T] = ()) -> None:
+    Dirtyable.__init__(self)
     self._f: Callable[[T], bool] = f
     initial = list(iterable)
     for i in initial:
       self._check(i)
     self._checking:bool = True
     super().__init__(initial)
-    self._dirty:bool = False
     
-  def setDirty(self, value:bool=True):
-    '''
-    An object is dirty if it has been modified and should probably be
-    saved on exit.  This should be called from all methods that modify
-    the state of this object.
-    
-    :param value: (default True) The value to set *dirty* to.
-    :type value: bool
-    '''
-    self._dirty = value
-    
-  def isDirty(self) -> bool:
-    '''
-    Returns True iff the object has been modified and should probably
-    be saved on exit. 
-    '''
-    return self._dirty
-
   def _check(self, i: T) -> None:
     """
     Validate a single item against the predicate.

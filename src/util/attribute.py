@@ -68,6 +68,7 @@ from util.utils import getFullClassName, getFullyQualifiedClass, getClass,\
 from util.observer import Subject
 from util.persistence.serialize import Serializable, SerializableType, strdict,\
   InstantiationInfo, ParamInfo, PropertyInfo
+from util.dirtyable import Dirtyable
 
 class RestrictionTypes(Flag):
   UNRESTRICTED = 0
@@ -103,7 +104,7 @@ class Restriction:
       if self == v:
         return k
     return f'ILLEGAL: {self}'
-  
+
 VAR_DEFAULTED      = Restriction(UNRESTRICTED, UNRESTRICTED)
 'Restriction: Normal variable with a default. Eg: "degree" field with default "None".'
 VAR                = Restriction(NOINHERIT, UNRESTRICTED)
@@ -304,11 +305,13 @@ def typeAsCanonical(t:AttributeValueTypes, throw:bool=False) -> AttributeValueTy
   return None
   
 
-class Attribute(Serializable):
+class Attribute(Serializable, Dirtyable):
   def __init__(self, value:Union[SerializableType, NoValue], 
                      typ:Optional[AttributeValueTypes], 
                      restriction:Optional[Restriction|tuple[int,int]|tuple[RestrictionTypes,RestrictionTypes]],
                      note:str|None=None):
+    Serializable.__init__(self)
+    Dirtyable.__init__(self)
     assert value is NOVALUE or typ is None or isValidType(typ, value), f'Invalid Attribute type/value: {typ}/{value}.'
     self._value:Union[SerializableType, NoValue] = value
     self._type:Optional[AttributeValueTypes] = typ
@@ -317,10 +320,9 @@ class Attribute(Serializable):
       self._restriction = Restriction(restriction[0] if isinstance(restriction[0], RestrictionTypes) else RestrictionTypes(restriction[0]), \
                                      restriction[1] if isinstance(restriction[1], RestrictionTypes) else RestrictionTypes(restriction[1]))
     else:
-      assert isinstance(restriction, (Restriction,NoneType)), f'Expected Restriction or NoneType type, got {type(restriction)}:{rest}'
+      assert isinstance(restriction, (Restriction,NoneType)), f'Expected Restriction or NoneType type, got {type(restriction)}:{restriction}'
       self._restriction = restriction
     self.note = note
-    self._dirty:bool = False
     
   @property
   def value(self) -> SerializableType|NoValue:
@@ -355,24 +357,6 @@ class Attribute(Serializable):
     if value != self._restriction:
       self.setDirty()
       self._restriction = value
-  
-  def setDirty(self, value:bool=True):
-    '''
-    An object is dirty if it has been modified and should probably be
-    saved on exit.  This should be called from all methods that modify
-    the state of this object.
-    
-    :param value: (default True) The value to set *dirty* to.
-    :type value: bool
-    '''
-    self._dirty = value
-    
-  def isDirty(self) -> bool:
-    '''
-    Returns True iff the object has been modified and should probably
-    be saved on exit. 
-    '''
-    return self._dirty
   
   def isComplete(self) -> bool: return self.value is not NOVALUE and \
                                        self.type is not None and \
@@ -410,7 +394,7 @@ class Attribute(Serializable):
   def __str__(self)->str:
     return f'Attribute({self.value}, {self._type}, {self.restriction}, {self.note})'
   
-class AttributedObject(Serializable, strdict[Attribute], Subject):
+class AttributedObject(Serializable, Dirtyable, strdict, Subject):
 
   @override
   @classmethod
@@ -425,38 +409,40 @@ class AttributedObject(Serializable, strdict[Attribute], Subject):
     Subject.__init__(self)
     strdict.__init__(self)
     Serializable.__init__(self)
-    self._dirty:bool = False
+    Dirtyable.__init__(self)
 
-  def setDirty(self, value:bool=True) -> None:
+  @override
+  def setDirty(self, dirty:bool=True) -> None:
     '''
     An object is dirty if it has been modified and should probably be
     saved on exit.  This should be called from all methods that modify
     the state of this object.
     
-    If *value* is False, resets all the contained *Attributes* to False.
+    If *dirty* is False, resets all the contained *Attributes* to False.
     
-    :param value: (default True) The value to set *dirty* to.
-    :type value: bool
+    :param dirty: (default True) The dirty to set *dirty* to.
+    :type dirty: bool
     '''
-    assert type(value) is bool
-    if not value:
+    assert type(dirty) is bool
+    if not dirty:
       obj:Attribute
-      for obj in super().values():  # LOCAL attributes only -- an inherited Attribute belongs to (and is tracked dirty by) its owning super object, not this one
+      for obj in strdict.values(self):  # LOCAL attributes only -- an inherited Attribute belongs to (and is tracked dirty by) its owning super object, not this one
         if obj.isDirty():
           obj.setDirty(False)
-    self._dirty = value
+    super().setDirty(dirty)
 
+  @override
   def isDirty(self) -> bool:
     '''
     Returns True iff the object (or an of it's contained *Attributes*) have
     been modified and should probably be saved on exit.
     '''
-    if self._dirty:
+    if super().isDirty():
       return True
     obj:Attribute
-    for obj in super().values():  # LOCAL attributes only -- see setDirty()
+    for obj in strdict.values(self):  # LOCAL attributes only -- see setDirty()
       if obj.isDirty():
-        self._dirty = True
+        super().setDirty(True)
         return True
     return False
   
@@ -523,9 +509,11 @@ class AttributedObject(Serializable, strdict[Attribute], Subject):
     :returns: The value field of the *Attribute* object at *key* if found.
     :rtype: SerializeableType|NoValue
     '''
-    attr:Attribute = super().get(key, None)
-    if attr is None:
+    temp = super().get(key, None)
+    if temp is None:
       return default
+    assert isinstance(temp, Attribute)
+    attr:Attribute = temp
     return attr.value if attr.value is not NOVALUE else default
 
   def getLocalAttr(self, key:str) -> Attribute | None:
@@ -671,6 +659,7 @@ class AttributedObject(Serializable, strdict[Attribute], Subject):
     '''
     if isinstance(value, Attribute):
       self.setAttr(key, value)
+      self.setDirty()
       return 
     
     current = super().get(key)
@@ -691,6 +680,7 @@ class AttributedObject(Serializable, strdict[Attribute], Subject):
   @override
   def __delitem__(self, key:str)->None:
     super().__delitem__(key)
+    self.setDirty()
     self.notify(("del attribute", (key,)))
 
   def __iter__(self):
