@@ -465,7 +465,7 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
   #   return attr.value
 
   @override
-  def get(self, key:str, default:Any=NOVALUE, storeDefault:Any=NOVALUE, storeType:AttributeValueTypes|None=None) -> SerializableType | NoValue:
+  def get(self, key:str, default:Any=NOVALUE, storeDefault:Any=NOVALUE, storeType:AttributeValueTypes|None=None, note:str|None=None) -> SerializableType | NoValue:
     '''
     Return the *value* of the attribute at the key. If it isn't found locally,
     search the inheritance lattice.
@@ -495,7 +495,7 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
       return default
     if storeType is None:
       storeType = type(storeDefault)
-    self.setAttr(key, Attribute(value=storeDefault, typ=storeType, restriction=VAR_DEFAULTED))
+    self.setAttr(key, Attribute(value=storeDefault, typ=storeType, restriction=VAR_DEFAULTED, note=note))
     return storeDefault
     
   def getLocal(self, key:str, default:Any=NOVALUE) -> SerializableType | Any:

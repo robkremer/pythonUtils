@@ -30,13 +30,28 @@ class Dirtyable:
   A mixin class for object needing a dirty bit, using setDirty() and isDirty()
   '''
 
-  def __init__(self):
+  def __init__(self, **kwargs) -> None:
     '''
     Set the _dirty property and initialize it to False.
+
+    :param kwargs: Passed on to *super().__init__()*. *Dirtyable* is normally
+      one link in a longer chain of cooperative *__init__* calls -- eg:
+      *sn.view.graphics.vobjects.VObject* combines it with *Observer* and
+      *ErrorReportingObject* via multiple inheritance. Calling
+      *super().__init__(**kwargs)* here (instead of simply returning) ensures
+      whatever comes after *Dirtyable* in that particular class's MRO still
+      gets initialized, exactly once, with the constructor arguments meant
+      for it, even though *Dirtyable* itself has no use for them. Not doing
+      this used to silently strand every class listed after *Dirtyable* in
+      such a chain -- eg: *ErrorReportingObject.__init__()* never ran for any
+      *VObject*, because *Dirtyable.__init__()* was the cooperative chain's
+      dead end.
+    :type kwargs: Any
     '''
+    super().__init__(**kwargs)
     self._dirty:bool = False
         
-  def setDirty(self, dirty:bool=True) -> None:
+  def setDirty(self, dirty:bool=True):
     '''
     An object is dirty if it has been modified and should probably be
     saved on exit.  This should be called from all methods that modify

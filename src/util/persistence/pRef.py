@@ -88,9 +88,25 @@ class PRObject[DBT:"PRDb"](Serializable, Dirtyable):
     :raises PermissionError: If the DB is write locked.
     :raises TypeError: If the *value* is not of type *PRObject*.
     :raises MemoryError: if the DB has been deleted.
+
+    :note: This used to call ``Serializable.__init__(self)`` and
+      ``Dirtyable.__init__(self)`` directly, up here, before the
+      *super().__init__(**kwargs)* call below. *Serializable* has no
+      *__init__* of its own so that call was a no-op, but the explicit
+      *Dirtyable* call meant *Dirtyable* got initialized via a hardcoded
+      direct call rather than via this class's cooperative *super()* chain
+      -- and, since a class combining *PRObject* with something listed
+      *after* *Dirtyable* in its own MRO (eg:
+      *sn.view.graphics.vobjects.VObject*, which also mixes in
+      *ErrorReportingObject*) relies on that same chain to reach the classes
+      *after* *Dirtyable* too, this dead end silently meant
+      *ErrorReportingObject.__init__()* -- and anything else listed after
+      *Dirtyable* -- never ran at all for any such object. Removing the
+      explicit calls and letting *Dirtyable* (now itself cooperative -- see
+      its own *__init__*) be reached exactly once via *super()* below fixes
+      that for every current and future user of this class, not just this
+      one case.
     '''
-    Serializable.__init__(self)
-    Dirtyable.__init__(self)
     if not isinstance(db, PRDb):
       raise TypeError(f"db must be an PRDb, got {type(id).__name__}")
     self._db:ReferenceType = ref(db) # weak reference as the db will maintain references to this object

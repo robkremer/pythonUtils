@@ -360,21 +360,39 @@ class Subject:
     call_soon()/call_soon_threadsafe(), if one is running; and finally a
     threading.Timer(0, ...) as a last resort.
 
+    *self._observers*/*self._callbacks* are snapshotted right here, before
+    any of those schedulers run -- not read again when the deferred call
+    actually fires -- since by then they may have changed (an Observer
+    attached/detached in the meantime, say), and the whole point of
+    deferring is to still deliver the notification this call was actually
+    asked to send. None of the four scheduling mechanisms below reliably
+    accepts extra keyword arguments to forward to the deferred call (Tk's
+    after_idle() and asyncio's call_soon()/call_soon_threadsafe() only take
+    *args at all; threading.Timer does take a kwargs= param, but there's no
+    reason to special-case it), so the snapshot is captured as plain local
+    variables and closed over by a single, argument-less _fireNow(), which
+    every scheduler is just asked to call once, later, with nothing further
+    to pass through.
+
     :param topics: Same as notify().
     :rtype: None
     '''
     if not enabled:
       return
-      
+
+    observers = copy(self._observers)
+    callbacks = copy(self._callbacks)
+    def _fireNow() -> None:
+      self._notify(*topics, observers=observers, callbacks=callbacks)
+
     scheduler = self.scheduler or Subject.scheduler
     if scheduler is not None:
-      scheduler(self._notify, *topics)
+      scheduler(_fireNow)
       return
 
     tk = sys.modules.get("tkinter")
     if tk is not None and tk._default_root is not None:
-      # we need to call this later with the observers and callbacks we have *now*, not when the callback gets executed.
-      tk._default_root.after_idle(self._notify, *topics, observers=copy(self._observers), callbacks=copy(self._callbacks))
+      tk._default_root.after_idle(_fireNow)
       return
 
     aio = sys.modules.get("asyncio")
@@ -385,12 +403,12 @@ class Subject:
         loop = None
       if loop is not None:
         if threading.current_thread() is threading.main_thread():
-          loop.call_soon(self._notify, *topics)
+          loop.call_soon(_fireNow)
         else:
-          loop.call_soon_threadsafe(self._notify, *topics)
+          loop.call_soon_threadsafe(_fireNow)
         return
 
-    threading.Timer(0, self._notify, args=topics).start()
+    threading.Timer(0, _fireNow).start()
 
 
 

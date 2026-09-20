@@ -1447,23 +1447,25 @@ class SerializationStrategy[T](ABC):
         ret = cls(*args, **kwargs) # call the constructor
         # if this object has an id attribute, put it's address in the readDB
         registerMaybe(elem, ret)
-       
-        setters = getSetters(info.postconSetters)
-        for _, meth in setters:
-          meth(ret) 
-        setters = getSetters(info.finalSetters)
-        for _, meth in setters: 
-          self._finalMethodsList.append(lambda slf=ret, method=meth : method(slf))
-        return ret
       except Exception as ex:
         #these exceptions will be trapped by argparse and will be dumped, so log them here.
         className = cls.__name__
-        if "getInstantiationInfo" in cls.__dict__:
-          logger.exception(ex)
-          raise ex.__class__(f'Failed to instantiate object of class {className}: {ex}')
-        else:
-          logger.exception(ex)
-          raise NotImplementedError(f'Failed to instantiate object of class {className}: {ex.__class__.__name__}: {ex}.\n  Did you forget to implement the {className}.getInstantiationInfo() method?')
+        logger.exception(f'Failed to instantiate object of class {className}')
+        return None
+       
+      setters = getSetters(info.postconSetters)
+      for vname, meth in setters:
+        try:
+          meth(ret) 
+        except Exception as ex:
+          #these exceptions will be trapped by argparse and will be dumped, so log them here.
+          className = cls.__name__
+          logger.exception(f'Failed to get postconSetter "{className}.{vname}"')
+
+      setters = getSetters(info.finalSetters)
+      for _, meth in setters: 
+        self._finalMethodsList.append(lambda slf=ret, method=meth : method(slf))
+      return ret
     
     def registerMaybe(elem:T, obj:SerializableType):
       # if this object has an id attribute, put it's address in the readDB

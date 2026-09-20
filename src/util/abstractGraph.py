@@ -253,6 +253,7 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
     if source is not None:
       if self._src is not source: # don't do anything if it's already done.
         self.src = source
+        source._outgoing.append(self)
         # if self._src is not None:
         #   delOne(self._src._outgoing, self)
         # self._src = source
@@ -262,6 +263,7 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
     if destination is not None:
       if self._dst is not destination: # don't do anything if it's already done.
         self.dst = destination
+        destination._incoming.append(self)
         # if self._dst is not None:
         #   delOne(self._dst._incoming, self)
         # self._dst = destination
