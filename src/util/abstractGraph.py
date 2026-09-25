@@ -70,7 +70,7 @@ class AGObject[TDB:AbstractGraph, R:"AGRelation"](PRObject[TDB]):
   def _isConnected(self):
     return self.id in self.db
 
-  def _disconnect(self) -> None:
+  def _disconnect(self, **kwargs) -> None:
     '''
     Disconnect this object from it's *Model* by:
     
@@ -86,49 +86,57 @@ class AGObject[TDB:AbstractGraph, R:"AGRelation"](PRObject[TDB]):
       its _reconnect() method.
     '''
     #TODO: This is a potential problem for chains of transitive relations.
-    assert self._isConnected()
+    if not self._isConnected():
+      raise RuntimeError("Trying to _disconnect() any already-disconnected object: {self}.")
     
-#   children = self.getChildren()
-    
-    # unregister from the model
-    self.db._unregister(self._id)
-
     # disconnect from related-to objects
     for r in self._incoming:
       r._disconnect(keep=self)
     for r in self._outgoing:
       r._disconnect(keep=self)
-      
-#    for child in children: #TODO: could be more efficient by just fixing the parentCache's.
-#      child.retract()
+
+    # unregister from the model
+    self.db._unregister(self._id)
     
-  def _reconnect(self):
+  def _reconnect(self, **kwargs):
     '''
     Reconnect this disconnected object to it's *Model* by:
-    
+
       - reregistering it to the *Model*
-      - reregistering (to other objects) the far ends of the relations 
+      - reregistering (to other objects) the far ends of the relations
       - reregistering all the above relations with the *Model*
-      
+
     .. Note::
-    
+
       This method should only be used to undo a _disconnect() operation.
-      
+
+    .. Note::
+
+      A relation *r* connecting two objects that are *both* being
+      reconnected together (eg: a multi-selection undo of an erase, where
+      *r* itself was one of the erased objects) gets reconnected as a side
+      effect of whichever of the two objects is processed first: that
+      object's own *r._reconnect(kept=self)* call both registers *r* and
+      re-appends it onto the *other* (not-yet-reconnected) object's
+      *_incoming*/*_outgoing* list, so that object sees *r* again once its
+      own turn comes. Guarding with *r._isConnected()* below -- mirroring
+      the *#TODO* on *_disconnect()* about chains of transitive relations
+      -- is what keeps that second encounter from trying to reconnect (and
+      re-*assert*) an already-reconnected *r*.
+
     '''
-    assert not self._isConnected()
-    
+    assert not self._isConnected(), self
+
     # unregister from the model
     self.db._register(self, self._id)
 
     # disconnect from related-to objects
     for r in self._incoming:
-      r._reconnect(kept=self)
+      if not r._isConnected():
+        r._reconnect(kept=self)
     for r in self._outgoing:
-      r._reconnect(kept=self)
-
-#    for child in self.getChildren(): #TODO: could be more efficient by just fixing the parentCache's.
-#      child.retract()
-      
+      if not r._isConnected():
+        r._reconnect(kept=self)
 
         
 class AGNode[TDB:AbstractGraph](AGObject[TDB, "AGRelation"]):
@@ -250,30 +258,24 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
     :param destination: The :py:class:`AGObject` for the *dst* link.
     :type destination: AGObject
     '''
+    if self.view.reading or self.modelObject is None:
+      return
     if source is not None:
       if self._src is not source: # don't do anything if it's already done.
         self.src = source
-        source._outgoing.append(self)
-        # if self._src is not None:
-        #   delOne(self._src._outgoing, self)
-        # self._src = source
+        # if self in source._outgoing:
+        #   raise RuntimeError(f'Reinserting self ({self}) into {source}.')
         # source._outgoing.append(self)
-        # assert self in source._outgoing
-        # self.setDirty()
     if destination is not None:
       if self._dst is not destination: # don't do anything if it's already done.
         self.dst = destination
-        destination._incoming.append(self)
-        # if self._dst is not None:
-        #   delOne(self._dst._incoming, self)
-        # self._dst = destination
+        # if self in destination._incoming:
+        #   raise RuntimeError(f'Reinserting self ({self}) into {destination}.')
         # destination._incoming.append(self)
-        # assert self in destination._incoming
-        # self.setDirty()
     
   @override
-  def _reconnect(self, kept:T|None=None):
-    super()._reconnect()
+  def _reconnect(self, kept:T|None=None, **kwargs):
+    super()._reconnect(**kwargs)
     if self._src is not None and self._src is not kept:
       self._src._outgoing.append(self) 
     if self._dst is not None and self._dst is not kept:
@@ -281,7 +283,7 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
     self.setDirty()
    
   @override
-  def _disconnect(self, keep:T|None=None) -> None: #type: ignore[override]
+  def _disconnect(self, keep:T|None=None, **kwargs) -> None: #type: ignore[override]
     '''
     Disconnects this relation from it's src and dst by removing the pointers
     from the src and dst objects. The pointers **to** these object (in this
@@ -302,7 +304,9 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
       delOne(self._src._outgoing, self) 
     if self._dst is not None and self._dst is not keep:
       delOne(self._dst._incoming, self) 
-    super()._disconnect()
+    if "keep" in kwargs:
+      del kwargs["keep"]
+    super()._disconnect(**kwargs)
     self.setDirty()
     
     
