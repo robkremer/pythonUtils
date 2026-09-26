@@ -27,7 +27,8 @@ Created on Apr 25, 2026
 import unittest
 from util.attribute import AttributedObject, Attribute, \
   NOVALUE, NOINHERIT, UNRESTRICTED, VAR, VAR_DEFAULTED, CONST,\
-  CONST_TYPEOVERRIDE, TYPENAME
+  CONST_TYPEOVERRIDE, TYPENAME, LOCAL, TYPEONLY, UNINHERITED, PRIVATE, \
+  Restriction, RestrictionTypes, restrictionTypesToString, restrictionTypesFromString
 from typing import Optional, override, Sequence
 from util.persistence.serialize import ParamInfo, InstantiationInfo, SerializationStrategy
 
@@ -215,8 +216,77 @@ class Test(unittest.TestCase):
     with self.assertRaises(PermissionError):
       obj["var"] = 1
     self.assertEqual(obj["var"], 99)
-          
-    
+
+  def test07PrivateRestrictions(self):
+    top = TestAttrs("top", False, [])
+    second = TestAttrs("second", False, [top])
+    obj = TestAttrs("obj", True, [second])
+    top.setAttr("local", Attribute(1, int, LOCAL))
+    top.setAttr("typeOnly", Attribute(2, int, TYPEONLY))
+    top.setAttr("uninh", Attribute(3, int, UNINHERITED))
+    # the defining object always sees its own attributes
+    self.assertEqual((top["local"], top["typeOnly"], top["uninh"]), (1, 2, 3))
+    # LOCAL: invisible to everything below
+    for o in (second, obj):
+      self.assertNotIn("local", o)
+      self.assertNotIn("local", list(o.keys()))
+      self.assertIsNone(o.getAttr("local"))
+      self.assertIsNone(o.getInhAttr("local"))
+      with self.assertRaises(KeyError):
+        o["local"]
+    # TYPEONLY: subtypes inherit it, individuals can't see it
+    self.assertEqual(second["typeOnly"], 2)
+    self.assertIsNotNone(second.getInhAttr("typeOnly"))
+    self.assertNotIn("typeOnly", obj)
+    self.assertNotIn("typeOnly", list(obj.keys()))
+    # UNINHERITED: the key (slot) is visible, the value isn't
+    for o in (second, obj):
+      self.assertIn("uninh", o)
+      self.assertIn("uninh", list(o.keys()))
+      self.assertEqual(o["uninh"], NOVALUE)
+      self.assertIsNotNone(o.getInhAttr("uninh")) # visible, unlike PRIVATE
+    # keys(), items() and `in` agree
+    for o in (top, second, obj):
+      self.assertEqual(set(o.keys()), {k for k,_ in o.items()})
+      self.assertTrue(all(k in o for k in o.keys()))
+
+  def test08PrivateRedefinition(self):
+    top = TestAttrs("top", False, [])
+    second = TestAttrs("second", False, [top])
+    obj = TestAttrs("obj", True, [second])
+    top.setAttr("tag", Attribute(True, bool, LOCAL))
+    # a hidden key can be defined afresh below; it's a new, unrelated attribute
+    second["tag"] = "fresh"
+    self.assertEqual(second["tag"], "fresh")
+    self.assertIs(second.getLocalAttr("tag").type, str)
+    self.assertEqual(obj["tag"], "fresh")
+    self.assertIs(top["tag"], True)
+
+  def test09PrivateMultipleInheritance(self):
+    a = TestAttrs("a", False, [])
+    b = TestAttrs("b", False, [])
+    a.setAttr("x", Attribute(1, int, LOCAL))
+    b.setAttr("x", Attribute(2, int, VAR_DEFAULTED))
+    c = TestAttrs("c", False, [a, b])  # blind to a's x, so sees b's
+    self.assertEqual(c["x"], 2)
+
+  def test10PrivateLegality(self):
+    top = TestAttrs("top", False, [])
+    with self.assertRaises(PermissionError): # private to types but not individuals
+      top.setAttr("bad", Attribute(1, int, Restriction(RestrictionTypes.UNRESTRICTED, PRIVATE)))
+    top.setAttr("x", Attribute(1, int, VAR_DEFAULTED))
+    second = TestAttrs("second", False, [top])
+    with self.assertRaises(PermissionError): # the same, by merging with an inherited restriction
+      second.setAttr("x", Attribute(2, None, Restriction(None, PRIVATE)))
+    second.setAttr("x", Attribute(2, None, Restriction(PRIVATE, None))) # hide from individuals: fine
+    self.assertNotIn("x", TestAttrs("obj", True, [second]))
+
+  def test11RestrictionStrings(self):
+    for r in (None, RestrictionTypes.UNRESTRICTED, PRIVATE, NOINHERIT, RestrictionTypes.ILLEGAL,
+              NOINHERIT | PRIVATE, RestrictionTypes.NOOVERRIDE | PRIVATE, RestrictionTypes.ILLEGAL | PRIVATE):
+      self.assertEqual(restrictionTypesFromString(restrictionTypesToString(r)), r)
+    self.assertEqual(restrictionTypesFromString("NOINHERIT|PRIVATE"), NOINHERIT | PRIVATE)
+
 
 if __name__ == "__main__":
   #import sys;sys.argv = ['', 'Test.testName']

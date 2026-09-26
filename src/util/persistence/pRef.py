@@ -189,13 +189,25 @@ class PRObject[DBT:"PRDb"](Serializable, Dirtyable):
   @override
   def __eq__(self, other: object) -> bool:
     '''
-    :returns: True iff the two are PRObjects with their *db* identical and *name*
-    and *id* equal.
+    :returns: True iff the two are PRObjects with the same *id* in DBs with the
+      same URL -- the same identity *__hash__()* uses. (Not *name*: names
+      needn't be unique, and in subclasses may be computed -- eg: inherited --
+      in ways that themselves compare objects.)
     :rtype: bool
     '''
+    if self is other:
+      return True
     if isinstance(other, PRObject):
-      return self.id == other.id and self.name == other.name and self.db is other.db
+      same = self._id == other._id and self._dbUrl() == other._dbUrl()
+      if same: # identity and == should agree; if not, something made a duplicate
+        logger.warning(f'Duplicate objects for {self._dbUrl()}#{self._id}: {id(self):#x} and {id(other):#x}')
+      return same
     return False
+
+  def _dbUrl(self) -> str:
+    'The URL of our DB, or the one it had when we were created if it has gone.'
+    db = self._db()
+    return self._url if db is None else db.url
   
   @override
   def __hash__(self):
@@ -521,7 +533,9 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
       self._db[_id] = value
       ret = _id
     self.setDirty()
-    self.notify(("new", (ret, value)))
+    #self.notify(("new", (ret, value)))
+    with Subject.ChangeMgr(self, later=True) as cm:
+      cm.registerTopics(("new", (ret, value)))
     return ret
   
   def _unregister(self, _id:int) -> None:

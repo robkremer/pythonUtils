@@ -493,10 +493,14 @@ class AttrEditor(tk.Toplevel):
         origValue = None
       else:
         origValue = origAttr.value
-        if isinstance(origAttr.type, type):
-          typeStr = getFullClassName(origAttr.type)
+        origType = origAttr.type
+        if origType is None: # a value-only override: the label shows the inherited type
+          inhRec = self.attrs.getInhAttr(k)
+          origType = None if inhRec is None else inhRec.type
+        if isinstance(origType, type):
+          typeStr = getFullClassName(origType)
         else:
-          typeStr = str(origAttr.type)
+          typeStr = str(origType)
           
       valueChanged = True # assume it's changed and try to disprove it
       if v.editor is None:
@@ -1049,14 +1053,28 @@ class HierarchicalAttrEditor(AttrEditor):
     # return  v.qualFinal is not None and v.qualFinal.get() != origAttr.isFinal() or \
     #         v.qualInstanceFinal is not None and v.qualInstanceFinal.get() != origAttr.isInstanceFinal() or \
     #         v.qualValueNotInherited is not None and v.qualValueNotInherited.get() != origAttr.isValueNotInheritable()
-    return v.qual is not None and v.qual != origAttr.restriction
+    return self._restrictionChanged(k, origAttr)
+
+  def _effectiveRestriction(self, k:str, origAttr:Attribute|None) -> Restriction|None:
+    '''
+    :returns: The restriction the qualifier menu started with: the local one,
+      or failing that the inherited one (see *makeQuals()*).
+    '''
+    if origAttr is not None and origAttr.restriction is not None:
+      return origAttr.restriction
+    inhRec = self.attrs.getInhAttr(k)
+    return None if inhRec is None else inhRec.restriction
+
+  def _restrictionChanged(self, k:str, origAttr:Attribute|None) -> bool:
+    qual = self.vars[k].qual
+    return qual is not None and qual != self._effectiveRestriction(k, origAttr)
     
   @override
   def _saveKey(self, k:str, origAttr:Attribute):
-    AttrEditor._saveKey(self, k, origAttr)
-    # v = self.vars[k]
-    # assert self.updatedKeys is not None
-    # self.updatedKeys[k].restriction = v.qual
+    AttrEditor._saveKey(self, k, origAttr) # drops the restriction on inherited overrides
+    assert self.updatedKeys is not None
+    if self._restrictionChanged(k, origAttr):
+      self.updatedKeys[k].restriction = self.vars[k].qual
               # AttributeFlags(
               # (AttributeFlags.FINAL if v.qualFinal is not None and v.qualFinal.get() else AttributeFlags.NIL) |
               # (AttributeFlags.INSTANCE_FINAL if v.qualInstanceFinal is not None and v.qualInstanceFinal.get() else AttributeFlags.NIL) |
