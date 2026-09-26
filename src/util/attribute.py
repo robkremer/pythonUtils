@@ -71,21 +71,79 @@ from util.persistence.serialize import Serializable, SerializableType, strdict,\
 from util.dirtyable import Dirtyable
 
 class RestrictionTypes(Flag):
+  '''
+  Restrictions on how an attribute is inherited, by individuals or by
+  subtypes (see :py:class:`Restriction`):
+
+    - NOINHERIT: the key is inherited, but the value isn't (a slot that must
+      be filled locally).
+    - NOOVERRIDE: the inherited value can't be overridden.
+    - PRIVATE: the key isn't inherited at all; the attribute is invisible. It
+      subsumes the other bits.
+  '''
   UNRESTRICTED = 0
   NOINHERIT = 1
   NOOVERRIDE = 2
   ILLEGAL = 3
-  
+  PRIVATE = 4
+
 UNRESTRICTED = RestrictionTypes.UNRESTRICTED
 NOINHERIT    = RestrictionTypes.NOINHERIT
 NOOVERRIDE   = RestrictionTypes.NOOVERRIDE
 ILLEGAL      = RestrictionTypes.ILLEGAL
+PRIVATE      = RestrictionTypes.PRIVATE
+
+def restrictionTypesToString(r:RestrictionTypes|None) -> str:
+  '''
+  :returns: The flag's name; a combination is "|"-separated (eg: "NOINHERIT|PRIVATE"),
+    or "None" for None.
+  '''
+  if r is None:
+    return "None"
+  if r.name is not None:
+    return r.name
+  return "|".join(m.name for m in RestrictionTypes if m.value and (m.value & r.value) == m.value
+                  and m.value & (m.value - 1) == 0 and m.name is not None) # single bits only
+
+def restrictionTypesFromString(s:str) -> RestrictionTypes|None:
+  'The inverse of :py:func:`restrictionTypesToString`.'
+  s = s.strip()
+  if s == "None":
+    return None
+  ret = UNRESTRICTED
+  for name in s.split("|"):
+    ret |= RestrictionTypes[name.strip()]
+  return ret
 
 @dataclass
 class Restriction:
   global RESTRICTION_TYPES
   individual:Optional[RestrictionTypes]
+  "The restriction on individuals inheriting the attribute."
   type:Optional[RestrictionTypes]
+  "The restriction on subtypes inheriting the attribute."
+
+  def hides(self, isIndividual:bool) -> bool:
+    '''
+    :returns: True iff an inheriting individual (or type, if *isIndividual* is
+      False) can't see the attribute at all.
+    '''
+    r = self.individual if isIndividual else self.type
+    return r is not None and bool(r & PRIVATE)
+
+  def legalityError(self) -> str|None:
+    '''
+    :returns: Why this restriction is illegal, or None if it's legal.
+    '''
+    for side, r in (("individual", self.individual), ("type", self.type)):
+      if r is not None and not (r & PRIVATE) and (r & ILLEGAL) == ILLEGAL:
+        return f'Over restricted {side}.'
+    # visibility must be monotone: individuals are below types, so anything
+    # hidden from subtypes must be hidden from individuals too.
+    if self.hides(False) and not self.hides(True) and self.individual is not None:
+      return 'An attribute that is PRIVATE to types must be PRIVATE to individuals.'
+    return None
+
   @classmethod
   def fromstring(cls, name:str) -> Restriction:
     choices =[x for x in RESTRICTION_TYPES if x.startswith(name.upper())]
@@ -113,8 +171,12 @@ CONST_TYPEOVERRIDE = Restriction(NOOVERRIDE, UNRESTRICTED)
 'Restriction: Constant that types can change.'
 # ILLEGAL1           = Restriction(UNRESTRICTED, NOINHERIT)
 # 'Illegal'
-LOCAL              = Restriction(NOINHERIT, NOINHERIT)
-'Restriction: Types must change but individuals can\'t. Eg: name of a relation.'
+LOCAL              = Restriction(PRIVATE, PRIVATE)
+'Restriction: Visible only on the object that defines it. Eg: a relation\'s "symmetric" tag.'
+TYPEONLY           = Restriction(PRIVATE, UNRESTRICTED)
+'Restriction: Subtypes inherit it, individuals can\'t see it.'
+UNINHERITED        = Restriction(NOINHERIT, NOINHERIT)
+'Restriction: Everything below sees the key, but must supply its own value.'
 TYPENAME           = Restriction(NOOVERRIDE, NOINHERIT)
 'Restriction: Types must change but individuals can\'t. Eg: name of a relation.'
 # ILLEGAL2           = Restriction(UNRESTRICTED, NOOVERRIDE) 
@@ -130,7 +192,9 @@ RESTRICTION_TYPES:dict[str,Restriction] = {
   "CONST": CONST,
   "CONST_TYPEOVERRIDE": CONST_TYPEOVERRIDE,
   "TYPENAME": TYPENAME,
-  "LOCAL": LOCAL}    
+  "LOCAL": LOCAL,
+  "TYPEONLY": TYPEONLY,
+  "UNINHERITED": UNINHERITED}    
 
 class NoValue(Serializable): 
   '''
@@ -367,10 +431,10 @@ class Attribute(Serializable, Dirtyable):
   @classmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
     def saveRest(r:Restriction) -> str:
-      return f'{r.individual.name if r.individual is not None else "None"}:{r.type.name if r.type is not None else "None"}'
+      return f'{restrictionTypesToString(r.individual)}:{restrictionTypesToString(r.type)}'
     def restoreRest(string:str) -> Restriction:
       i,t = string.split(":")
-      return Restriction(RestrictionTypes[i] if i != "None" else None, RestrictionTypes[t] if t != "None" else None)
+      return Restriction(restrictionTypesFromString(i), restrictionTypesFromString(t))
     def getType(name:str) -> type|str|None:
       if name == "None":
         return None
@@ -556,12 +620,7 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
     :returns: The value field of the *Attribute* object at *key* if found.
     :rtype: Attribute
     '''
-    p:AttributedObject
-    for p in self.getSupers():
-      r:Attribute = p.getAttr(key)
-      if r is not None:
-        return r
-    return None
+    return self._getSuperAttr(key)
 
   def getAttr(self, key:str) -> Attribute | None:
     '''
@@ -689,12 +748,15 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
     keys, each exactly once. (Order is otherwise unspecified — unlike a
     plain *dict*, this isn't insertion order.)
     '''
-    keys:set = set(super().keys())
+    local:set = set(super().keys())
+    keys:set = set()
     s:AttributedObject
     for s in self.getSupers():
       keys.update(s)  # iterates s itself, i.e. s.__iter__() -- s's own local+inherited keys
-    for k in keys:
-      yield k
+    yield from local
+    for k in keys - local:
+      if self._getSuperAttr(k) is not None: # skip keys PRIVATE to our kind
+        yield k
 
   def __len__(self) -> int:
     '''
@@ -856,10 +918,9 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
         if not isValidType(attr.type, attr.value): #isinstance(attr.value, attr.type):
           raise ValueError(f'key "{key}": Value of type {type(attr.value)} is not an instance of {attr.type}.')
         assert attr.restriction is not None
-        if attr.restriction.individual == RestrictionTypes.ILLEGAL:
-          raise PermissionError(f'key "{key}": Over restricted individual.')
-        if attr.restriction.type == RestrictionTypes.ILLEGAL:
-          raise PermissionError(f'key "{key}": Over restricted type.')
+        err = attr.restriction.legalityError()
+        if err is not None:
+          raise PermissionError(f'key "{key}": {err}')
       else:
         raise ValueError(f'key "{key}": A new attribute must be complete.')
     
@@ -878,16 +939,22 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
       if attr.restriction is not None:
         if superAttr.restriction.individual is not None \
               and attr.restriction.individual is not None:
-          if (superAttr.restriction.individual | attr.restriction.individual) == RestrictionTypes.ILLEGAL:
+          if Restriction(superAttr.restriction.individual | attr.restriction.individual, None).legalityError():
             raise PermissionError(f'key "{key}": Bad individual inheritance restrictions {attr.restriction.individual} <: {superAttr.restriction.individual}.')
           if superAttr.restriction.individual.value > attr.restriction.individual.value:
             raise PermissionError(f'key "{key}": Bad individual inheritance restrictions {attr.restriction.individual} <: {superAttr.restriction.individual}.')
         if superAttr.restriction.type is not None \
               and attr.restriction.type is not None:
-          if (superAttr.restriction.type | attr.restriction.type == RestrictionTypes.ILLEGAL):
+          if Restriction(None, superAttr.restriction.type | attr.restriction.type).legalityError():
             raise PermissionError(f'key "{key}": Bad type inheritance restrictions {attr.restriction.type} <: {superAttr.restriction.type}.')
           if superAttr.restriction.type.value > attr.restriction.type.value:
             raise PermissionError(f'key "{key}": Bad type inheritance restrictions {attr.restriction.type} <: {superAttr.restriction.type}.')
+        def merge(sup:RestrictionTypes|None, mine:RestrictionTypes|None) -> RestrictionTypes|None:
+          return sup if mine is None else mine if sup is None else sup | mine
+        err = Restriction(merge(superAttr.restriction.individual, attr.restriction.individual),
+                          merge(superAttr.restriction.type, attr.restriction.type)).legalityError()
+        if err is not None:
+          raise PermissionError(f'key "{key}": {err}')
       
     # inheritance restrictions (enforcement)
     restriction, override = cls._getRestriction(isIndividual, 
@@ -947,7 +1014,9 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
     s:AttributedObject
     for s in self.getSupers():
       a:Optional[Attribute] = s.getAttr(key)
-      if a is not None:
+      # we're "blind" to attributes PRIVATE to our kind (but may see the same
+      # key along another inheritance path)
+      if a is not None and not (a.restriction is not None and a.restriction.hides(self.isIndividual())):
         return a
     return None
         

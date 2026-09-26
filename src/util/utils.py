@@ -850,7 +850,7 @@ def delOne[T](lst:list[T], val:T,
       del lst[i]
       return True
   if throw:
-    raise KeyError(f'delOne() failed. Can\'t find {item} in {lst}.')
+    raise KeyError(f"delOne() failed. Can't find {val} in {lst}.")
   return False
 
 def grouped[T](iterable:Iterable[T], n:int) -> Iterable[tuple[T,...]]:

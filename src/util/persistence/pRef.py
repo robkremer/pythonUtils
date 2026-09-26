@@ -409,7 +409,12 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     if urlExists(url) and not _reading:
       raise FileExistsError(f'PRDb.__init__(): URL already exists. Use PRDb.getDB("{url}") to open it.')
     self.url:str = url
-    self._db:dict[int, T] = dict()
+    class NoNoneDict[_KT,_VT](dict):
+      def __setitem__(self, key:_KT, value:_VT)->None:
+        if value is None:
+          raise ValueError(f'None not allowed as a value. (key="{key}")')
+        super().__setitem__(key, value)
+    self._db:NoNoneDict[int, T] = NoNoneDict()
     self.nextID:int = 1
     if memoryResident:
       PRDb.AllDBs[self.url] = self
@@ -433,7 +438,8 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
       assert isinstance(slf, PRDb), f'Expected PRDb for param 1, got {type(slf)}.'
       slf._db = convertStrdictToDict(cast(strdict,d))
       for k,v in slf._db.items():
-        v._id = k
+        if v is not None:
+          v._id = k
     def clearReading(slf:Serializable, _:SerializableType):
       assert isinstance(slf, PRDb), f'Expected PRDb for param 1, got {type(slf)}.'
       slf.reading = False
@@ -558,7 +564,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     if not dirty:
       obj:PRObject
       for obj in self._db.values():  # LOCAL attributes only -- an inherited Attribute belongs to (and is tracked dirty by) its owning super object, not this one
-        if obj.isDirty():
+        if obj is not None and obj.isDirty():
           obj.setDirty(False)
     super().setDirty(dirty)
 
