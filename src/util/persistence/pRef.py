@@ -559,7 +559,8 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     if self._db.get(_id, None) is None:
       raise ValueError(f'PRDB._unregister(): indici {_id} does not exist.')
     self.setDirty()
-    self.notify(("del", (_id,)))
+    with Subject.ChangeMgr(self, later=True) as cm:
+      cm.registerTopics(("del", (_id,)))
     del self._db[_id]
   
   @override
@@ -852,32 +853,26 @@ class PReference[T:PRObject]:
     :returns: A *PRObject* represented by *text*.
     :rtype: PRObject
     '''
-    # Be lax in evaluating PReference obects: if we get FineNotFound, assume we're missing the # prefix...
-    try:
-      ref:PReference = PReference(text)
+    ref:PReference = PReference(text)
+    try: # if the DB can't be found, then maybe the user left a prefix "#" off a relative name spec
+      theID:str|int|None = ref.id if ref.id != -1 else ref.name
+      if theID is None:
+        assert ref.url is not None
+        return PRDb.getDB(ref.url)
+      if ref.url is not None: # absolute id
+        db:PRDb[T1] = PRDb.getDB(ref.url)
+      else: # relative id
+        if contextDB is not None:
+          if isinstance(contextDB, str):
+            db = PRDb.getDB(contextDB)
+          else:
+            db = contextDB
+        else:
+          raise LookupError(f'Relative reference requires a *relativeTo* parameter.')
     except FileNotFoundError as ex:
       if "#" not in text:
         return PReference.eval('#'+text, contextDB, filtr)
       raise ex
-      
-    # if filtr is None:
-    #   return ref(contextDB)
-    
-    #ref = PReference(text)
-    theID:Optional[str|int] = ref.id if ref.id != -1 else ref.name
-    if theID is None:
-      assert ref.url is not None
-      return PRDb.getDB(ref.url)
-    if ref.url is not None: # absolute id
-      db:PRDb[T1] = PRDb.getDB(ref.url)
-    else: # relative id
-      if contextDB is not None:
-        if isinstance(contextDB, str):
-          db = PRDb.getDB(contextDB)
-        else:
-          db = contextDB
-      else:
-        raise LookupError(f'Relative reference requires a *relativeTo* parameter.')
     
     def search(dbs:list[PRDb[T1]]) -> list[T1]:
       for db in dbs:
