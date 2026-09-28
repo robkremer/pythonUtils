@@ -1484,7 +1484,7 @@ import traceback
 import tkinter as tk
 from tkinter import scrolledtext
 
-def showExceptionDialog(parent: tk.Toplevel | None = None, title: str = "Error", text:str|None=None) -> None:
+def showExceptionDialog(parent: tk.Toplevel|tk.Tk|None = None, title: str = "Error", text:str|None=None) -> None:
   """Display the currently-handled exception's traceback (as returned by
   traceback.format_exc()) in a scrollable, resizable dialog. Call this
   from within an `except:` block, the same place you'd call

@@ -43,7 +43,7 @@ Created on Mar 17, 2025
 import logging
 import tkinter as tk
 import re
-from tkinter import colorchooser, ttk
+from tkinter import colorchooser, ttk, messagebox
 from dataclasses import dataclass
 from typing import Any, Callable, Union, Optional, override, Type
 from types import NoneType
@@ -117,6 +117,11 @@ def applyEditAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes 
 def _updateWith(attrs:AttributedObject, attrChangeList):
   pass
   
+def _keyedMessage(key:str, ex:Exception) -> str:
+  'An error message that names *key* exactly once.'
+  msg = str(ex)
+  return msg if msg.startswith(f'key "{key}"') else f'key "{key}": {msg}'
+
 def getEditedAttrsCommandObj(parent:tk.Widget, attrs:AttributedObject, title="Attributes Editor", editKey:Optional[str]=None, disabled:bool=False):
   '''
   :return: An *UpdateAttrsCommand* object that displays an *AttrsEditor* or a
@@ -400,6 +405,24 @@ class AttrEditor(tk.Toplevel):
     except:
       logger.exception("AttrEditor.show() failed on wait_window():")
     
+  def _validateUpdates(self) -> list[str]:
+    '''
+    Dry-run the validation *setAttr()* will apply to each changed attribute.
+
+    :returns: A message for each change that would be rejected.
+    '''
+    if not isinstance(self.attrs, AttributedObject) or not self.updatedKeys:
+      return []
+    errors:list[str] = []
+    for k, attr in self.updatedKeys.items():
+      if attr is None: # a deletion
+        continue
+      try:
+        self.attrs._validateOverride(k, self.attrs.isIndividual(), attr, self.attrs._getSuperAttr(k))
+      except Exception as ex:
+        errors.append(_keyedMessage(k, ex))
+    return errors
+
   def dismiss(self):
     '''
     Call this method to destroy the window. It will also release the modal window.
@@ -565,6 +588,7 @@ class AttrEditor(tk.Toplevel):
       return
     
     self.updatedKeys:dict[str, Optional[Attribute]] = dict()
+    errors:list[str] = []
     for k,v in self.vars.items():
       #ignore the records just used to display inherited items
       if k.endswith(INHERIT_KEY_EXT):
@@ -589,6 +613,17 @@ class AttrEditor(tk.Toplevel):
           self._saveKey(k, origAttr)
       except Exception as ex:
         logger.exception(f'Failed on key {k}, value {v.getValue()}: {ex.__class__.__name__}: {ex}')
+        errors.append(_keyedMessage(k, ex))
+
+    # Check the changes against the inheritance rules now, while the user can
+    # still fix them: once the dialog is gone, a rejected setAttr() would only
+    # be logged, and the change silently lost.
+    errors += self._validateUpdates()
+    if errors:
+      messagebox.showerror(self.title() or "Attribute Editor",
+                           "These changes can't be saved:\n\n" + "\n".join(errors), parent=self)
+      self.updatedKeys = None # nothing is saved unless the user fixes them and saves again
+      return
         
     if len(self.updatedKeys) == 0:
       self.updatedKeys = None
