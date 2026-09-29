@@ -1165,8 +1165,10 @@ class CommandContext:
   def __getattribute__(self, name: str) -> Any:
     attr = super().__getattribute__(name)
     try:
-      # if this is method or function.
-      if not name.startswith('__') and callable(attr):
+      # if this is a public method or function (private "_" ones -- helpers, which
+      # loadCommands() doesn't make commands of either -- are left alone: no
+      # defaults are filled in for them)
+      if not name.startswith('_') and callable(attr):
         className = funNameToCommandName(name)#commandName[0].upper()+commandName[1:]
 
         #can't use hasattr() to determine if there is a corresponding command...
@@ -1394,7 +1396,7 @@ class CompositeCommand(Command):
   @override
   def undo(self)->Any:
     ret = super().undo()
-    for c in self.commands:
+    for c in reversed(self.commands): # (later commands may depend on earlier ones)
       c.undo()
     return ret
 
