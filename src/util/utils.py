@@ -764,10 +764,13 @@ def findConcreteSubclasses[T](abstractClass: Type[T]) -> list[Type[T]]:
   origin = _originOf(abstractClass)
   result: list[Type[T]] = []
   for sub in origin.__subclasses__():
-    if inspect.isabstract(sub):
-      result.extend(findConcreteSubclasses(sub))
-    else:
+    if not inspect.isabstract(sub):
       result.append(sub)
+    # a concrete class may have concrete subclasses of its own (eg: a strategy
+    # that reuses another's encoding), so always keep walking down
+    for s in findConcreteSubclasses(sub):
+      if s not in result: # (a class reachable by more than one path)
+        result.append(s)
   return result
 
 def importSubmodules(packageName: str, filtr:Optional[Callable[[str], bool]]=None) -> None:

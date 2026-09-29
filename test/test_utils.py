@@ -49,7 +49,23 @@ class Test(unittest.TestCase):
     self.assertEqual(removeDuplicates([1,2,[1,[3,4,2]],1,1,2], asTree=True), [1,2,[[3,4]]])
     self.assertEqual(removeDuplicates([1,2,[1,[3,4,2]],1,5,1,2], asTree=True), [1,2,[[3,4]],5])
 
-    
+  def test_findConcreteSubclasses(self):
+    from abc import ABC, abstractmethod
+    from util.utils import findConcreteSubclasses
+    class Base(ABC):
+      @abstractmethod
+      def f(self): ...
+    class Mid(Base): # still abstract
+      pass
+    class A(Mid):
+      def f(self): pass
+    class B(A):      # a concrete subclass of a concrete class
+      pass
+    class C(Base):
+      def f(self): pass
+    self.assertEqual(set(findConcreteSubclasses(Base)), {A, B, C})
+
+
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

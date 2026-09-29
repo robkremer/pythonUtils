@@ -285,7 +285,7 @@ class ParamInfo:
   def __init__(self, name:str, typ:Optional[type], 
                getter:Optional[Callable[[Serializable], SerializableType]]=None,
                setter:Optional[Callable[[SerializableType], Any]]=None,
-               unique:bool=False):
+               unique:bool=False, optional:bool=False):
     '''
     :param name: The name of the parameter in the classes constructor (*__init__()*).
     :type name: str
@@ -319,6 +319,8 @@ class ParamInfo:
     else:
       self.setter = setter
     self.unique:bool = unique
+    self.optional:bool = optional
+    'Iff True, a file without this parameter still loads: it is left out of the constructor call (so its default applies). For parameters added after files were saved.'
     
 
 class PropertyInfo():
@@ -328,7 +330,7 @@ class PropertyInfo():
   def __init__(self, name:str, typ:type, 
                getter:Optional[Callable[[Serializable], SerializableType]]=None,
                setter:Optional[Callable[[Serializable, SerializableType], None]]=None,
-               unique:bool=False):
+               unique:bool=False, optional:bool=False):
     '''
     :param name: The name of the property in the class's definition. You may
       also use the value "_" in order the just execute the *setter* function
@@ -370,6 +372,8 @@ class PropertyInfo():
     else:
       self.setter = setter
     self.unique:bool = unique
+    self.optional:bool = optional
+    'Iff True, a file without this property still loads: it just isn\'t set. For properties added after files were saved.'
 
 
 class SerializationStrategy[T](ABC):
@@ -1396,6 +1400,8 @@ class SerializationStrategy[T](ABC):
         for pinfo in desc:
           sub:Optional[T] = self._getKVPair(elem, pinfo.name)
           if sub is None:
+            if getattr(pinfo, "optional", False):
+              continue
             raise LookupError(f'Subelement parameter named "{pinfo.name}" not found.')# in Element "{elem.tag}" of type {elem.attrib[ATTR_TYPE]}.')
           if not (pinfo.typ is None or \
                  issubclass(cast(type, getFullyQualifiedClass(self._getAttr(sub, ATTR_TYPE))), pinfo.typ) \
@@ -1415,6 +1421,8 @@ class SerializationStrategy[T](ABC):
           else:
             sub = self._getKVPair(elem, pinfo.name)
             if sub is None:
+              if getattr(pinfo, "optional", False):
+                continue
               raise LookupError(f'Subelement property named "{pinfo.name}" not found.')# in Element "{elem.tag}" of type {elem.attrib[ATTR_TYPE]}.')
           assert pinfo.typ is None or sub is None or \
                  issubclass(cast(type, getFullyQualifiedClass(self._getAttr(sub, ATTR_TYPE))), pinfo.typ) \

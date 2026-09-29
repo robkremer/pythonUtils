@@ -87,13 +87,14 @@ class AGObject[TDB:AbstractGraph, R:"AGRelation"](PRObject[TDB]):
     '''
     #TODO: This is a potential problem for chains of transitive relations.
     if not self._isConnected():
-      raise RuntimeError("Trying to _disconnect() any already-disconnected object: {self}.")
+      raise RuntimeError(f"Trying to _disconnect() an already-disconnected object: {self}.")
     
-    # disconnect from related-to objects
-    for r in self._incoming:
-      r._disconnect(keep=self)
-    for r in self._outgoing:
-      r._disconnect(keep=self)
+    # disconnect from related-to objects. A relation with this object at BOTH
+    # ends (eg: top's own relation types, top -> top) is in both lists: skip it
+    # the second time round, as _reconnect() does.
+    for r in list(self._incoming) + list(self._outgoing):
+      if r._isConnected():
+        r._disconnect(keep=self)
 
     # unregister from the model
     self.db._unregister(self._id)
