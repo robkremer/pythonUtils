@@ -35,10 +35,12 @@ from typing import Iterator, ItemsView, KeysView, ValuesView, Optional, Union,\
 from abc import abstractmethod
 from weakref import ref, ReferenceType
 from util.utils import openUrl, urlExists, isValidURL, fixURL
-from urllib.parse import unquote, quote, urlparse
+from urllib.parse import unquote, quote, urlparse, urljoin
+from contextlib import contextmanager
 #import xml.etree.ElementTree as ET
 from util.persistence.serialize import Serializable, InstantiationInfo,\
   ParamInfo, PropertyInfo, SerializationStrategy, strdict, SerializableType
+from util.persistence.serialize import DEFAULT_STRATEGY
 from pathlib import Path
 import re
 import logging
@@ -303,7 +305,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
           url = k # found a match, so carry on with the matched full path
           break
            
-    url = fixURL(url, extension=".xml", replaceExt=None, mode="")[0] # get it without checking access
+    url = cls._relocate(fixURL(cls.absoluteURL(url), extension=".xml", replaceExt=None, mode="")[0]) # get it without checking access
     if not isValidURL(url):
       raise ValueError(f'Malformed URL: "{url}"')
     if url in PRDb.AllDBs:
@@ -347,21 +349,177 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     # completely different file instead of raising -- the moment the XML strategy
     # happens to be tried. Passing None here preserves *url*'s actual extension, same
     # as every other read/write call site in this codebase already does.
-    read = SerializationStrategy.readx(url, replaceExt=None, mode=mode)
-    assert isinstance(read, cls)
-    ret:Self = read
+    ret:Self = cls.readFile(url, mode=mode)
+    if not isinstance(ret, cls):
+      raise TypeError(f'PRDb._read(): Expected a {cls.__name__} in "{url}"; got type {str(type(ret))}.')
+    return ret
+
+  @classmethod
+  def readFile(cls, url:str, mode="w") -> Any:
+    '''
+    Read the object in the file (or at the URL) *url* -- usually a PRDb, but not
+    necessarily -- and return it. Use this rather than
+    *SerializationStrategy.readx()* to read a PRDb, as it takes care of files
+    that have been copied or moved:
+
+    A copied or moved file still has its old URL in it. That's found out first
+    (without reading the file), so that while it's read it's taken as being the
+    file it was actually read from -- never confused with the original (which
+    may be open) -- and so are its references to files that were next to it, if
+    they've been copied along with it (see *_relocate()*). Its *previousURL* is
+    the URL it was copied from (written in the header the next time it's saved).
+    '''
+    try:
+      stored = SerializationStrategy.peekStringx(url, "root", "url", mode=mode)
+      previous = SerializationStrategy.peekStringx(url, "header", "previousURL", mode=mode)
+    except Exception:
+      stored = previous = None
+    moved = stored is not None and stored != url
+    if moved:
+      logger.warning(f'"{url}" was copied or moved from "{stored}": it\'s now taken to be "{url}" (and will be saved there).')
+      PRDb._readFrames.append((stored, url))
+    try:
+      with PRDb.basedOn(url): # (relative references in it are relative to where it actually is)
+        read = SerializationStrategy.readx(url, replaceExt=None, mode=mode)
+    finally:
+      if moved:
+        PRDb._readFrames.pop()
+    ret = read
     if not isinstance(ret, PRDb):
-      raise TypeError(f'PRDb._read(): Expected a PRDb in "{url}"; got type {str(type(ret))}.')
-    if ret.url != url:
+      return ret
+    if ret.url != url: # (shouldn't happen any more: see above)
       logger.warning(f'DB read from "{url}" appears to have been copied from "{ret.url}". Changing its internal URL.')
       PRDb.AllDBs[url] = ret
-      del PRDb.AllDBs[ret.url]
+      if PRDb.AllDBs.get(ret.url) is ret:
+        del PRDb.AllDBs[ret.url]
       ret.url = url
+    ret.previousURL = stored if moved else previous
+    return ret
+
+  _bases:list[str] = []
+  '''
+  The URLs of the files being read or written just now, innermost last: relative
+  URLs in a file are relative to the file (see *relativeURL()*, *absoluteURL()*).
+  '''
+
+  @classmethod
+  @contextmanager
+  def basedOn(cls, url:str|None):
+    '''
+    Within this context, relative URLs are relative to *url* (eg: the file being
+    read or written) -- unless *url* is None.
+    '''
+    if url is None:
+      yield
+      return
+    cls._bases.append(url)
+    try:
+      yield
+    finally:
+      cls._bases.pop()
+
+  @staticmethod
+  def isRelativeURL(url:str) -> bool:
+    'Whether *url* is a relative URL, eg: "pets.snm" or "shared/animals.snm" (not "file:...", "sn:...", "/...", "$name", "#12").'
+    return bool(url) and urlparse(url).scheme == "" and not url.startswith(("/", "$", "~", "#", "?"))
+
+  @classmethod
+  def absoluteURL(cls, url:str, base:str|None=None) -> str:
+    '''
+    *url*, if it's relative, made absolute against *base* -- by default the file
+    being read or written (see *basedOn()*); otherwise *url* as is (eg: a path
+    typed by the user, relative to the current directory).
+    '''
+    base = base if base is not None else (cls._bases[-1] if cls._bases else None)
+    if base is None or not cls.isRelativeURL(url):
+      return url
+    ret = urljoin(base, url)
+    path = ret.partition("#")[0].partition("?")[0]
+    if path not in PRDb.AllDBs and not urlExists(path):
+      # A file copied on its own: what it referred to isn't next to it -- so
+      # it's what was next to it where it was copied from.
+      for stored, actual in reversed(cls._readFrames):
+        if actual == base:
+          alt = urljoin(stored, url)
+          altPath = alt.partition("#")[0].partition("?")[0]
+          if altPath in PRDb.AllDBs or urlExists(altPath):
+            if (path, altPath) not in cls._relocated:
+              cls._relocated.add((path, altPath))
+              logger.warning(f'"{actual}" refers to "{url}", which isn\'t there (as "{path}"), but was where it was copied from: taking it to be "{altPath}".')
+            return alt
+          break
+    return ret
+
+  MAX_UP:int = 2
+  "The most folders up (\"../\") a relative URL goes (see *relativeURL()*): further than that, URLs stay absolute."
+
+  @classmethod
+  def relativeURL(cls, url:str, base:str|None=None) -> str:
+    '''
+    *url* relative to *base* -- by default the file being read or written (see
+    *basedOn()*) -- if it's a file in the same folder, below it, or at most
+    *MAX_UP* folders up from it, eg: "pets.snm", "shared/animals.snm" or
+    "../animals.snm"; otherwise *url* as is (eg: a file in an unrelated folder,
+    or anything not a file). So a block of files copied together keeps referring
+    to one another. (A file copied on its own still finds what it referred to:
+    see *absoluteURL()*.)
+    '''
+    base = base if base is not None else (cls._bases[-1] if cls._bases else None)
+    if base is None or not url:
+      return url
+    u, b = urlparse(url), urlparse(base)
+    if u.scheme != "file" or b.scheme != "file" or u.netloc != b.netloc:
+      return url
+    target, folder = u.path.split("/"), b.path.split("/")[:-1] # (the target's path; the base's folder)
+    common = 0
+    while common < min(len(target) - 1, len(folder)) and target[common] == folder[common]:
+      common += 1
+    up = len(folder) - common
+    if up > cls.MAX_UP or common <= 1: # (too far up, or nothing in common but the root)
+      return url
+    rel = "/".join([".."] * up + target[common:])
+    return rel + (f"?{u.query}" if u.query else "") + (f"#{u.fragment}" if u.fragment else "")
+
+  _readFrames:list[tuple[str, str]] = []
+  "(stored URL, actual URL) for each copied or moved file being read just now (see _read())."
+  _relocated:set[tuple[str, str]] = set()
+  "(from, to) relocations already reported."
+
+  @classmethod
+  def _relocate(cls, url:str) -> str:
+    '''
+    While a copied or moved file is being read (see *_read()*): its old URL is
+    taken to be the one it was read from; and a URL of a file that was next to
+    it (eg: the model of a copied view) is taken to be the same file next to
+    it now -- if that file is there. Otherwise, *url*.
+    '''
+    base, hash_, frag = url.partition("#")
+    for stored, actual in reversed(cls._readFrames):
+      if base == stored:
+        return actual + hash_ + frag
+      oldDir, newDir = stored.rsplit("/", 1)[0], actual.rsplit("/", 1)[0]
+      if oldDir != newDir and base.startswith(oldDir + "/") and "/" not in base[len(oldDir) + 1:]:
+        candidate = newDir + base[len(oldDir):]
+        if candidate in PRDb.AllDBs or urlExists(candidate):
+          if (base, candidate) not in cls._relocated:
+            cls._relocated.add((base, candidate))
+            logger.warning(f'"{actual}" refers to "{base}", which was next to it: taking it to be "{candidate}", which is next to it now.')
+          return candidate + hash_ + frag
+    return url
+
+  def serializationHeader(self) -> dict[str, str]:
+    '''
+    Header fields for when this is written (see *SerializationStrategy.tostring()*):
+    its URL, and the URL it was copied or moved from, if it was.
+    '''
+    ret = {"url": self.url}
+    if getattr(self, "previousURL", None):
+      ret["previousURL"] = self.previousURL
     return ret
   
   def __new__(cls, url:str, mode="w", memoryResident:bool=True, _reading:bool=False):
     assert issubclass(cls, PRDb)
-    url = fixURL(url, extension=".xml", replaceExt=None, mode=mode)[0]
+    url = cls._relocate(fixURL(cls.absoluteURL(url), extension=".xml", replaceExt=None, mode=mode)[0])
     if not isValidURL(url):
       raise ValueError(f'PRDb.__init__(): Malformed URL: "{url}"')
     if memoryResident and url in PRDb.AllDBs:
@@ -413,7 +571,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     self.superDBs:list[Self] = []
     'List of other DBs that will be searched for indicies ([]) and get().'
     
-    url = fixURL(url, extension=".xml", replaceExt=None, mode=mode)[0]
+    url = self._relocate(fixURL(self.absoluteURL(url), extension=".xml", replaceExt=None, mode=mode)[0])
     if not isValidURL(url):
       raise ValueError(f'PRDb.__init__(): Malformed URL: "{url}"')
     if url in PRDb.AllDBs:
@@ -431,6 +589,8 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     if memoryResident:
       PRDb.AllDBs[self.url] = self
     self._writeLocked = False
+    self.previousURL:str|None = None
+    "The URL this was copied or moved from, if it was (see _read()); written in the header."
     
   @classmethod
   @override
@@ -472,9 +632,9 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     path:Path = Path(url.path)
     return path.name
     
-  def save(self, saveas:Optional[str]=None, overwrite=False, format:str="XML") -> None:
+  def save(self, saveas:Optional[str]=None, overwrite=False, format:str=DEFAULT_STRATEGY) -> None:
     if saveas is not None:
-      url = fixURL(saveas, extension=f".{format.lower()}", replaceExt=None, mode="w")[0]
+      url = fixURL(saveas, extension=SerializationStrategy.findStrategy(format).defaultExtension(), replaceExt=None, mode="w")[0]
       if not isValidURL(url):
         raise ValueError(f'PRDb.save(): Malformed URL: "{url}"')
       if url in PRDb.AllDBs:
@@ -483,10 +643,12 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
         raise FileExistsError(f'PRDb.save(): URL already exists. Did you mean to use the *overwrite* option?')
       oldURL = self.url 
       self.url = url
-      SerializationStrategy.writex(url, self, format, replaceExt=None)
+      with PRDb.basedOn(url): # (references to files next to it are written relative to it)
+        SerializationStrategy.writex(url, self, format, replaceExt=None)
       self.url = oldURL
     else:
-      SerializationStrategy.writex(self.url, self, format, replaceExt=None)
+      with PRDb.basedOn(self.url):
+        SerializationStrategy.writex(self.url, self, format, replaceExt=None)
       
     
     
@@ -832,6 +994,8 @@ class PReference[T:PRObject]:
     if url is not None:
       if contextDB is not None and url == contextDB.url:
         url = None
+      else: # (relative to the file being written -- or else to the context db -- if it's next to it)
+        url = PRDb.relativeURL(url, None if PRDb._bases else (contextDB.url if contextDB is not None else ""))
     return f'{url if url is not None else ""}{("#"+str(ID)) if ID is not None else ""}{("?name="+quote(name)) if name is not None and (includeName or ID is None) else ""}'
   
   @classmethod
@@ -853,7 +1017,9 @@ class PReference[T:PRObject]:
     :returns: A *PRObject* represented by *text*.
     :rtype: PRObject
     '''
-    ref:PReference = PReference(text)
+    contextURL = contextDB if isinstance(contextDB, str) else getattr(contextDB, "url", None)
+    with PRDb.basedOn(None if PRDb._bases else contextURL): # (a relative URL is relative to the file being read, or else to the context db)
+      ref:PReference = PReference(text)
     try: # if the DB can't be found, then maybe the user left a prefix "#" off a relative name spec
       theID:str|int|None = ref.id if ref.id != -1 else ref.name
       if theID is None:
@@ -938,7 +1104,7 @@ class PReference[T:PRObject]:
       id_ = text[1:]
       url = None
     else: # exactly two parts: an absolute path
-      url = fixURL(parts[0], extension=".xml", replaceExt=None, mode="")[0]
+      url = PRDb._relocate(fixURL(PRDb.absoluteURL(parts[0]), extension=".xml", replaceExt=None, mode="")[0])
       if not isValidURL(url):
         raise ValueError(f'Malformed URL: "{url}"')
       if url not in PRDb.AllDBs and not urlExists(url):
@@ -1130,7 +1296,7 @@ class PReference[T:PRObject]:
     if path == "":
       path = None
     if path is not None:
-      path = fixURL(path, extension=".xml", replaceExt=None, mode="")[0]
+      path = PRDb._relocate(fixURL(PRDb.absoluteURL(path), extension=".xml", replaceExt=None, mode="")[0])
       if not isValidURL(path):
         raise ValueError(f'Malformed url: "{path}"')
       # This no longer applies as db's can be non-memory resident

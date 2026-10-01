@@ -376,6 +376,10 @@ class PropertyInfo():
     'Iff True, a file without this property still loads: it just isn\'t set. For properties added after files were saved.'
 
 
+
+DEFAULT_STRATEGY = "XML2"
+"The name of the strategy things are saved with unless told otherwise (see util.persistence.serializeXML2)."
+
 class SerializationStrategy[T](ABC):
   '''
   A Strategy pattern class designed to save objects in a manner that allows for
@@ -517,6 +521,13 @@ class SerializationStrategy[T](ABC):
     else:
       return ret
 
+  preferred:bool = False
+  '''
+  If *True*, this strategy is chosen when a file extension is matched by more
+  than one strategy (see *findStrategy()*) -- eg: one that can read what the
+  others write.
+  '''
+
   appName = APP
   'The name of the Application -- should be reassigned by the application at startup.'
   
@@ -541,7 +552,20 @@ class SerializationStrategy[T](ABC):
     return f'{self.appVerion}:{self.serializationStrategyVersion}:{self.protocolVersion()}'
   
   @classmethod
+  def _byPreference(cls) -> list[SerializationStrategy.Strategy]:
+    'The available strategies (see *getAvailableStrategies()*), preferred ones first.'
+    strats = cls.getAvailableStrategies()
+    assert isinstance(strats, list)
+    return sorted(strats, key=lambda s: not getattr(s.cls, "preferred", False))
+
+  @classmethod
   def findStrategy(cls, strategy:str) -> SerializationStrategy:
+    # an extension matched by several strategies: the preferred one
+    if strategy.startswith("."):
+      for s0 in cls._byPreference():
+        if s0.extension == strategy:
+          strategy = s0.name
+          break
     #search for a relevant strategy in memory... 
     deleteRecs = []
     strat:Optional[SerializationStrategy] = None
@@ -688,11 +712,11 @@ class SerializationStrategy[T](ABC):
     :type url: str
     :param strategy: (default=None) The name or extension (starting with a dot) of some 
       protocol-specific strategy (a concrete subclass of this class) to use to 
-      encode *obj*. If *strategy* is an extension and there is more than one 
-      strategy with that extension, the last matching one used will
-      be selected, or if this is the first one, the selection is unspecified. If
-      *strategy* is missing or None, the strategy will be inferred from the 
-      extension in *url* as though it had been given in the *strategy* parameter.
+      encode *obj*. If *strategy* is an extension matched by more than one
+      strategy, the preferred one (see *preferred*) is used. If *strategy* is
+      missing or None, each strategy is tried in turn until one succeeds: those
+      for *url*'s extension first (preferred ones first), then the rest (see
+      *_tryInOrder()*).
     :type strategy: Optional[str] 
     :param kwargs: A set of keyword arguments to be passed to concrete subclass.
     :type kwargs: dict[str, Any]
@@ -710,28 +734,42 @@ class SerializationStrategy[T](ABC):
       if strat is None:
         raise LookupError(f'SerializationStrategy.readx({url}): No strategy matching "{strategy}" found.')
     else:
-      parsed = urlparse(url)
-      filename = os.path.basename(parsed.path)
-      ext = filename.split(".")[-1]
-      try:
-        strat = cls.findStrategy('.'+ext)
-      except:
-        pass
-      if strat is None: # can't find a strategy, so try opening with all the known strategies.
-        logger.debug(f'SerializationStrategy.readx({url}): LookupError: No strategy matching ".{ext}" found.')
-        tried:str = ""
-        for s in SerializationStrategy.knownStrategies:
-          try:
-            logger.debug(f'SerializationStrategy.readx({url}): Trying strategy {s.name}...')
-            ret = s.obj.read(url, replaceExt=replaceExt, mode=mode, **kwargs)
-          except Exception as ex:
-            logger.exception(f'SerializationStrategy.readx({url}): {s.name}: failed: {ex}.')
-            tried += f'\n  {s.name}: {ex}'
-            continue
-          logger.debug('  ...success!')
-          return ret
-        raise LookupError(f'SerializationStrategy.readx({url}): No read strategy succeeded. Tried:{tried}')
+      # (replaceExt=None: the file as named, whichever strategy reads it -- not one with that strategy's extension)
+      return cls._tryInOrder(url, "readx", lambda strat: strat.read(url, replaceExt=None, mode=mode, **kwargs))
     return strat.read(url, replaceExt=replaceExt, mode=mode, **kwargs)
+
+  @classmethod
+  def _tryInOrder[R](cls, url:str, caller:str, action:Callable[[SerializationStrategy], R]) -> R:
+    '''
+    Try *action* with each available strategy in turn until one succeeds: those
+    for *url*'s file extension first (preferred ones first: see *preferred*),
+    then the rest -- eg: a ".xml" file written by one of several XML strategies,
+    or a file whose extension isn't any strategy's.
+
+    :raises OSError: At once, if *url* can't be opened (eg: it doesn't exist):
+      no other strategy would do better.
+    :raises LookupError: If every strategy fails; the message says why each did.
+    '''
+    parsed = urlparse(url)
+    filename = os.path.basename(parsed.path)
+    ext = "." + filename.rsplit(".", 1)[-1] if "." in filename else ""
+    strats = cls._byPreference()
+    order = [s for s in strats if s.extension == ext] + [s for s in strats if s.extension != ext]
+    tried:str = ""
+    for s in order:
+      try:
+        logger.debug(f'SerializationStrategy.{caller}({url}): Trying strategy {s.name}...')
+        ret = action(cls.findStrategy(s.name))
+      except (FileNotFoundError, IsADirectoryError, PermissionError):
+        raise
+      except Exception as ex:
+        logger.debug(f'SerializationStrategy.{caller}({url}): {s.name}: failed: {ex.__class__.__name__}: {ex}.')
+        tried += f'\n  {s.name}: {ex.__class__.__name__}: {ex}'
+        continue
+      if tried:
+        logger.info(f'SerializationStrategy.{caller}({url}): read with {s.name} (after:{tried})')
+      return ret
+    raise LookupError(f'SerializationStrategy.{caller}({url}): No strategy succeeded. Tried:{tried}')
 
   @classmethod
   def peekTypex(cls, url:str, strategy:Optional[str]=None, mode:str="w", **kwargs) -> type:
@@ -766,28 +804,7 @@ class SerializationStrategy[T](ABC):
         raise LookupError(f'SerializationStrategy.peekTypex({url}): No strategy matching "{strategy}" found.')
       return strat.peekType(url, mode=mode, **kwargs)
     else:
-      parsed = urlparse(url)
-      filename = os.path.basename(parsed.path)
-      ext = filename.split(".")[-1]
-      try:
-        strat = cls.findStrategy('.'+ext)
-      except:
-        pass
-      if strat is None: # can't find a strategy by extension, so try peeking with all the known strategies.
-        logger.debug(f'SerializationStrategy.peekTypex({url}): LookupError: No strategy matching ".{ext}" found.')
-        tried:str = ""
-        for s in SerializationStrategy.knownStrategies:
-          try:
-            logger.debug(f'SerializationStrategy.peekTypex({url}): Trying strategy {s.name}...')
-            ret = s.obj.peekType(url, mode=mode, **kwargs)
-          except Exception as ex:
-            logger.exception(f'SerializationStrategy.peekTypex({url}): {s.name}: failed: {ex}.')
-            tried += f'\n  {s.name}: {ex}'
-            continue
-          logger.debug('  ...success!')
-          return ret
-        raise LookupError(f'SerializationStrategy.peekTypex({url}): No strategy succeeded at peeking. Tried:{tried}')
-    return strat.peekType(url, mode=mode, **kwargs)
+      return cls._tryInOrder(url, "peekTypex", lambda strat: strat.peekType(url, mode=mode, **kwargs))
 
   @classmethod
   @abstractmethod
@@ -981,6 +998,34 @@ class SerializationStrategy[T](ABC):
       raise TypeError(f'SerializationStrategy.peekType({url}): Could not find type "{className}".')
     return cls
   
+  def peekString(self, url:str, section:str, key:str, mode:str="w", **kwargs) -> Optional[str]:
+    '''
+    :returns: The value of string property *key* of the *section* ("header" or
+      "root") of the document at *url* -- eg: ("root", "url") for a stored
+      PRDb's URL -- or None if there isn't one (or it isn't a string). Like
+      *peekType()*, nothing in the document is constructed.
+    '''
+    url, parsedUrl = fixURL(url, replaceExt=None, mode=mode, extension=self.defaultExtension())
+    contents:str = self._fetchContents(url, parsedUrl)
+    top:T = self._fromstring(contents, kwargs)
+    part:Optional[T] = self._getKVPair(top, section)
+    if part is None:
+      if section != "root":
+        return None
+      part = top # not a "header"/"root"-wrapped document -- the top-level element IS the object.
+    try:
+      value = self._getKVPair(part, key)
+      if value is None or self._getAttr(value, ATTR_TYPE) != "str":
+        return None
+      return self._decodeStr(value)
+    except Exception:
+      return None
+
+  @classmethod
+  def peekStringx(cls, url:str, section:str, key:str, mode:str="w", **kwargs) -> Optional[str]:
+    'Like *peekString()*, choosing the strategy as *readx()* does.'
+    return cls._tryInOrder(url, "peekStringx", lambda strat: strat.peekString(url, section, key, mode=mode, **kwargs))
+
   def tostring(self, obj:SerializableType, *, wrap:Union[bool,dict]=False, assume:list[Any]=[], **kwargs) -> str:
     """
     Return the data as a strategy-specific formatted string.
@@ -1014,6 +1059,9 @@ class SerializationStrategy[T](ABC):
                   "version": self.version,
                   TAG_FILETYPE: self.defaultExtension(),
                   })
+        extra = getattr(obj, "serializationHeader", None) # (the object's own header fields, eg: PRDb's url)
+        if callable(extra):
+          header.update(extra())
       obj = strdict({"header": header, 
                      "root": obj})
 

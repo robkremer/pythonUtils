@@ -554,6 +554,8 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
     '''
     attr = self.getAttr(key)
     if attr != None:
+      if note is not None and attr.note != note: # (notes aren't saved: the caller's is the current one)
+        attr.note = note
       return attr.value
     if storeDefault is NOVALUE:
       return default

@@ -37,7 +37,7 @@ Modified to include a delay time by Victor Zaccardo, 25mar16
 """
 
 import tkinter as tk
-from typing import Union, Callable, Optional
+from typing import Any, Union, Callable, Optional
 from tkinter import Widget
 
 def findCanvas(widget:tk.Widget) -> tk.Canvas|None:
@@ -67,7 +67,7 @@ class CreateToolTip:
   def __init__(self, widget:Widget, text:Union[str,Callable[[],str]]='', canvasID:Optional[int]=None, 
         waitTime:int=500, wrapLength:int=240, 
         shouldDisplay:Optional[Callable]=None,
-        background="#ffffff"):
+        background="#ffffff", font:Any=None):
     """
     :param widget:    The widget at attach this tooltip to
     :param text:    Either a string to display or a no-argument function returning a *str*
@@ -79,12 +79,15 @@ class CreateToolTip:
               specified or None, the tooltip will display only if the text
               (text or a function) is not a zero-length string.
     :type shouldDisplay: Optional[Callable[[Self],bool]]
+    :param font: The font for the text (eg: "TkFixedFont", so text laid out with
+      spaces stays aligned); by default, Tk's default.
     :throws TypeError:
     :throws ValueError:
     """
     self.waittime = waitTime   #miliseconds
     self.wraplength = wrapLength   #pixels
     self.background = background
+    self.font = font
     if isinstance(text, Callable):
       self.text = text
     elif isinstance(text, str):
@@ -158,7 +161,7 @@ class CreateToolTip:
     self.tw.wm_geometry("+%d+%d" % (screenX, screenY))
     label = tk.Label(self.tw, text=self.text(), justify='left',
              background=self.background, relief='solid', borderwidth=1,
-             wraplength = self.wraplength)
+             wraplength = self.wraplength, **({} if self.font is None else {"font": self.font}))
     label.pack(ipadx=1)
     # An overrideredirect window is NOT managed by the window manager, so
     # nothing protects its stacking position once created -- if anything

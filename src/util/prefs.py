@@ -117,15 +117,21 @@ class Prefs(util.attribute.AttributedObject):
     except Exception as ex:
       logger.warning(f'Prefs.removeCallback("{key}", {str(ID)}): Unexpected exception occurred: {ex.__class__.__name__}: {str(ex)}')
   
-  def save(self, saveas:str|None=None, overwrite=True, format:str="XML") -> None:
-    from util.persistence.serialize import SerializationStrategy
+  def save(self, saveas:str|None=None, overwrite=True, format:str|None=None) -> None:
+    '''
+    :param format: The serialization strategy to save with (see
+      *SerializationStrategy*); by default, *DEFAULT_STRATEGY*.
+    '''
+    from util.persistence.serialize import SerializationStrategy, DEFAULT_STRATEGY
+    if format is None:
+      format = DEFAULT_STRATEGY
     from util.utils import fixURL, isValidURL, urlExists
     if saveas is None:
       filename = self.prefsFileName
     else:
       filename = saveas
 
-    url = fixURL(filename, extension=f".{format.lower()}", replaceExt=None, mode="w")[0]
+    url = fixURL(filename, extension=SerializationStrategy.findStrategy(format).defaultExtension(), replaceExt=None, mode="w")[0]
     if not isValidURL(url):
       raise ValueError(f'PRDb.save(): Malformed URL: "{url}"')
     if urlExists(url) and not overwrite:

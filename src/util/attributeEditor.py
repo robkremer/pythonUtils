@@ -21,6 +21,7 @@
 #################################################################################
 import util
 from util.persistence.serialize import SerializationStrategy, strdict
+from util.persistence.serialize import DEFAULT_STRATEGY
 from util import attribute
 from mypyc.primitives import str_ops
 '''
@@ -42,6 +43,7 @@ Created on Mar 17, 2025
 
 import logging
 import tkinter as tk
+import tkinter.font as tkfont
 import re
 from tkinter import colorchooser, ttk, messagebox
 from dataclasses import dataclass
@@ -76,11 +78,16 @@ vni: value not inheritable:
           Instances of this type must override the attribute value.'''
 
 def editAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes Editor", 
-                 editKey:Optional[str]=None, disabled:bool=False) -> Optional[dict[str,Attribute]]:
+                 editKey:Optional[str]=None, disabled:bool=False,
+                 displayValues:Optional[dict[str,Any]]=None) -> Optional[dict[str,Attribute]]:
   '''
   :param parent: The parent widget
   :param attrs: The *AttributedObject* object to be updated.
   :param title: The title of the dialog window. 
+  :param displayValues: [Optional] Values to show (and edit) for some keys in
+    place of their stored values -- eg: a fuller form of the value, which the
+    caller interprets. A key counts as changed only if its value differs from
+    what was shown.
   :return: An dict *str->Attribute* with any updates 
    
   displays an *AttrsEditor* or a *HierarchicalAttrsEditor* (depanding on whether 
@@ -88,9 +95,9 @@ def editAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes Edito
   updates the result to *attrs* .  
   '''
   if isinstance(attrs, AttributedObject):
-    editor = HierarchicalAttrEditor(parent, attrs, title=title, disabled=disabled)
+    editor = HierarchicalAttrEditor(parent, attrs, title=title, disabled=disabled, displayValues=displayValues)
   else:  
-    editor = AttrEditor(parent, attrs, title=title, disabled=disabled)
+    editor = AttrEditor(parent, attrs, title=title, disabled=disabled, displayValues=displayValues)
   editor.show(editKey=editKey)
   logger.debug(f'editAttrsBox(): updated: {editor.updatedKeys}')
   editor.destroy()
@@ -256,9 +263,12 @@ class AttrEditor(tk.Toplevel):
   
   '''
   #TODO: Implement "disabled" param
-  def __init__(self, parent, attrs:AttributedObject, title="Attribute Editor", disabled=False):
+  def __init__(self, parent, attrs:AttributedObject, title="Attribute Editor", disabled=False,
+               displayValues:Optional[dict[str,Any]]=None):
     super().__init__(parent)
     self.parent = parent
+    self.displayValues:dict[str,Any] = dict(displayValues or {})
+    "Values shown for some keys in place of their stored ones (see *editAttrsBox()*)."
     self.title(title if title else "Attribute Editor")
     self.attrs:AttributedObject = attrs
     #self.changes = dict() # name:Item
@@ -459,45 +469,59 @@ class AttrEditor(tk.Toplevel):
       editor.config(state="!disabled")
       self.vars[key].delete =  False
 
-  def typeInconsistent(self, event, ans, key, row, originalAnswer):
-    asn = ans.upper()
+  def typeInconsistent(self, event, ans, key, row, newType):
+    ans = (ans or "").strip().upper()
     if ans not in ["Y", "N"]:
       return # give up
-    if ans == "Y":
-      #self.makeKind(self.editorsListFrame, key, originalAnswer, self.cKind, row)
-      self.vars[key].setValue("")
-      self.resetKind(originalAnswer, key, row)
+    if ans == "Y": # the new type, with its default value (not "", which may not be one)
+      self.resetKind(newType, key, row, value=_defaultValue(newType))
     self.clearMessage()
        
-  def resetKind(self, kind, key, row):
+  def resetKind(self, kind, key, row, value:Any=NOVALUE):
+    '''
+    Change *key*'s type to *kind*, with *value* (default: its current one) --
+    which must suit *kind* (see *_convertValue()*).
+    '''
     clearGrid(self.editorsListFrame, column=self.cKind, row=row)
     self.makeKind(self.editorsListFrame, key, kind, self.cKind, row, None, False, "")
-    value = self.vars[key].getValue()
+    if value is NOVALUE:
+      value = self.vars[key].getValue()
     typeLabel = self.vars[key].typeLabel
     #tempAttr = copy(self.attrs._attrs[key])
     tempAttr = copy(self.attrs.getLocalAttr(key))
     #tempAttr.owner = None
     assert tempAttr is not None
-    tempAttr.type = kind
+    tempAttr._type = kind # (not via .type: that checks the new type against the OLD value)
     tempAttr.value = value
     self.makeEditor(self.editorsListFrame, key, tempAttr, self.cEdit, row, False, "")
-    self.vars[key].setValue(value)
+    self.vars[key].setValue(str(value) if isinstance(value, bool) else value) # (a checkbox's on/off values are "True"/"False"; Tk would make a bool 1/0)
     self.vars[key].typeLabel = typeLabel
     
   def editTypeAnswer(self, button, event, ans, key, row): 
+    if ans is None:
+      return
+    ans = ans.strip()
     if not isValidType(ans):
       self.clearMessage()
       self.ask(f'Invalid type for key "{key}". Please enter one of the following known types:\n{KNOWN_TYPES}:', 
-               lambda event, ans, key=key, row=row: self.editTypeAnswer(event, ans, key, row),
+               lambda event, ans, b=button, key=key, row=row: self.editTypeAnswer(b, event, ans, key, row),
                default=ans, bg="red", fg="yellow")
       return
-    if not isValidType(ans, self.vars[key].getValue()):
+    # The editor holds values as text: convert it to the new type if it can be
+    # (eg: "true" -> True, "3" -> 3). An empty value just takes the new type's
+    # default; only a value that would be lost needs asking about.
+    current = self.vars[key].getValue()
+    current = "" if current is None else str(current).strip()
+    value = _convertValue(ans, current)
+    if value is NOVALUE and current == "":
+      value = _defaultValue(ans)
+    if value is NOVALUE:
       self.clearMessage()
-      self.ask(f'Entered type for key "{key}" is inconsistent with the value "{ans}".\n  Do you want to keep this type and delete the value? [Y/N]:', 
-               lambda event, ans, key=key, row=row, originalAnswer=ans: self.typeInconsistent(event, ans, key, row, originalAnswer),
+      self.ask(f'The value "{current}" of key "{key}" is not of type {ans}.\n  Do you want to keep this type and replace the value with a default? [Y/N]:', 
+               lambda event, ans, key=key, row=row, newType=ans: self.typeInconsistent(event, ans, key, row, newType),
                default="Y", bg="red", fg="white") 
       return
-    self.resetKind(ans, key, row)
+    self.resetKind(ans, key, row, value=value)
     self.clearMessage()
     
   def editType(self, b:tk.Button, parent, key, typ, column, row):
@@ -515,7 +539,7 @@ class AttrEditor(tk.Toplevel):
         typeStr = "str"
         origValue = None
       else:
-        origValue = origAttr.value
+        origValue = self.displayValues.get(k, origAttr.value) # (compared with what was shown)
         origType = origAttr.type
         if origType is None: # a value-only override: the label shows the inherited type
           inhRec = self.attrs.getInhAttr(k)
@@ -743,26 +767,26 @@ class AttrEditor(tk.Toplevel):
       elif typ is bool:
         v = tk.StringVar(value=str(value))
         editor = ttk.Checkbutton(parent, text="", variable=v, onvalue='True', offvalue='False')
-        self.vars[key+keyExt] = ChangeDescr(v, editor, False, lambda b: b!='False' and bool(b))
+        self.vars[key+keyExt] = ChangeDescr(v, editor, False, lambda b: str(b).strip().lower() in ("true", "1", "yes"))
       elif typ is str:
         v = tk.StringVar(value=str("" if value is None else value))
         editor = ttk.Entry(parent, textvariable=v)
         self.vars[key+keyExt] = ChangeDescr(v, editor, False, str)
       elif typ is list:
-        buf = SerializationStrategy.tostringx("XML", value)#(Serializable.serializeAllXML(value, typ))
+        buf = SerializationStrategy.tostringx(DEFAULT_STRATEGY, value)#(Serializable.serializeAllXML(value, typ))
         editor = tk.Text(parent, height=getHeight(buf))
         editor.insert('1.0', buf)
-        self.vars[key+keyExt] = ChangeDescr(None, editor, False, lambda val: SerializationStrategy.fromstringx("XML", val))
+        self.vars[key+keyExt] = ChangeDescr(None, editor, False, lambda val: SerializationStrategy.fromstringx(DEFAULT_STRATEGY, val))
       elif issubclass(typ, PRObject):
-        buf = SerializationStrategy.tostringx("XML", value)
+        buf = SerializationStrategy.tostringx(DEFAULT_STRATEGY, value)
         editor = tk.Text(parent, height=getHeight(buf))
         editor.insert('1.0', buf)
-        self.vars[key+keyExt] = ChangeDescr(None, editor, False, lambda val: SerializationStrategy.fromstringx("XML", val))
+        self.vars[key+keyExt] = ChangeDescr(None, editor, False, lambda val: SerializationStrategy.fromstringx(DEFAULT_STRATEGY, val))
       elif issubclass(typ, Serializable):
-        buf = SerializationStrategy.tostringx("XML", value)
+        buf = SerializationStrategy.tostringx(DEFAULT_STRATEGY, value)
         editor = tk.Text(parent, height=getHeight(buf))
         editor.insert('1.0', buf)
-        self.vars[key+keyExt] = ChangeDescr(None, editor, False, lambda val: SerializationStrategy.fromstringx("XML", val))
+        self.vars[key+keyExt] = ChangeDescr(None, editor, False, lambda val: SerializationStrategy.fromstringx(DEFAULT_STRATEGY, val))
     else:
       logger.error(f'AttributeEditor on key "{key}": Types must be strings or Types, got typ {str(typ)} or type {type(typ).__name__}')
 
@@ -805,9 +829,11 @@ class AttrEditor(tk.Toplevel):
   def addTooltip(self, widget:Widget, helpText:str):
     if helpText is None or helpText == "":
       return
-    longestLine = len(max(helpText.split("\n"), key=len))
-    width = min(longestLine * 7, 560)
-    CreateToolTip(widget, helpText, background="yellow", wrapLength=width)
+    # A fixed-width font, so notes that line things up with spaces display as
+    # written; wide enough for the longest line (up to a limit, then wrapped).
+    font = tkfont.nametofont("TkFixedFont")
+    width = min(max(font.measure(line) for line in helpText.split("\n")) + 8, 720)
+    CreateToolTip(widget, helpText, background="yellow", wrapLength=width, font=font)
 
   def makeHeader(self, row, **kwargs):
     self.makeTitle(self.cLabel, "ATTR NAME", f'The name of the Attribute (NOT the value).', row, **kwargs)
@@ -816,7 +842,8 @@ class AttrEditor(tk.Toplevel):
     self.makeTitle(self.cKind, "TYPE", f'The type of the value.', row, **kwargs)
     
   def makeEditor(self, parent, key, item, column, row, disabled, keyExt, inhType:str|type|None=None):
-    editor = self.getEditorForType(parent, key, item.type, item.value, keyExt, inhType=inhType)
+    value = self.displayValues[key] if keyExt == "" and key in self.displayValues else item.value
+    editor = self.getEditorForType(parent, key, item.type, value, keyExt, inhType=inhType)
     editor.grid(column=column, row=row, sticky='EW', padx=0, pady=0)
     if disabled:
       self.conf(editor, state= "disabled")#, foreground="blue")
@@ -978,8 +1005,9 @@ class AttrEditor(tk.Toplevel):
                 
 class HierarchicalAttrEditor(AttrEditor):
   
-  def __init__(self, parent, attrs:AttributedObject, title="Attribute Editor", disabled=False):
-    super().__init__(parent, attrs, title=title, disabled=disabled)
+  def __init__(self, parent, attrs:AttributedObject, title="Attribute Editor", disabled=False,
+               displayValues:Optional[dict[str,Any]]=None):
+    super().__init__(parent, attrs, title=title, disabled=disabled, displayValues=displayValues)
     
     # "constants" for the columns in the Editors grid
     self.rowsPerEntry = 3 # from 1
@@ -1144,3 +1172,35 @@ if __name__ == "__main__":
   edit(root, attrs)
   root.mainloop()
   
+
+
+def _convertValue(typ:str, text:str) -> Any:
+  '''
+  :returns: *text* (an editor's value) as a value of the type named *typ*, or
+    NOVALUE if it can't be one. Text types take any text; "" isn't a number or
+    boolean.
+  '''
+  t = TYPE_EQUIVALENTS.get(typ) if typ in TYPE_EQUIVALENTS else None
+  if t is str:
+    return text
+  if typ.startswith("choices[") and typ.endswith("]"):
+    choices = [c.strip() for c in typ[8:-1].split(",")]
+    return text if text in choices else NOVALUE
+  try:
+    if t is bool:
+      return {"true": True, "t": True, "yes": True, "y": True, "1": True,
+              "false": False, "f": False, "no": False, "n": False, "0": False}[text.lower()]
+    if t is int:
+      return int(text)
+    if t is float:
+      return float(text)
+  except (KeyError, ValueError):
+    return NOVALUE
+  return NOVALUE
+
+def _defaultValue(typ:str) -> Any:
+  'A reasonable starting value for the type named *typ*.'
+  if typ.startswith("choices[") and typ.endswith("]"):
+    return typ[8:-1].split(",")[0].strip()
+  t = TYPE_EQUIVALENTS.get(typ) if typ in TYPE_EQUIVALENTS else None
+  return {bool: False, int: 0, float: 0.0, str: "", list: []}.get(t, None) if isinstance(t, type) else None
