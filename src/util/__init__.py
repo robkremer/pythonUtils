@@ -40,6 +40,9 @@ from typing import Callable
 
 cachedGetLogger:Callable|None = None
 
+_loggingSetUp:bool = False
+"Whether *setupLogger()* has been called (by the application, or by *getLogger()* for want of it)."
+
 ##### LOGGING STUFF #######################################
 
 class Logger(logging.Logger):
@@ -91,11 +94,12 @@ def getLogger(name:str):
         cachedGetLogger = getLogger
         return ret
 
-  # We couldn't find a getLogger, so make our own for THIS call.
-  # In the case of not being able to access the main module (python REPL),
-  # the logger class might have been changed by the main module: if so,
-  # just go with that.
-  if type(_getLogger(__name__)) is logging.Logger:
+  # We couldn't find a getLogger, so make our own for THIS call -- setting up
+  # logging our own way first, if nothing has yet. (Only if nothing has: an
+  # application that's called setupLogger() itself, with its own logger class
+  # -- eg: sn's SNLogger -- mustn't have that undone by the next util module
+  # to be imported.)
+  if not _loggingSetUp:
     setupLogger()
   if topLevelName is not None and topModule is None:
     # There IS a plausible top-level package (e.g. "sn") -- it just hasn't
@@ -139,6 +143,8 @@ def setupLogger(loggerClass:type|None=None, logFileName:str|None=None):
     folder = os.path.join(os.path.expanduser("~"), "Library", "Logs", Path(sys.argv[0]).stem)
     os.makedirs(folder, exist_ok=True)
     logFileName = os.path.join(folder, logFileName)
+  global _loggingSetUp
+  _loggingSetUp = True
   if os.path.isfile(logFileName): os.remove(logFileName)
   fileHandler = logging.FileHandler(logFileName)
   fileHandler.setFormatter(logging.Formatter('**%(levelname)s: %(name)s: %(message)s\n  at %(filename)s, func=%(funcName)s, line=%(lineno)d', style='%'))

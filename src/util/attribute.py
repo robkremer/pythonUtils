@@ -455,6 +455,10 @@ class Attribute(Serializable, Dirtyable):
       assert isinstance(restriction, (Restriction,NoneType)), f'Expected Restriction or NoneType type, got {type(restriction)}:{restriction}'
       self._restriction = restriction
     self.note = note
+    self.userNote:bool = False
+    '''Whether the note was written by the user (eg: in the attribute editor), not
+    by the program: such a note is saved (see *getInstantiationInfo()*), and
+    *AttributedObject.get()* doesn't replace it with the program's own.'''
     
   @property
   def value(self) -> SerializableType|NoValue:
@@ -549,7 +553,12 @@ class Attribute(Serializable, Dirtyable):
                ParamInfo("restriction", str, \
                                         lambda slf: saveRest(slf.restriction) if slf.restriction is not None else "None",  #type: ignore[attr-defined]
                                         lambda restStr: restoreRest(restStr) if restStr != "None" else None) #type: ignore[arg-type]
-              ])
+              ],
+      # (only a note the user wrote is saved -- see *userNote* -- and only then is it in the file at all)
+      postconSetters=[PropertyInfo("note", str,
+                                   lambda slf: slf.note if getattr(slf, "userNote", False) else None, #type: ignore[attr-defined]
+                                   lambda slf, note: [setattr(slf, "note", note), setattr(slf, "userNote", True)] and None, #type: ignore[func-returns-value]
+                                   omitIfNone=True)])
 
   def __str__(self)->str:
     '''
@@ -670,7 +679,7 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
     '''
     attr = self.getAttr(key)
     if attr != None:
-      if note is not None and attr.note != note: # (notes aren't saved: the caller's is the current one)
+      if note is not None and attr.note != note and not getattr(attr, "userNote", False): # (the program's note, unless the user wrote their own)
         attr.note = note
       return attr.value
     if storeDefault is NOVALUE:

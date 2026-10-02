@@ -346,7 +346,7 @@ class PropertyInfo():
   def __init__(self, name:str, typ:type, 
                getter:Optional[Callable[[Serializable], SerializableType]]=None,
                setter:Optional[Callable[[Serializable, SerializableType], None]]=None,
-               unique:bool=False, optional:bool=False):
+               unique:bool=False, optional:bool=False, omitIfNone:bool=False):
     '''
     :param name: The name of the property in the class's definition. You may
       also use the value "_" in order the just execute the *setter* function
@@ -371,8 +371,13 @@ class PropertyInfo():
     :type setter: Optional[Callable[[Serializable, SerializableType], None]]=None
     :param unique:
     :type unique: bool
-    :param optional:
+    :param optional: Whether it may be missing from a file (eg: one written
+      before the property existed): the setter is then not called.
     :type optional: bool
+    :param omitIfNone: Whether to leave it out of the file when its value is
+      None -- eg: a property that's almost always None, so as not to fill every
+      file with it. (It's then *optional* too.)
+    :type omitIfNone: bool
     '''
     self.name:str = name
     'the name of the parameter'
@@ -392,7 +397,9 @@ class PropertyInfo():
     else:
       self.setter = setter
     self.unique:bool = unique
-    self.optional:bool = optional
+    self.optional:bool = optional or omitIfNone
+    self.omitIfNone:bool = omitIfNone
+    "Whether it's left out of the file when its value is None (see *__init__()*)."
     'Iff True, a file without this property still loads: it just isn\'t set. For properties added after files were saved.'
 
 
@@ -1635,6 +1642,8 @@ class SerializationStrategy[T](ABC):
       for props in (info.postconSetters, info.finalSetters):
         for pinfo2 in props:
           sub = pinfo2.getter(obj)
+          if sub is None and getattr(pinfo2, "omitIfNone", False):
+            continue
           e = self._encode_(sub, pinfo2.unique)
           self._setKVPair(elem, pinfo2.name, e)
       return elem
