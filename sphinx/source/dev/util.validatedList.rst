@@ -1,5 +1,5 @@
-util.validatedList
-==================
+util.validatedList module
+=========================
 
 .. automodule:: util.validatedList
    :members:

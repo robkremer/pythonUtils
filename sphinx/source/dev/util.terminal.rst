@@ -1,5 +1,5 @@
-util.terminal
-=============
+util.terminal module
+====================
 
 .. automodule:: util.terminal
    :members:

@@ -82,6 +82,9 @@ class Command(ABC):
   def __init__(self, name:str):
     '''
     Constructor
+
+    :param name:
+    :type name: str
     '''
     self.name = name
     self.done:bool = False
@@ -92,7 +95,10 @@ class Command(ABC):
     """
     The execution of this command. This isn't really abstract in the you can (should?) call this
     method as the first instruction of your *do()* method to check that the *do()* isn't being called
-    twice in a row without an *undo()* in between (a problem in the code logic?).  
+    twice in a row without an *undo()* in between (a problem in the code logic?).
+
+    :returns:
+    :rtype: Any
     """
     if self.done: raise RedoError(f'Can\'t do command "{self.name}" a second time without an undo() in between.')
     self.done = True
@@ -105,6 +111,9 @@ class Command(ABC):
     The undoing of this command. This isn't really abstract in the you can (should?) call this
     method as the first instruction of your *undo()* method to check that the *undo()* isn't being called
     twice in a row without an *do()* in between (a problem in the code logic?).
+
+    :returns:
+    :rtype: Any
     """
     if not self.done: raise UndoError(f'Can\'t undo command "{self.name}" without it first having been done (do()).')
     self.done = False
@@ -119,6 +128,10 @@ class Command(ABC):
     pass    
     
   def __str__(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     return self.name
 
 ################################################################################
@@ -136,22 +149,44 @@ class LambdaCommand(Command):
   """
 
   def __init__(self, name:str, do:Callable[[], NoReturn], undo:Callable[[], NoReturn], changesState=True):
+    '''
+    :param name:
+    :type name: str
+    :param do:
+    :type do: Callable[[], NoReturn]
+    :param undo:
+    :type undo: Callable[[], NoReturn]
+    :param changesState:
+    :type changesState: bool
+    '''
     super().__init__(name)
     self.myDo = do
     self.myUndo = undo
     
   @override
   def do(self) -> Any:
+    '''
+    :returns:
+    :rtype: Any
+    '''
     super().do()
     return self.myDo()
     
   @override
   def undo(self) -> Any:
+    '''
+    :returns:
+    :rtype: Any
+    '''
     super().undo()
     return self.myUndo()
     
   @override
   def __str__(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     return "LambdaCommand:"+self.name
     
 
@@ -194,6 +229,9 @@ class CommandWrapper(Command):
       - *command.do()* always
       - *teardown()* always
       - *initTeardown()* if this is the first call to *do()*
+
+    :returns:
+    :rtype: Any
     """
     super().do()
     if self.initSetup is not None and not self.firstTimeDone:
@@ -215,7 +253,10 @@ class CommandWrapper(Command):
     
       - *setup()* 
       - *command.undo()* 
-      - *teardown()* 
+      - *teardown()*
+
+    :returns:
+    :rtype: Any
     """
     super().undo()
     if self.setup is not None:
@@ -226,6 +267,10 @@ class CommandWrapper(Command):
     return ret
 
   def __str__(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     return "WrappedCommand: "+self.name
 
     
@@ -247,6 +292,11 @@ class DoList():
     calls *do()* on that *Command*, possibly
     removing the tail of the queue if the current index is not past the 
     end of the queue (eg: we have done one or more *undo()*'s).
+
+    :param c:
+    :type c: Command
+    :returns:
+    :rtype: Any
     """
     if self.index+1 > len(self.queue):
       logger.error(f'DoList.do(): index ({self.index}) is past the end of queue (length {len(self.queue)})')
@@ -263,7 +313,11 @@ class DoList():
     return result
     
   def redo(self) -> Any:
-    ":raises RedoError: if trying to redo past the end of the command queue."
+    """
+    :raises RedoError: if trying to redo past the end of the command queue.
+    :returns:
+    :rtype: Any
+    """
     if self.index+1 > len(self.queue):
       logger.error(f'DoList.redo(): index ({self.index}) is past the end of queue (length {len(self.queue)})')
       return
@@ -276,7 +330,11 @@ class DoList():
     return result
     
   def undo(self) -> Any:
-    ":raises UndoError: if trying to undo an empty command queue."
+    """
+    :raises UndoError: if trying to undo an empty command queue.
+    :returns:
+    :rtype: Any
+    """
     if self.index < 0: # at the end of the queue
       logger.error("Cannot undo past the beginning of the command queue")
       return
@@ -287,19 +345,34 @@ class DoList():
     return result
     
   def getRedoDesc(self) -> str:
-    "Returns a description of the command that will be executed on a *redo()*, or *None* if nothing to redo."
+    """
+    Returns a description of the command that will be executed on a *redo()*, or *None* if nothing to redo.
+
+    :returns:
+    :rtype: str
+    """
     if self.index+1 == len(self.queue): # at the end of the queue
       return "<nothing to redo>"
     return self.queue[self.index+1].name
     
   def getUndoDesc(self) -> str:
-    "Returns a description of the command that will be executed on a *undo()*, or *None* if nothing to undo."
+    """
+    Returns a description of the command that will be executed on a *undo()*, or *None* if nothing to undo.
+
+    :returns:
+    :rtype: str
+    """
     if self.index < 0: # at the end of the queue
       return "<nothing to undo>"
     return self.queue[self.index].name
 
   def undoQueue(self) -> list[str]:
-    "Returns a list of string representation of the commands in the undo list starting with the next to the undone."
+    """
+    Returns a list of string representation of the commands in the undo list starting with the next to the undone.
+
+    :returns:
+    :rtype: list[str]
+    """
     if self.index<0: return []
     ret = []
     for i in range(self.index, -1, -1):
@@ -307,7 +380,12 @@ class DoList():
     return ret
 
   def redoQueue(self) -> list[str]:
-    "Returns a list of string representation of the commands in the redo list starting with the next to the redone."
+    """
+    Returns a list of string representation of the commands in the redo list starting with the next to the redone.
+
+    :returns:
+    :rtype: list[str]
+    """
     size = len(self.queue)
     if self.index>size: return []
     ret = []
@@ -316,12 +394,22 @@ class DoList():
     return ret
     
   def nextUndo(self) -> str:
-    "Returns the string representation of the next command to be undone."
+    """
+    Returns the string representation of the next command to be undone.
+
+    :returns:
+    :rtype: str
+    """
     q = self.undoQueue()
     return "<nothing to undo>" if len(q)==0 else q[0]
     
   def nextRedo(self):
-    "Returns the string representation of the next command to be redone."
+    """
+    Returns the string representation of the next command to be redone.
+
+    :returns:
+    :rtype:
+    """
     q = self.redoQueue()
     return None if len(q)==0 else q[0]
   

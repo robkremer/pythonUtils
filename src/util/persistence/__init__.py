@@ -19,3 +19,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
+
+'''
+Persistence: databases of objects that are saved to and read from files (or
+URLs), and refer to one another -- across files -- by reference:
+
+- *util.persistence.pRef*: the databases (*PRDb*), their objects (*PRObject*)
+  and references to them (*PReference*).
+- *util.persistence.serialize*: how objects describe themselves for saving
+  (*InstantiationInfo*), and the *SerializationStrategy* that writes and reads
+  them -- in XML (*serializeXML*, and the more compact *serializeXML2*), JSON
+  (*serializeJSON*) or property lists (*serializePlist*).
+'''

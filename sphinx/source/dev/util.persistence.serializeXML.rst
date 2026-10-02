@@ -1,5 +1,5 @@
 util.persistence.serializeXML module
-======================================
+====================================
 
 .. automodule:: util.persistence.serializeXML
    :members:

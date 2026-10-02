@@ -19,6 +19,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
+'''
+The *util* package: general-purpose building blocks for Python applications --
+persistence, attributes with inheritance, commands with undo and a command-line
+parser, the observer pattern, preferences, and some Tk widgets (a terminal, an
+attribute editor, dialogs, tooltips). It came out of *Semantic Nets*, but
+doesn't depend on it.
+
+This module sets up logging. Modules get their loggers with
+``util.getLogger(__name__)``: an application can supply its own *getLogger()*
+in its top-level package, which is then used instead (see *getLogger()*), and
+set up the log file with *setupLogger()*.
+'''
 import types
 import sys
 import logging
@@ -31,16 +43,29 @@ cachedGetLogger:Callable|None = None
 ##### LOGGING STUFF #######################################
 
 class Logger(logging.Logger):
+  '''
+  A *logging.Logger* with a *print()* method too (see *util.getLogger()*).
+  '''
   def print(self, *args, **kwargs):
     '''
     Intended to mimic the print system command but allowing for redirection 
     and multiple destinations if necessary.
+
+    :param args:
+    :type args:
+    :param kwargs:
+    :type kwargs:
     '''
     print(*args, **kwargs)
     
 def getLogger(name:str):
   '''
   Create or find a Logger for *name*.  This should be called as util.getLogger(__name__).
+
+  :param name:
+  :type name: str
+  :returns:
+  :rtype:
   '''
   global cachedGetLogger
   if cachedGetLogger is not None: # we've already cached the thing
@@ -133,6 +158,12 @@ class DynamicStderrHandler(logging.StreamHandler):
     # Pass a placeholder; StreamHandler.__init__ requires *some* stream, but
     # we override .stream to always resolve dynamically, so this initial
     # value is never actually used for writing.
+    '''
+    :param args:
+    :type args: object
+    :param kwargs:
+    :type kwargs: object
+    '''
     super().__init__(sys.stderr, *args, **kwargs)
 
   @property

@@ -21,10 +21,7 @@
 #################################################################################
 '''
   .. inheritance-diagram:: 
-                UndoCommand 
                 RedoCommand
-                HelpCommand
-                DebugCommand
                 IntermediateCommandWord
                 TopCommandParser
                 MutatingCommandGenerator
@@ -145,6 +142,17 @@ class AbbrevSubParsersAction(argparse._SubParsersAction):
     If we don't have an exact match for the command commandName, search for a unique
     prefix match, and go with that one. Error out if there is not match or 
     the match is not unique.
+
+    :param parser:
+    :type parser:
+    :param namespace:
+    :type namespace:
+    :param values:
+    :type values:
+    :param option_string:
+    :type option_string:
+    :returns:
+    :rtype:
     '''
     given = values[0]
     choices = list(self._name_parser_map.keys())
@@ -171,12 +179,22 @@ class _AbbrevChoices(dict[str,Any]):
   :py:class:`AbbrevSubParsersAction` to catch the error of a non existant choice. 
   """
   def __contains__(self, item: object) -> bool:
+    '''
+    :param item:
+    :type item: object
+    :returns:
+    :rtype: bool
+    '''
     return True  # bypass pre-validation; AbbrevSubParsersAction handles it
 
 
 class ArgumentParser(argparse.ArgumentParser):
   "Trivial override of *argparse.ArgumentParser* to prevent it from exiting on error."
   def error(self, message):
+    '''
+    :param message:
+    :type message:
+    '''
     self.print_usage(sys.stderr)
     raise SyntaxError(f'{self.prog}: error: {message}\n')
   
@@ -190,6 +208,11 @@ def funNameToCommandName(funName:str) -> str:
   In :py:class:`CommandContext` classes, this defines the translation from a 
   "signature" method commandName to it's corresponding :py:class:`util.command.Command`
   class commandName.
+
+  :param funName:
+  :type funName: str
+  :returns:
+  :rtype: str
   '''
   return f'_{funName[0].upper()}{funName[1:]}'
 
@@ -197,6 +220,11 @@ def commandNameToFunName(commandName:str) -> str:
   '''
   In :py:class:`CommandContext` classes, this defines the translation from a 
   :py:class:`util.command.Command` class commandName to it's corresponding "signature" method commandName .
+
+  :param commandName:
+  :type commandName: str
+  :returns:
+  :rtype: str
   '''
   return f'{commandName[1].lower()}{commandName[2:]}'
 
@@ -220,6 +248,8 @@ class Parsable(ABC):
     :type topParser: TopCommandParser
     :param kwarg: Keyword arguments to be passed along the *ArgumentParser* constructor
       for this command.
+    :param kwargs:
+    :type kwargs:
     '''
     super().__init__()
     assert isinstance(topParser, TopCommandParser), f'MutatingCommandGenerator.__init__(): Second parameter should be a TopCommandParser, got {topParser.__class__.__name__}'
@@ -246,6 +276,9 @@ class Parsable(ABC):
     :rtype: tuple[ArgumentParser, SubParsable]
 
     Used to instantiates self.parser in the constructor.
+
+    :param kwargs:
+    :type kwargs:
     '''
     parser:argparse.ArgumentParser
     immediateSuper:SubParsable
@@ -289,6 +322,9 @@ class SubParsable(Parsable):
     Adds to the *super* version by creating subparsers (calling 
     *ArgParser.add_subparsers()*) and setting itself up as in internal command
     tree node.
+
+    :param kwargs:
+    :type kwargs:
     '''
     self.immediateSuper = immediateSuper # needed for str() before the Parsable constructor
     Parsable.__init__(self, commandName, topParser, help=help, **kwargs)
@@ -328,6 +364,10 @@ class CommandGenerator(SubParsable):
     :type topParser: :py:class:`TopCommandParser`
     :param kwarg: Keyword arguments to be passed along the *ArgumentParser* constructor
       for this command.
+    :param commandName:
+    :type commandName: str
+    :param kwargs:
+    :type kwargs:
     '''
     Parsable.__init__(self, commandName, topParser=topParser, **kwargs)
     self._makeShortDescription()
@@ -356,6 +396,9 @@ class CommandGenerator(SubParsable):
     :rtype: tuple[ArgumentParser, SubParsable]
 
     Used to instantiates self.parser in the constructor.
+
+    :param kwargs:
+    :type kwargs:
     '''
     self.parser, self.immediateSuper = super()._makeParser(**kwargs)
     self.defineParse()
@@ -386,6 +429,11 @@ class CommandGenerator(SubParsable):
   def do(self, args:Namespace) -> Any:
     '''
     Execute this command using *args*.
+
+    :param args:
+    :type args: Namespace
+    :returns:
+    :rtype: Any
     '''
     pass
     
@@ -407,6 +455,13 @@ class NonMutatingCommandGenerator(CommandGenerator):
     that DOES NOT CHANGE the state of the data, such as a query.  It will **not**
     be entered on the undo list. There is no associated :py:class:`util.commmand.Command`
     object associated with it.
+
+    :param commandName:
+    :type commandName: str
+    :param topParser:
+    :type topParser: TopCommandParser
+    :param kwargs:
+    :type kwargs:
     '''
     # if "help" not in kwargs:
     #   kwargs["help"] = f'help for {commandName}'
@@ -417,6 +472,11 @@ class NonMutatingCommandGenerator(CommandGenerator):
   def do(self, args:Namespace) -> Any:
     '''
     Execute this command using *args*.
+
+    :param args:
+    :type args: Namespace
+    :returns:
+    :rtype: Any
     '''
     return self._execute(args)
   
@@ -425,12 +485,32 @@ class NonMutatingCommandGenerator(CommandGenerator):
     '''
     Subclasses should override this method to provide the implementation of the
     command.
+
+    :param args:
+    :type args: Namespace
+    :returns:
+    :rtype: Any
     '''
     pass
 
 class GenFromFunction(NonMutatingCommandGenerator):
   # TODO: get rid of *containingClassObject*
+  '''
+  A command generator for a context's method that has no *Command* class: calling it just runs the method (it isn't undoable).
+  '''
   def __init__(self, fun:Callable, commandParser:TopCommandParser, containingClassObject:Optional[Any]=None, commandName:Optional[str]=None, **kwargs):
+    '''
+    :param fun:
+    :type fun: Callable
+    :param commandParser:
+    :type commandParser: TopCommandParser
+    :param containingClassObject:
+    :type containingClassObject: Optional[Any]
+    :param commandName:
+    :type commandName: Optional[str]
+    :param kwargs:
+    :type kwargs:
+    '''
     assert callable(fun)
     if commandName is None: # create a commandName from the function's commandName.
       commandName = fun.__name__
@@ -461,6 +541,12 @@ class GenFromFunction(NonMutatingCommandGenerator):
     # for paramName in kwargs: # remove anything in kwargs that isn't in the signature
     #   if paramName in sig.parameters:
     #     kwargs2[paramName] = kwargs[paramName]
+    '''
+    :param args:
+    :type args: Namespace
+    :returns:
+    :rtype: Any
+    '''
     pargs, kwargs = fixKwargs(fun=self.fun,
                        args=[], 
                        kwargs=vars(args),
@@ -481,7 +567,14 @@ class MutatingCommandGenerator(CommandGenerator):
       
     This is NOT a command, but a command definition used by a *TopCommandParser* to
     generate *Command* instances suitable for an *UndoList*. Thus, *MutatingCommandGenerator*
-    objects act like a *class* whereas *Command* objects act like an object. 
+    objects act like a *class* whereas *Command* objects act like an object.
+
+    :param commandName:
+    :type commandName:
+    :param commandParser:
+    :type commandParser: TopCommandParser
+    :param kwargs:
+    :type kwargs:
     '''
     super().__init__(commandName, topParser=commandParser, **kwargs)
     
@@ -495,6 +588,9 @@ class MutatingCommandGenerator(CommandGenerator):
     *_makeCommand()* method), enters it into the undo
     list, and executes it. This method method is usually called by the the command
     parser.
+
+    :returns:
+    :rtype: Any
     '''
     cmdObject:Command = self._makeCommand(args)
     if self.topParser.doList is not None:
@@ -504,10 +600,29 @@ class MutatingCommandGenerator(CommandGenerator):
   
   @abstractmethod
   def _makeCommand(self, args:Namespace) -> Command:
+    '''
+    :param args:
+    :type args: Namespace
+    :returns:
+    :rtype: Command
+    '''
     pass
   
 class GenFromCommand(MutatingCommandGenerator):
+  '''
+  A command generator for a context's method that has a *Command* class (eg: *move()* and *_Move*): running it makes the *Command* and does it on the undo list.
+  '''
   def __init__(self, commandClass:type[Command], commandParser:TopCommandParser, commandName:Optional[str]=None, **kwargs):
+    '''
+    :param commandClass:
+    :type commandClass: type[Command]
+    :param commandParser:
+    :type commandParser: TopCommandParser
+    :param commandName:
+    :type commandName: Optional[str]
+    :param kwargs:
+    :type kwargs:
+    '''
     assert issubclass(commandClass, Command)
     if commandName is None:
       commandName = commandClass.__name__
@@ -520,6 +635,12 @@ class GenFromCommand(MutatingCommandGenerator):
     
   @override
   def _makeCommand(self, args:Namespace) -> Command:
+    '''
+    :param args:
+    :type args: Namespace
+    :returns:
+    :rtype: Command
+    '''
     pargs, kwargs = fixKwargs(fun=self.commandClass.__init__,
                        args=[], 
                        kwargs=vars(args),
@@ -652,12 +773,25 @@ class GenFromCommand(MutatingCommandGenerator):
     
 class RedoCommand(NonMutatingCommandGenerator): # TODO: change this to the non-SelfContained version
   
+  '''
+  The *redo* command (see *UndoCommand*).
+  '''
   def __init__(self, topParser:TopCommandParser):
+    '''
+    :param topParser:
+    :type topParser: TopCommandParser
+    '''
     help="Redo the last command that was undone by the undo command."
     super().__init__("redo", topParser=topParser, help=help, description=help)
     
   @override
   def _execute(self, args:Namespace) -> list[str]|str|Any:
+    '''
+    :param args:
+    :type args: Namespace
+    :returns:
+    :rtype: list[str] | str | Any
+    '''
     if args.queue: return self.topParser.doList.redoQueue()
     if args.next : return self.topParser.doList.nextRedo()
     return self.topParser.doList.redo()
@@ -745,6 +879,20 @@ class IntermediateCommandWord(SubParsable):
   def __init__(self, commandName:str, commandParser:TopCommandParser, 
                immediateSuper:SubParsable, 
                help:Optional[str]=None, description:Optional[str]=None, **kwargs):
+    '''
+    :param commandName:
+    :type commandName: str
+    :param commandParser:
+    :type commandParser: TopCommandParser
+    :param immediateSuper:
+    :type immediateSuper: SubParsable
+    :param help:
+    :type help: Optional[str]
+    :param description:
+    :type description: Optional[str]
+    :param kwargs:
+    :type kwargs:
+    '''
     if help is None:
       help = f'For more detail, type "help {commandName} <choice>".'
     if description is None:
@@ -780,7 +928,18 @@ class TopCommandParser(SubParsable):
     Adds to the *super* version by setting itself as an empty root command,
     insuring there is a dolist, and instantiating
     *undo, redo, help*, and *debug* commands. The *debug* command merely sets or
-    clear a self.debug boolean for other commands to use as appropriate. 
+    clear a self.debug boolean for other commands to use as appropriate.
+
+    :param loadCommandsFrom:
+    :type loadCommandsFrom: list[CommandContext]
+    :param ignore:
+    :type ignore: Callable[[str], bool]
+    :param defaults:
+    :type defaults: Optional[dict[str, Any]]
+    :param decoders:
+    :type decoders: Optional[DecodersType]
+    :param args:
+    :type args:
     '''
     # The *immediageSuper* is self...
     SubParsable.__init__(self, commandName, self, self, help='List of commands', description="Top level commands")
@@ -843,6 +1002,9 @@ class TopCommandParser(SubParsable):
         > modify relation ...
         
         > modify      <<Raises a SyntaxError>>
+
+    :param context:
+    :type context: Optional[CommandContext]
     '''
     commandPath:list[str] = commandName.split(maxsplit=1)
     #help = kwargs["help"] if "help" in kwargs else (command.help if hasattr(command, "help") and command.help is not None else f'help for {commandName}')
@@ -880,6 +1042,12 @@ class TopCommandParser(SubParsable):
     return command.parser, parent
     
   def _makeParser(self, **kwargs) -> tuple[ArgumentParser, SubParsable]:
+    '''
+    :param kwargs:
+    :type kwargs:
+    :returns:
+    :rtype: tuple[ArgumentParser, SubParsable]
+    '''
     if "help" in kwargs:
       del kwargs["help"]
     descr = """
@@ -977,10 +1145,22 @@ Type "<cmd...> -h" or "help <cmd...>" for more detail on each command."""
     
   @staticmethod
   def _strToComList(line:str) -> list[str]:
+    '''
+    :param line:
+    :type line: str
+    :returns:
+    :rtype: list[str]
+    '''
     return shlex.split(line)#, posix=False)
     
   @staticmethod
   def _comListToStr(com:list[str]) -> str:
+    '''
+    :param com:
+    :type com: list[str]
+    :returns:
+    :rtype: str
+    '''
     result = ""
     for c in com:
       result += ("<" + str(c) + "> ")
@@ -1000,6 +1180,9 @@ Type "<cmd...> -h" or "help <cmd...>" for more detail on each command."""
   def lastArgs(self):
     '''
     Return the set of args parsed from the last parse.
+
+    :returns:
+    :rtype:
     '''
     if self.args is None:
       return dict()
@@ -1010,7 +1193,12 @@ Type "<cmd...> -h" or "help <cmd...>" for more detail on each command."""
     '''
     - Parse the command line using parser
     - if it creates a command, execute it either on the doList if we have one or otherwise
-    - return the result of the execution  
+    - return the result of the execution
+
+    :param argsList:
+    :type argsList: list[str]
+    :returns:
+    :rtype: Any
     '''
     assert self.parser._subparsers is not None
     if len(argsList) == 0:
@@ -1064,6 +1252,12 @@ Type "<cmd...> -h" or "help <cmd...>" for more detail on each command."""
   
   def loadCommands(self, context:CommandContext, ignore:Callable[[str], bool]=lambda name: name.startswith("_")):
     
+    '''
+    :param context:
+    :type context: CommandContext
+    :param ignore:
+    :type ignore: Callable[[str], bool]
+    '''
     def addSynonyms(cls, c):
       # for any declared synonyms, associate the parser according to the synonym dict
       for syn in cls.commandSynonyms.get(c.commandName, []):
@@ -1122,6 +1316,14 @@ Type "<cmd...> -h" or "help <cmd...>" for more detail on each command."""
         
 class CommandContext:
   
+  '''
+  A container of commands: each public method is a command, callable from code
+  and parsable from a command line (its name's words, eg: *new_node* is "new
+  node"; its parameters, the arguments and options). A method with a matching
+  nested *Command* class (*move()* and *_Move*) is done through the undo list, so
+  it can be undone. Arguments are converted by the context's *decoders*, and
+  missing ones filled in from its *defaults*.
+  '''
   commandSynonyms:dict[str, Iterable[str]] = dict()
   'The methodname -> list[synonym] defining synonyms for commands'
   
@@ -1136,6 +1338,10 @@ class CommandContext:
 
   def __init__(self, parser:Optional[TopCommandParser]=None):
     
+    '''
+    :param parser:
+    :type parser: Optional[TopCommandParser]
+    '''
     self.parser:TopCommandParser = parser if parser is not None else TopCommandParser("")
     'The associatated parser.'
     
@@ -1163,6 +1369,12 @@ class CommandContext:
     pass
     
   def __getattribute__(self, name: str) -> Any:
+    '''
+    :param name:
+    :type name: str
+    :returns:
+    :rtype: Any
+    '''
     attr = super().__getattribute__(name)
     try:
       # if this is a public method or function (private "_" ones -- helpers, which
@@ -1213,6 +1425,10 @@ class CommandContext:
     return attr
   
   def _setCapture(self, capture:CompositeCommandMgr|None):
+    '''
+    :param capture:
+    :type capture: CompositeCommandMgr | None
+    '''
     if capture is None:
       self._capture = None
     else:
@@ -1331,11 +1547,20 @@ class CommandContext:
     :param commandName: The commandName of the param to have the default filled in.
     :type commandName: str
     :param value: The default value.
-    :type value: Any|None 
+    :type value: Any|None
+    :param defName:
+    :type defName: str
+    :param _defaults:
+    :type _defaults: Optional[dict[str, Any]]
+    :returns:
+    :rtype: Any
     '''
     pass
 
   class _Default(Command):
+    '''
+    The command that sets one of a context's defaults (see *CommandContext.default()*).
+    '''
     def __init__(self, defName:str, value:Any=NoValue, /, _commandContext:Optional[CommandContext]=None):
       '''
       Set or get a parser-global command default. If *value* is omitted the current
@@ -1344,7 +1569,11 @@ class CommandContext:
       :param commandName: The commandName of the param to have the default filled in.
       :type commandName: str
       :param value: The default value.
-      :type value: Any|None 
+      :type value: Any|None
+      :param defName:
+      :type defName: str
+      :param _commandContext:
+      :type _commandContext: Optional[CommandContext]
       '''
       assert _commandContext is not None
       super().__init__("default")
@@ -1355,6 +1584,10 @@ class CommandContext:
       
     @override
     def do(self):
+      '''
+      :returns:
+      :rtype:
+      '''
       super().do()
       if self.value is NoValue:
         #print(f'CommandContext.Default.do(): defaults@{id(self.defaults)}')
@@ -1366,6 +1599,10 @@ class CommandContext:
       
     @override
     def undo(self):
+      '''
+      :returns:
+      :rtype:
+      '''
       super().undo()
       self.defaults[self.defName] = self.oldValue
       return self.oldValue
@@ -1379,15 +1616,30 @@ class CommandContext:
       
     @override
     def __str__(self) -> str:
+      '''
+      :returns:
+      :rtype: str
+      '''
       return f'{super().__str__()} {self.defName} {self.value}'
     
 class CompositeCommand(Command):
+  '''
+  Several commands as one: done in order, and undone in reverse order.
+  '''
   def __init__(self, commands:list[Command]):
+    '''
+    :param commands:
+    :type commands: list[Command]
+    '''
     super().__init__("<composite command>")
     self.commands:list[Command] = commands
 
   @override
   def do(self)->Any:
+    '''
+    :returns:
+    :rtype: Any
+    '''
     ret = super().do()
     for c in self.commands:
       c.do()
@@ -1395,6 +1647,10 @@ class CompositeCommand(Command):
 
   @override
   def undo(self)->Any:
+    '''
+    :returns:
+    :rtype: Any
+    '''
     ret = super().undo()
     for c in reversed(self.commands): # (later commands may depend on earlier ones)
       c.undo()
@@ -1407,15 +1663,38 @@ class CompositeCommand(Command):
 
 
 class CompositeCommandMgr:
+  '''
+  A context manager that groups the commands called on a *CommandContext*
+  inside its ``with`` block into one *CompositeCommand* -- one entry on the undo
+  list. The commands are queued, not run, until the block ends.
+  '''
   def __init__(self, context:CommandContext):
+    '''
+    :param context:
+    :type context: CommandContext
+    '''
     self.commands:list[Command] = []
     self.context:CommandContext = context
   
   def __enter__(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     self.context._setCapture(self)
     return self
         
   def __exit__(self, exc_type, exc_val, exc_tb):
+    '''
+    :param exc_type:
+    :type exc_type:
+    :param exc_val:
+    :type exc_val:
+    :param exc_tb:
+    :type exc_tb:
+    :returns:
+    :rtype:
+    '''
     self.context._setCapture(None)
     composite = CompositeCommand(self.commands)
     self.context.doList.do(composite)
@@ -1423,6 +1702,10 @@ class CompositeCommandMgr:
     return False 
       
   def _addCommand(self, command:Command):
+    '''
+    :param command:
+    :type command: Command
+    '''
     self.commands.append(command)
 
 def fixKwargs(fun:Callable, args:list[Any], kwargs:dict[str,Any], 
@@ -1439,6 +1722,19 @@ def fixKwargs(fun:Callable, args:list[Any], kwargs:dict[str,Any],
       str values in *kwargs*.
     - if a decoder has a param named "params", they call it with a *kwargs* named
       "params" containing a *dict* of the OTHER params to the function.
+
+  :param fun:
+  :type fun: Callable
+  :param args:
+  :type args: list[Any]
+  :param kwargs:
+  :type kwargs: dict[str, Any]
+  :param defaults:
+  :type defaults: dict[str, Any]
+  :param decoders:
+  :type decoders: DecodersType
+  :returns:
+  :rtype: tuple[list[Any], dict[str, Any]]
   '''
   sig = inspect.signature(fun)
   retKwargs = kwargs.copy() # fixed kwargs

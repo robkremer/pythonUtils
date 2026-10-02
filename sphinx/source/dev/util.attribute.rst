@@ -1,5 +1,5 @@
-util.attribute
-==============
+util.attribute module
+=====================
 
 .. automodule:: util.attribute
    :members:

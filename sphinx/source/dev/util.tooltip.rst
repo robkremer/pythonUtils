@@ -1,5 +1,5 @@
 util.tooltip module
-=============================
+===================
 
 .. automodule:: util.tooltip
    :members:

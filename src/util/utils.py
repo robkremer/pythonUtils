@@ -73,14 +73,15 @@ def makeParserFromFunc(fn:Callable,
     *parser* is absent, a new :py:class:`argparse.ArgumentParser` will be created.
   :type parser: argparse.ArgumentParser
   :param typeHandlers:
-  :type typeHandlers
-  :returns: 
-  
+  :type typeHandlers: dict[str, Callable[[str], Any]]
+  :returns: The parser.
+  :rtype: argparse.ArgumentParser
+
   Limitations to be aware of:
   
     - Complex annotations (list[int], Optional[str], unions) need extra handling
   
-    - *args / **kwargs don't map cleanly to argparse
+    - ``*args`` / ``**kwargs`` don't map cleanly to argparse
   
   But for straightforward typed functions it works well.
   '''
@@ -127,7 +128,7 @@ def makeParserFromFunc(fn:Callable,
   # collect the doc on each param  
   paramsDoc = dict()
   for p in pdoc.params:
-    paramsDoc[p.arg_name] = f'({p.type_name}{"" if p.default is None else (", default="+p.default)}) {p.description}'
+    paramsDoc[p.arg_name] = f'({p.type_name}{"" if p.default is None else (", default="+p.default)}) {p.description or ""}'.rstrip() # (an empty description: no "None")
     
   sig = inspect.signature(fn)
 
@@ -196,7 +197,10 @@ def resolveAliases(x:str, table:dict[str,str], raiseOnError:bool=True) -> str:
   :param raiseOnError: If True a syntax error or a failed lookup in *table* will raise an exception, otherwise the $ expression will be left intact.
   
   From a string, substitute any contained <key> expressions "${<key>}" for *dict["key"]*. 
-  Eg: *x* == *"a${b}c"* and *table* == *{"b":"BB"}* returns "aBBc".   
+  Eg: *x* == *"a${b}c"* and *table* == *{"b":"BB"}* returns "aBBc".
+
+  :returns:
+  :rtype: str
   """
   length = len(x)
   i = 0
@@ -246,6 +250,8 @@ def splitOnSeparator(s: str, separator:str=".") -> List[str]:
   :raises ValueError: If a quote appears mid-token, a quoted block is not
       properly terminated, or characters follow a closing quote before the
       next '.' or end of string.
+  :param separator:
+  :type separator: str
   """
   tokens: List[str] = []
   current: List[str] = []
@@ -291,6 +297,11 @@ def quoteIfNecessary(s:str) -> str:
   '''
   If the string contains spaces return surrounded with quotes, otherwise just
   return the string.
+
+  :param s:
+  :type s: str
+  :returns:
+  :rtype: str
   '''
   if " " in s:
     return f'"{s}"'
@@ -302,16 +313,32 @@ def quoteIfNecessary(s:str) -> str:
 
 # State bits in events
 def s_CMD(s:int) -> bool:
-  ":return: *True* iff *s* has the Command key bit set."
+  """
+  :return: *True* iff *s* has the Command key bit set.
+  :param s:
+  :type s: int
+  """
   return (s&0x18) != 0
 def s_SHIFT(s:int) -> bool: 
-  ":return: *True* iff *s* has the Shift key bit set."
+  """
+  :return: *True* iff *s* has the Shift key bit set.
+  :param s:
+  :type s: int
+  """
   return (s&0x1)  != 0
 def s_CTL(s:int) -> bool: 
-  ":return: *True* iff *s* has the Control key bit set."
+  """
+  :return: *True* iff *s* has the Control key bit set.
+  :param s:
+  :type s: int
+  """
   return (s&0x4)  != 0
 def s_ALT(s:int) -> bool: 
-  ":return: *True* iff *s* has the Alt or Option key bits set."
+  """
+  :return: *True* iff *s* has the Alt or Option key bits set.
+  :param s:
+  :type s: int
+  """
   return (s&0x88) != 0
 s_OPT = s_ALT
 
@@ -322,6 +349,12 @@ CHAR_ALT   = u'\u2387'
 CHAR_CMD   = u'\u2318'
 
 def strToBool(b:str):
+  '''
+  :param b:
+  :type b: str
+  :returns:
+  :rtype:
+  '''
   b = b.lower()
   ln = len(b)
   if b in ("on", "true"[:min(4,ln)]):
@@ -591,6 +624,13 @@ def changeUrlExtension(url, new_extension):
 
     Returns:
         str: The URL with the modified extension.
+
+    :param url:
+    :type url:
+    :param new_extension:
+    :type new_extension:
+    :returns:
+    :rtype:
     """
     parsed_url = urlparse(url)
     path_without_ext, _ = os.path.splitext(parsed_url.path)
@@ -642,7 +682,12 @@ def makeConcrete[T: ABC](abstract_cls: type[T], implementations: dict[str, Calla
 
 
 def getFullClassName(cls:type) -> str:
-  "Unlike *obj.__class__.__name__* this returns the (period-deliminated) full class path of *subjectClass*"
+  """
+  Unlike *obj.__class__.__name__* this returns the (period-deliminated) full class path of *subjectClass*
+
+  :returns:
+  :rtype: str
+  """
   #return str(subjectClass)[8:-2]
   splt = str(cls).split()
   if len(splt) == 1: # it was a simple type like "int"
@@ -653,6 +698,11 @@ def getClass(className:str) -> Optional[type]:
   '''
   Searches the modules in the system for the first class that matches the 
   simple class name.  Use *getFullyqualifiedClass()* if you have a class path.
+
+  :param className:
+  :type className: str
+  :returns:
+  :rtype: Optional[type]
   '''
   cls:Optional[type] = None
   for _, mod in sys.modules.items():
@@ -702,7 +752,10 @@ def getClassFromFullyQualifiedName(classPath:str) -> Optional[type]:
   :param className: A string representing the fully qualified name of a class
   :return: Either a *Class* object or None
   
-  Uses the FULLY QUALIFIED class name to retrieve the actual class. 
+  Uses the FULLY QUALIFIED class name to retrieve the actual class.
+
+  :param classPath:
+  :type classPath: str
   """
   cls:Optional[type] = None
   try:
@@ -796,6 +849,8 @@ def getCallerIdInfoStr(stack:int=1, includeArgs=True) -> str:
   :param stack: An integer indicating how far back in the call stack to go. The
     default is 1, which indicates the caller of this method's caller.
   :return: A string of the form "[<class>.]<method>([self=<self>]) [line <lineno>]".
+  :param includeArgs:
+  :type includeArgs: bool
   """
   curframe = inspect.currentframe()
   calframe = inspect.getouterframes(curframe, 2)
@@ -877,6 +932,13 @@ def removeDuplicates(items:list, asTree:bool=False) -> list:
   '''
   Return a copy of the *items* list with any duplicates (determine by the "==" 
   operator) removed. The first of any duplicates are the ones that are kept.
+
+  :param items:
+  :type items: list
+  :param asTree:
+  :type asTree: bool
+  :returns:
+  :rtype: list
   '''
   def do(items:list, asTree:bool, seen:list):
     ret = []
@@ -900,6 +962,9 @@ def removeDuplicatesInPlace(items:list, removeLater=True) -> None:
   
   Removes any duplicates from the *items* list (determine by the "==" operator)
   in place.
+
+  :param items:
+  :type items: list
   '''
   removals:list = []
   for i in range(len(items)):
@@ -913,6 +978,11 @@ def removeDuplicatesInPlace(items:list, removeLater=True) -> None:
 def flattenPairs(pairs):
   """
   From a vector of pairs, return a simple vector. [(1,2),(3,4)] -> [1,2,3,4]
+
+  :param pairs:
+  :type pairs:
+  :returns:
+  :rtype:
   """
   ret = []
   for p in pairs:
@@ -925,6 +995,13 @@ def treeFlatten(tree:list, _omit:list=[]) -> list:
   Flatten a tree formed by nested lists into a single flat list eliminating duplicates.
   
   eg: [1 [2 [6], 3 [4 [6], 5 [6]]]] --> [1, 2, 6, 3, 4, 5]
+
+  :param tree:
+  :type tree: list
+  :param _omit:
+  :type _omit: list
+  :returns:
+  :rtype: list
   """
   ret:list = []
   for item in tree:
@@ -942,6 +1019,13 @@ def treeSplit(tree:list, _omit:list=[]):
   
   [2 [6], 3 [4 [6], 5 [6]] --> [2, 3], [6, 4, 5], [6, 6] (note that [6, 4, 5] are the 
     immediate parents "1 in the example above)
+
+  :param tree:
+  :type tree: list
+  :param _omit:
+  :type _omit: list
+  :returns:
+  :rtype:
   """
   roots = []
   branches = []
@@ -958,8 +1042,17 @@ def treeSplit(tree:list, _omit:list=[]):
 ################################################################################
 
 class ExtendedEnumMeta(EnumMeta):
+  '''
+  A metaclass for *ExtendedFlag*: looking up a name with "|" in it (eg: ``Flags["A|B"]``) gives the combined flags.
+  '''
   @override
   def __getitem__(self, name):
+    '''
+    :param name:
+    :type name:
+    :returns:
+    :rtype:
+    '''
     items = name.split('|')
     ret:int = self(0)
     for i in items:
@@ -969,9 +1062,19 @@ class ExtendedEnumMeta(EnumMeta):
 
 class ExtendedFlag(Flag, metaclass=ExtendedEnumMeta):
 
+  '''
+  A *Flag* whose members can be looked up by combined names (see *ExtendedEnumMeta*).
+  '''
   @staticmethod
   def fromStr(spec:str):
-    'This cannot be right...'
+    '''
+    This cannot be right...
+
+    :param spec:
+    :type spec: str
+    :returns:
+    :rtype:
+    '''
     #TODO This can't be right...
     typeAndExp = spec.split(".")
     if len(typeAndExp) == 2:
@@ -985,6 +1088,10 @@ class ExtendedFlag(Flag, metaclass=ExtendedEnumMeta):
 
   @override
   def __str__(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     result = super().__str__()
     resultList = result.split(".")
     result = ".".join([getFullClassName(self.__class__), resultList[1]])
@@ -1020,6 +1127,11 @@ def play(soundFile:Optional[str]=None) -> None:
 def xmlEscape( strXML: str ) -> str:
   """
   Replaces the "&", "<", ">", and single and double quote characters with xml escape codes.
+
+  :param strXML:
+  :type strXML: str
+  :returns:
+  :rtype: str
   """
   return strXML  .replace("&", "&amp;") \
           .replace("<",  "&lt;") \
@@ -1032,6 +1144,11 @@ def xmlEscape( strXML: str ) -> str:
 def xmlUnescape( strXML: str ) -> str:
   """
   Replaces XML escape codes with "&", "<", ">", and single and double quote characters.
+
+  :param strXML:
+  :type strXML: str
+  :returns:
+  :rtype: str
   """
   return strXML  .replace("&amp;", "&") \
           .replace("&lt;",   "<") \
@@ -1045,6 +1162,13 @@ def xmlToStringIndented(elem:Element, **kwargs):
   '''
   Emulate an *ElementTree.tostring()* function, but with indents similar to
   what you get with the *ElementTree.indent()* method only for Elements.
+
+  :param elem:
+  :type elem: Element
+  :param kwargs:
+  :type kwargs:
+  :returns:
+  :rtype:
   '''
   if "encoding" not in kwargs:
     kwargs["encoding"] = "unicode"
@@ -1089,7 +1213,10 @@ class Point(Sequence):
   def __init__(self, *args) -> None: # type: ignore[misc] # MyPy doesn't match *args to overloads
     '''
     Overloaded constructor that will take either to *PointInidici* arguments as
-    *x* and *y*, or any *Iterator* of two *PointInidicis*. 
+    *x* and *y*, or any *Iterator* of two *PointInidicis*.
+
+    :param args:
+    :type args:
     '''
     if len(args) == 1:
       if isinstance(args[0], Iterable):
@@ -1111,12 +1238,22 @@ class Point(Sequence):
     '''
     Implementation of indexing ([]). Works exactly like *tuple*[index]* 
     where index may be an *int* or a *slice*.
+
+    :param index:
+    :type index: Union[int, slice[Any, Any, Any]]
+    :returns:
+    :rtype: Union[PointIndici, Sequence[PointIndici]]
     '''
     x = self.asTuple()
     return x[index]
 
   def __len__(self) -> int:
-    'Implementation for *len()*. Always returns 2.' 
+    '''
+    Implementation for *len()*. Always returns 2.
+
+    :returns:
+    :rtype: int
+    ''' 
     return 2
 
   def __iter__(self) -> Generator:
@@ -1125,21 +1262,45 @@ class Point(Sequence):
     yield self.y
     
   def asTuple(self) -> tuple:
-    'Returns *self* as a *tuple*.' 
+    '''
+    Returns *self* as a *tuple*.
+
+    :returns:
+    :rtype: tuple
+    ''' 
     return (self.x, self.y)
   
   def asList(self)  -> list:
-    'Returns *self* as a *list*.' 
+    '''
+    Returns *self* as a *list*.
+
+    :returns:
+    :rtype: list
+    ''' 
     return [self.x, self.y]
   
   def __add__(self, other:Union[Iterable,Self]):
-    "None mutating overload of the + operator to add the corresponding indices."
+    """
+    None mutating overload of the + operator to add the corresponding indices.
+
+    :param other:
+    :type other: Union[Iterable, Self]
+    :returns:
+    :rtype:
+    """
     if not isinstance(other, Point):
       other = Point(other) # will throw if the type of other is incompatible
     return Point(self.x + other.x, self.y + other.y)
   
   def moveBy(self, x:Optional[PointIndici]=None, y:Optional[PointIndici]=None):
-    "Mutating version of adding the corresponding values of x and y"
+    """
+    Mutating version of adding the corresponding values of x and y
+
+    :param x:
+    :type x: Optional[PointIndici]
+    :param y:
+    :type y: Optional[PointIndici]
+    """
     if x is not None:
       self.x += x 
     if y is not None:
@@ -1149,6 +1310,11 @@ class Point(Sequence):
     '''
     Overload of the == operator where the second operand may be a *Point* or a
     two-element iterator of *PointIndici*.
+
+    :param other:
+    :type other: Any
+    :returns:
+    :rtype: bool
     '''
     if not isinstance(other, Point):
       try:
@@ -1158,7 +1324,12 @@ class Point(Sequence):
     return (self.x == other.x) and (self.y == other.y)
        
   def __str__(self) -> str:
-    'Return the in "(<x>,<y>)" form.'
+    '''
+    Return the in "(<x>,<y>)" form.
+
+    :returns:
+    :rtype: str
+    '''
     return f'({self.x},{self.y})'
   
 # @dataclass
@@ -1215,6 +1386,8 @@ def shiftRectToPoint(rect:Iterable[PointIndici], point:Iterable[PointIndici]) ->
   :param rect: (x,y,x1,y1)
   :return: A new rectangle if the same size and aspect ratio as *rect*, but with the 
     upper left corner at *pt*
+  :param point:
+  :type point: Iterable[PointIndici]
   """
   rect = iterableToList(rect)
   point = iterableToList(point)  
@@ -1295,6 +1468,8 @@ def normalizeRect(rect:Iterable[PointIndici]) -> list[PointIndici]:
   
   :param: rect:
   :return: A new rectangle same as *rect*, but s/t x<x1 and y<y1.
+  :param rect:
+  :type rect: Iterable[PointIndici]
   """
   rect = iterableToList(rect)
   return [rect[0] if rect[0]<rect[2] else rect[2],
@@ -1303,6 +1478,12 @@ def normalizeRect(rect:Iterable[PointIndici]) -> list[PointIndici]:
       rect[3] if rect[1]<rect[3] else rect[1]]
       
 def iterableToList(it: Iterable) -> list:
+  '''
+  :param it:
+  :type it: Iterable
+  :returns:
+  :rtype: list
+  '''
   return list(it)
   # if isinstance(it, (list,tuple)):
   #   return it
@@ -1422,6 +1603,14 @@ class VerticalScrolledFrame(ttk.Frame):
     * This frame only allows vertical scrolling.
     """
     def __init__(self, parent, *args, **kw):
+        '''
+        :param parent:
+        :type parent:
+        :param args:
+        :type args:
+        :param kw:
+        :type kw:
+        '''
         ttk.Frame.__init__(self, parent, *args, **kw)
 
         # Create a canvas object and a vertical scrollbar for scrolling it.
@@ -1459,6 +1648,12 @@ class VerticalScrolledFrame(ttk.Frame):
         canvas.bind('<Configure>', _configure_canvas)
 
 def bindRightMouse(window, func):
+  '''
+  :param window:
+  :type window:
+  :param func:
+  :type func:
+  '''
   if window.winfo_toplevel().tk.call("tk", "windowingsystem") == 'aqua':
     window.bind("<2>", func)
     window.bind("<Control-1>", func)
@@ -1466,6 +1661,14 @@ def bindRightMouse(window, func):
     window.bind("<3>", func)
 
 def tag_bindRightMouse(window, id_, func):
+  '''
+  :param window:
+  :type window:
+  :param id_:
+  :type id_:
+  :param func:
+  :type func:
+  '''
   if window.tk.call("tk", "windowingsystem") == 'aqua':
     window.tag_bind(id_, "<2>", func)
     window.tag_bind(id_, "<Control-1>", func)
@@ -1473,6 +1676,12 @@ def tag_bindRightMouse(window, id_, func):
     window.tag_bind(id_, "<3>", func)
 
 def tag_unbindRightMouse(window, id_):
+  '''
+  :param window:
+  :type window:
+  :param id_:
+  :type id_:
+  '''
   if window.tk.call("tk", "windowingsystem") == 'aqua':
     window.tag_unbind(id_, "<2>")
     window.tag_unbind(id_, "<Control-1>")
@@ -1480,6 +1689,14 @@ def tag_unbindRightMouse(window, id_):
     window.tag_unbind(id_, "<3>")
 
 def eventEqual(e1, e2):
+  '''
+  :param e1:
+  :type e1:
+  :param e2:
+  :type e2:
+  :returns:
+  :rtype:
+  '''
   return isinstance(e1, tk.Event) and isinstance(e2, tk.Event) and \
       e1.x_root == e2.x_root and \
       e1.y_root == e2.y_root and \
@@ -1542,11 +1759,19 @@ def showExceptionDialog(parent: tk.Toplevel|tk.Tk|None = None, title: str = "Err
 ################################################################################
 
 def allSubclasses(cls) -> set:
-  """Returns the set of all descendants of *subjectClass*"""
+  """Returns the set of all descendants of *subjectClass*
+
+  :returns:
+  :rtype: set
+  """
   return set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in allSubclasses(c)])
 
 def allConcreteSubclasses(cls) -> set:
-  """Returns the set of all non-abstract descendants of *subjectClass*"""
+  """Returns the set of all non-abstract descendants of *subjectClass*
+
+  :returns:
+  :rtype: set
+  """
   subclasses = allSubclasses(cls)
   return set([c for c in subclasses if not inspect.isabstract(c)])
   
@@ -1556,17 +1781,39 @@ def allConcreteSubclasses(cls) -> set:
 
 class Categories[T]:
   
+  '''
+  Named categories of objects, each defined by a test: *isCategory()* says
+  whether an object is in any of the named categories.
+  '''
   def __init__(self):
     self.categories:dict[str, Callable[[T],bool]] = dict()
     
   def addCategory(self, name:str, test:Callable[[T], bool]):
+    '''
+    :param name:
+    :type name: str
+    :param test:
+    :type test: Callable[[T], bool]
+    '''
     self.categories[name] = test
     
   def deleteCategory(self, name:str):
+    '''
+    :param name:
+    :type name: str
+    '''
     if name in self.categories:
       del self.categories[name]
       
   def isCategory(self, obj:T, categories:Union[Iterable[str], str]):
+    '''
+    :param obj:
+    :type obj: T
+    :param categories:
+    :type categories: Union[Iterable[str], str]
+    :returns:
+    :rtype:
+    '''
     if isinstance(categories, str): categories = [categories]
     for c in categories:
       if c in self.categories:
@@ -1577,5 +1824,9 @@ class Categories[T]:
     return False
     
   def keys(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     return self.categories.keys()
 

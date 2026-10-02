@@ -1,5 +1,5 @@
-util.commandParser
-==================
+util.commandParser module
+=========================
 
 .. automodule:: util.commandParser
    :members:

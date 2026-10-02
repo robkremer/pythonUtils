@@ -19,17 +19,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
-from util.actionDialog import ActionDialog
 '''
+*ErrorReportingObject*: a mix-in for objects that check themselves. Problems
+found while validating are added to the object's *status report* (with a
+severity, and optional actions to fix them), which can then be shown in an
+*ActionDialog* (see *util.actionDialog*).
+
 Created on Sep 18, 2026
 
-@author: robkremer
+.. codeauthor:: Rob Kremer <robkremer@me.com>
 '''
+from util.actionDialog import ActionDialog
 import tkinter as tk
 from typing import Callable
 
 class ErrorReportingObject(object):
   
+  '''
+  A mix-in for objects that check themselves: *validate()* fills the object's
+  status report (see *assertToStatusReport()*), whose entries can be listed
+  (*statusReport()*) or shown, with their actions, in an *ActionDialog*.
+  '''
   def __init__(self, **kwargs):
     '''
     :param kwargs: Passed on to *super().__init__()*. *ErrorReportingObject*
@@ -64,10 +74,18 @@ class ErrorReportingObject(object):
       self._statusReport.append((severity, msg, actions))
     
   def validate(self) -> list[str]:
+    '''
+    :returns:
+    :rtype: list[str]
+    '''
     self.assertToStatusReport(True, "This message should never be displayed", 'E', []) # type: ignore[arg-type]
     return self.statusReport()
   
   def statusReport(self) -> list[str]:
+    '''
+    :returns:
+    :rtype: list[str]
+    '''
     ret:list[str] = []
     for sev, text, _actions in self._statusReport:
       ret.append(f'{sev}: {text}')
@@ -77,6 +95,10 @@ class ErrorReportingObject(object):
     self._statusReport = []
     
   def showErrorActionDialog(self, parentWidget:tk.Wm):
+    '''
+    :param parentWidget:
+    :type parentWidget: tk.Wm
+    '''
     name:str|None = str(self.name) if hasattr(self, "name") else None
     subject:str = "" if name is None else f' on "{name}"'
     text:str = f'For <b>{str(self)}:</b><br><br><ol>'
@@ -96,6 +118,10 @@ class ErrorReportingObject(object):
       closeOnAction=False)
     
   def status(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     stats:list[tuple[str,str,dict[str,Callable[[],None],]]] = self._statusReport
     priority = 'IWEF'
     pos:int = -1
@@ -117,6 +143,10 @@ class ErrorReportingObject(object):
     }
   
   def statsInt(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     return self._STATUS[self.status()]    
     
         

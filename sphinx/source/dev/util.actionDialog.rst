@@ -1,7 +1,7 @@
-test.testUtil module
+util.actionDialog module
 ========================
 
-.. automodule:: test.testUtil
+.. automodule:: util.actionDialog
    :members:
    :private-members:
    :show-inheritance:

@@ -61,16 +61,28 @@ class PlistSerializationStrategy(JSONSerializationStrategy):
   @override
   @classmethod
   def defaultExtension(self)->str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return ".plist"
 
   @override
   @classmethod
   def protocolName(self)->str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return "Plist"
 
   @override
   @classmethod
   def protocolVersion(self)->str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return "1.0"
 
   @override
@@ -78,6 +90,10 @@ class PlistSerializationStrategy(JSONSerializationStrategy):
     '''
     :param kwargs: "sort_keys" (default False, so dicts keep their order, as
       in the other formats) is passed on to :py:func:`plistlib.dumps`.
+    :param elem:
+    :type elem: JSONtypes
+    :returns:
+    :rtype: str
     '''
     try:
       return plistlib.dumps(elem, fmt=plistlib.FMT_XML, sort_keys=bool(kwargs.get("sort_keys", False))).decode("utf-8")
@@ -86,4 +102,12 @@ class PlistSerializationStrategy(JSONSerializationStrategy):
 
   @override
   def _fromstring(self, string:str, kwargs:dict[str,Any])->JSONtypes:
+    '''
+    :param string:
+    :type string: str
+    :param kwargs:
+    :type kwargs: dict[str, Any]
+    :returns:
+    :rtype: JSONtypes
+    '''
     return plistlib.loads(string.encode("utf-8"), fmt=plistlib.FMT_XML)

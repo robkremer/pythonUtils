@@ -19,13 +19,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
-from __future__ import annotations
 '''
 A general-purpose popup dialog (*ActionDialog*) that renders a small,
 dependency-free subset of HTML -- bold/italic/underline, line breaks, and
 ``<a id="...">`` action links -- inside a *tk.Text* widget, and invokes a
 caller-supplied callback when an action link is clicked.
-
 Motivating use case: a validation-error popup (eg: for *decorators.py*'s
 error tag) that lists an object's errors, one per line, each with inline
 "Fix" / "Delete" / "Ignore" links -- without needing a full HTML rendering
@@ -35,9 +33,8 @@ every time such a popup is needed.
 Created on Sep 18, 2026
 
 .. codeauthor:: Rob Kremer <robkremer@me.com>
-
--------------------
 '''
+from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
 from html.parser import HTMLParser
@@ -75,12 +72,24 @@ class _RichTextParser(HTMLParser):
     'Whether the run most recently emitted ended with a newline (or nothing has been emitted yet).'
 
   def _emit(self, text:str, actionId:Optional[str] = None) -> None:
+    '''
+    :param text:
+    :type text: str
+    :param actionId:
+    :type actionId: Optional[str]
+    '''
     if text == "":
       return
     self.runs.append((text, tuple(self._styleStack), actionId))
     self._atLineStart = text.endswith("\n")
 
   def handle_starttag(self, tag:str, attrs:list[tuple[str, Optional[str]]]) -> None:
+    '''
+    :param tag:
+    :type tag: str
+    :param attrs:
+    :type attrs: list[tuple[str, Optional[str]]]
+    '''
     if tag in _STYLE_TAGS:
       self._styleStack.append(_STYLE_TAGS[tag])
     elif tag == "br":
@@ -99,6 +108,10 @@ class _RichTextParser(HTMLParser):
         self._emit("• ") # a <li> outside any <ol>/<ul> still gets a bullet
 
   def handle_endtag(self, tag:str) -> None:
+    '''
+    :param tag:
+    :type tag: str
+    '''
     if tag in _STYLE_TAGS:
       styleName = _STYLE_TAGS[tag]
       if styleName in self._styleStack:
@@ -112,6 +125,10 @@ class _RichTextParser(HTMLParser):
         self._emit("\n")
 
   def handle_data(self, data:str) -> None:
+    '''
+    :param data:
+    :type data: str
+    '''
     self._emit(data, actionId=self._linkId)
 
 
@@ -172,6 +189,22 @@ class ActionDialog(tk.Toplevel):
   def __init__(self, parent:tk.Wm, title:str, html:str,
                actions:Optional[dict[str, ActionCallback]] = None, *,
                closeOnAction:bool = True, width:int = 80, maxHeight:int = 40) -> None:
+    '''
+    :param parent:
+    :type parent: tk.Wm
+    :param title:
+    :type title: str
+    :param html:
+    :type html: str
+    :param actions:
+    :type actions: Optional[dict[str, ActionCallback]]
+    :param closeOnAction:
+    :type closeOnAction: bool
+    :param width:
+    :type width: int
+    :param maxHeight:
+    :type maxHeight: int
+    '''
     super().__init__(parent) # type: ignore[arg-type]
     self.geometry("600x300")
     self.title(title)
@@ -279,12 +312,24 @@ if __name__ == "__main__":
   tk.Label(root, text="(host window -- the dialog should appear on top)").pack(padx=20, pady=20)
 
   def onFix(name:str) -> None:
+    '''
+    :param name:
+    :type name: str
+    '''
     print(f"fix: {name}")
 
   def onIgnore(name:str) -> None:
+    '''
+    :param name:
+    :type name: str
+    '''
     print(f"ignore: {name}")
 
   def onDelete(name:str) -> None:
+    '''
+    :param name:
+    :type name: str
+    '''
     print(f"delete: {name}")
 
   ActionDialog(root, "Validation errors on 'Foo'",

@@ -83,6 +83,8 @@ class CreateToolTip:
       spaces stays aligned); by default, Tk's default.
     :throws TypeError:
     :throws ValueError:
+    :param background:
+    :type background: str
     """
     self.waittime = waitTime   #miliseconds
     self.wraplength = wrapLength   #pixels
@@ -127,10 +129,18 @@ class CreateToolTip:
     self.shouldDisplay = None
 
   def enter(self, event=None):
+    '''
+    :param event:
+    :type event:
+    '''
     if self.shouldDisplay(self):
       self.schedule()
 
   def leave(self, event=None):
+    '''
+    :param event:
+    :type event:
+    '''
     self.unschedule()
     self.hidetip()
 
@@ -145,6 +155,10 @@ class CreateToolTip:
       self.widget.after_cancel(id)
 
   def showtip(self, event=None):
+    '''
+    :param event:
+    :type event:
+    '''
     x = y = 0
     if self.isCanvas:
       x, y, cx, cy = self.widget.bbox(self.canvasID)

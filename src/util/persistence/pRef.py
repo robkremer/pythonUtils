@@ -119,6 +119,10 @@ class PRObject[DBT:"PRDb"](Serializable, Dirtyable):
   @override
   @classmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
+    '''
+    :returns:
+    :rtype: InstantiationInfo
+    '''
     return InstantiationInfo(
             cls, 
             conArgs=[ParamInfo("db", PRDb, lambda slf: cast(PRObject, slf)._db())])#,
@@ -166,6 +170,9 @@ class PRObject[DBT:"PRDb"](Serializable, Dirtyable):
   def getPRef(self) -> PReference[Self]:
     '''
     Returns a new :py:class:`PReference` object referencing this object.
+
+    :returns:
+    :rtype: PReference[Self]
     '''
     if self.db is None:
       raise AttributeError("PRObject has no DB.")
@@ -175,17 +182,37 @@ class PRObject[DBT:"PRDb"](Serializable, Dirtyable):
     
   @override
   def __repr__(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return f'{self.__class__.__name__}({(self.db.url if self.db is not None else "None")}, ID={self.id!r}, name={self.name!r})'
   
   def torepr(self, relativeTo:DBT) -> str:
+    '''
+    :param relativeTo:
+    :type relativeTo: DBT
+    :returns:
+    :rtype: str
+    '''
     url = self.db.url if self.db is not None else "None"
     return f'{self.__class__.__name__}({url}, ID={self.id!r}, name={self.name!r})'
 
   @override
   def __str__(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return self.tostring()
   
   def tostring(self, relativeTo:DBT|None=None) -> str:
+    '''
+    :param relativeTo:
+    :type relativeTo: DBT | None
+    :returns:
+    :rtype: str
+    '''
     return f'{self.__class__.__name__}({self.name}, {self.getPRef().tostring(relativeTo)})'
   
   @override
@@ -196,6 +223,8 @@ class PRObject[DBT:"PRDb"](Serializable, Dirtyable):
       needn't be unique, and in subclasses may be computed -- eg: inherited --
       in ways that themselves compare objects.)
     :rtype: bool
+    :param other:
+    :type other: object
     '''
     if self is other:
       return True
@@ -207,22 +236,41 @@ class PRObject[DBT:"PRDb"](Serializable, Dirtyable):
     return False
 
   def _dbUrl(self) -> str:
-    'The URL of our DB, or the one it had when we were created if it has gone.'
+    '''
+    The URL of our DB, or the one it had when we were created if it has gone.
+
+    :returns:
+    :rtype: str
+    '''
     db = self._db()
     return self._url if db is None else db.url
   
   @override
   def __hash__(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     return hash(str(self.getPRef()))
 
 
 class PRContainer[DBT:"PRDb"](PRObject[DBT]):
+  '''
+  A *PRObject* that contains other objects (see *getMembers()*).
+  '''
   @abstractmethod
   def getMembers(self) -> Iterator[PRObject[DBT]]:
+    '''
+    :returns:
+    :rtype: Iterator[PRObject[DBT]]
+    '''
     pass
 
   
 class PRDbContainer[DBT:"PRDb"](PRContainer[DBT]):
+  '''
+  The object standing for its whole database (as object 0): its members are all the database's objects.
+  '''
   @override
   def getMembers(self) -> Iterator[PRObject[DBT]]:
     for item in self.db.values():
@@ -231,6 +279,10 @@ class PRDbContainer[DBT:"PRDb"](PRContainer[DBT]):
   @override
   @property
   def name(self)->str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return self.db.name
   
   
@@ -293,6 +345,9 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
 
     Either return the DB from memory or attempt to read it from disk or 
     from the web.
+
+    :param mode:
+    :type mode: str
     '''
     # process a path prefixed $ by looking it up in memory first
     assert url is not None
@@ -331,6 +386,9 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     Read the DB from disk or from the web and instantiate it.
     Subclasses should implement this method to actually do the read; this 
     version merely raises the exception.
+
+    :param mode:
+    :type mode: str
     '''
     url = fixURL(url, extension=".xml", replaceExt=None, mode=mode)[0]
     if not isValidURL(url):
@@ -368,6 +426,13 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     may be open) -- and so are its references to files that were next to it, if
     they've been copied along with it (see *_relocate()*). Its *previousURL* is
     the URL it was copied from (written in the header the next time it's saved).
+
+    :param url:
+    :type url: str
+    :param mode:
+    :type mode: str
+    :returns:
+    :rtype: Any
     '''
     try:
       stored = SerializationStrategy.peekStringx(url, "root", "url", mode=mode)
@@ -408,6 +473,9 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     '''
     Within this context, relative URLs are relative to *url* (eg: the file being
     read or written) -- unless *url* is None.
+
+    :param url:
+    :type url: str | None
     '''
     if url is None:
       yield
@@ -420,7 +488,14 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
 
   @staticmethod
   def isRelativeURL(url:str) -> bool:
-    'Whether *url* is a relative URL, eg: "pets.snm" or "shared/animals.snm" (not "file:...", "sn:...", "/...", "$name", "#12").'
+    '''
+    Whether *url* is a relative URL, eg: "pets.snm" or "shared/animals.snm" (not "file:...", "sn:...", "/...", "$name", "#12").
+
+    :param url:
+    :type url: str
+    :returns:
+    :rtype: bool
+    '''
     return bool(url) and urlparse(url).scheme == "" and not url.startswith(("/", "$", "~", "#", "?"))
 
   @classmethod
@@ -429,6 +504,13 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     *url*, if it's relative, made absolute against *base* -- by default the file
     being read or written (see *basedOn()*); otherwise *url* as is (eg: a path
     typed by the user, relative to the current directory).
+
+    :param url:
+    :type url: str
+    :param base:
+    :type base: str | None
+    :returns:
+    :rtype: str
     '''
     base = base if base is not None else (cls._bases[-1] if cls._bases else None)
     if base is None or not cls.isRelativeURL(url):
@@ -463,6 +545,13 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     or anything not a file). So a block of files copied together keeps referring
     to one another. (A file copied on its own still finds what it referred to:
     see *absoluteURL()*.)
+
+    :param url:
+    :type url: str
+    :param base:
+    :type base: str | None
+    :returns:
+    :rtype: str
     '''
     base = base if base is not None else (cls._bases[-1] if cls._bases else None)
     if base is None or not url:
@@ -492,6 +581,11 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     taken to be the one it was read from; and a URL of a file that was next to
     it (eg: the model of a copied view) is taken to be the same file next to
     it now -- if that file is there. Otherwise, *url*.
+
+    :param url:
+    :type url: str
+    :returns:
+    :rtype: str
     '''
     base, hash_, frag = url.partition("#")
     for stored, actual in reversed(cls._readFrames):
@@ -511,6 +605,9 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     '''
     Header fields for when this is written (see *SerializationStrategy.tostring()*):
     its URL, and the URL it was copied or moved from, if it was.
+
+    :returns:
+    :rtype: dict[str, str]
     '''
     ret = {"url": self.url}
     if getattr(self, "previousURL", None):
@@ -518,6 +615,18 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     return ret
   
   def __new__(cls, url:str, mode="w", memoryResident:bool=True, _reading:bool=False):
+    '''
+    :param url:
+    :type url: str
+    :param mode:
+    :type mode: str
+    :param memoryResident:
+    :type memoryResident: bool
+    :param _reading:
+    :type _reading: bool
+    :returns:
+    :rtype:
+    '''
     assert issubclass(cls, PRDb)
     url = cls._relocate(fixURL(cls.absoluteURL(url), extension=".xml", replaceExt=None, mode=mode)[0])
     if not isValidURL(url):
@@ -557,6 +666,11 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     
     Creates a **new** PRDb. If the url exists already, you should be using
     PRDb.getDB() to retrieve it.
+
+    :param mode:
+    :type mode: str
+    :param memoryResident:
+    :type memoryResident: bool
     '''
     if hasattr(self, "_initialized"): # This means the __new__ method has returned an existing object, so don't truck over it!
       return
@@ -595,6 +709,10 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
   @classmethod
   @override
   def getInstantiationInfo(cls)->InstantiationInfo:
+    '''
+    :returns:
+    :rtype: InstantiationInfo
+    '''
     def convertDictToStrdict(d:dict[int, T]) -> strdict:
       ret:strdict = strdict()
       for k,v in d.items():
@@ -628,11 +746,23 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
 
   @property
   def name(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     url = urlparse(self.url)
     path:Path = Path(url.path)
     return path.name
     
   def save(self, saveas:Optional[str]=None, overwrite=False, format:str=DEFAULT_STRATEGY) -> None:
+    '''
+    :param saveas:
+    :type saveas: Optional[str]
+    :param overwrite:
+    :type overwrite: bool
+    :param format:
+    :type format: str
+    '''
     if saveas is not None:
       url = fixURL(saveas, extension=SerializationStrategy.findStrategy(format).defaultExtension(), replaceExt=None, mode="w")[0]
       if not isValidURL(url):
@@ -750,6 +880,9 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     '''
     Returns True iff the object (or an of it's contained *Attributes*) have
     been modified and should probably be saved on exit.
+
+    :returns:
+    :rtype: bool
     '''
     if super().isDirty():
       return True
@@ -763,6 +896,12 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
   # ── Name-resolution helper ────────────────────────────────────────────────
 
   def findByName(self, name:str) -> list[T]:
+    '''
+    :param name:
+    :type name: str
+    :returns:
+    :rtype: list[T]
+    '''
     return [v for v in self._db.values() if v.name == name]
     
   def _resolve(self, key: int | str) -> int:
@@ -794,6 +933,12 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
   # ── Read-side overrides ───────────────────────────────────────────────────
 
   def __getitem__(self, key: int | str) -> T:
+    '''
+    :param key:
+    :type key: int | str
+    :returns:
+    :rtype: T
+    '''
     try:
       index:int = self._resolve(key)
       if index == 0 and not self._db.get(0, None):
@@ -808,9 +953,19 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
       raise ex
     
   def _makeDBContainer(self) -> PRDbContainer[Self]:
+    '''
+    :returns:
+    :rtype: PRDbContainer[Self]
+    '''
     return PRDbContainer(self)
 
   def __contains__(self, key: object) -> bool:
+    '''
+    :param key:
+    :type key: object
+    :returns:
+    :rtype: bool
+    '''
     if isinstance(key, str):
       try:
         self._resolve(key)
@@ -830,6 +985,15 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
 
     - int  -> returned as-is (existence check deferred to caller)
     - str  -> scanned for a matching .name; DuplicateNameError if >1 match
+
+    :param key:
+    :type key: int | str
+    :param filtr:
+    :type filtr: Callable[[T], bool]
+    :param throw:
+    :type throw: bool
+    :returns:
+    :rtype: list[T]
     """
     # if key == 0:
     #   raise KeyError(f'getall(): Key 0 is illegal.')
@@ -847,41 +1011,89 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     return ret #type: ignore[return-value]
     
   def get(self, key:int|str, default:T|None=None) -> T|None:
+    '''
+    :param key:
+    :type key: int | str
+    :param default:
+    :type default: T | None
+    :returns:
+    :rtype: T | None
+    '''
     try:
       return self[key]
     except KeyError:
       return default
 
   def __iter__(self) -> Iterator[int]:
+    '''
+    :returns:
+    :rtype: Iterator[int]
+    '''
     return self._db.__iter__()
 
   def keys(self) -> KeysView[int]:
+    '''
+    :returns:
+    :rtype: KeysView[int]
+    '''
     return self._db.keys()
 
   def values(self) -> ValuesView[T]:
+    '''
+    :returns:
+    :rtype: ValuesView[T]
+    '''
     return self._db.values()
 
   def items(self) -> ItemsView[int, T]:
+    '''
+    :returns:
+    :rtype: ItemsView[int, T]
+    '''
     return self._db.items()
   
   def __len__(self) -> int:
+    '''
+    :returns:
+    :rtype: int
+    '''
     return len(self._db)
 
   # ── Representation ────────────────────────────────────────────────────────
 
   @override
   def __repr__(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return self.torepr()
   
   def torepr(self, relativeTo:Self|None=None) -> str:
+    '''
+    :param relativeTo:
+    :type relativeTo: Self | None
+    :returns:
+    :rtype: str
+    '''
     members = "\n  ".join(f"{k}: {v.tostring(relativeTo=relativeTo)}" for k, v in self.items())
     return f'{self.tostring(relativeTo=relativeTo)}\n  {members}'
   
   @override
   def __str__(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return self.tostring()
 
   def tostring(self, relativeTo:Self|None=None) -> str:
+    '''
+    :param relativeTo:
+    :type relativeTo: Self | None
+    :returns:
+    :rtype: str
+    '''
     return f'{self.__class__.__name__}({self.url}, <{len(self._db)} items>)'
 
 
@@ -921,6 +1133,8 @@ class PReference[T:PRObject]:
     '''
     :return: the resolved *PRObject*.
     :raises LookupError: if the reference cannot be resolved.
+    :param relativeTo:
+    :type relativeTo: PRDb[T] | str | None
     '''
     if self.obj is None:
       
@@ -944,19 +1158,39 @@ class PReference[T:PRObject]:
     return self.obj
   
   def tostring(self, relativeTo:PRDb[T]|None=None) -> str:
+    '''
+    :param relativeTo:
+    :type relativeTo: PRDb[T] | None
+    :returns:
+    :rtype: str
+    '''
     return self.formatForURL(self, contextDB=relativeTo)
   
   @override
   def __str__(self) -> str:
     #return f'{self.url}#{self.id}: {("resolved to "+str(self.obj)) if self.obj is not None else "unresolved"}'
     #return f'{self.url}?{("id="+str(self.id)) if self.id>0 else ""}{"&" if self.id>0 and self.name is not None else ""}{("name="+quote(self.name)) if self.name is not None else ""}'
+    '''
+    :returns:
+    :rtype: str
+    '''
     return self.tostring()
     
   @override
   def __repr__(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return self.torepr()
   
   def torepr(self, relativeTo:PRDb[T]|None=None) -> str:
+    '''
+    :param relativeTo:
+    :type relativeTo: PRDb[T] | None
+    :returns:
+    :rtype: str
+    '''
     return f'{self.tostring(relativeTo)}: {("resolved to "+self.obj.tostring(relativeTo)) if self.obj is not None else "unresolved"}'
   
   @classmethod
@@ -976,6 +1210,9 @@ class PReference[T:PRObject]:
     Format:
     
       <url>?{id=<id_int>}{{&}name=<name>}
+
+    :param includeName:
+    :type includeName: bool
     '''
     if ref is None:
       return "None"
@@ -1345,11 +1582,21 @@ if __name__ == "__main__":
   
   class CPObject(PRObject): # concrete PRObject
     def __init__(self, db:PRDb, name:str):
+      '''
+      :param db:
+      :type db: PRDb
+      :param name:
+      :type name: str
+      '''
       super().__init__(db)
       self._name:str = name
       
     @property
     def name(self) -> str:
+      '''
+      :returns:
+      :rtype: str
+      '''
       return self._name
 
     # @name.setter

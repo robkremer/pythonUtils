@@ -1,5 +1,5 @@
-util.rtValuesDialog
-===================
+util.rtValuesDialog module
+==========================
 
 .. automodule:: util.rtValuesDialog
    :members:

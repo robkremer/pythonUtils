@@ -129,6 +129,11 @@ class Subject:
   """
 
   class ChangeMgr:
+    '''
+    A context manager that collects the topics registered during a change (see
+    *registerTopics()*) and notifies the subject's observers once, when the
+    outermost change ends -- unless it was cancelled.
+    '''
     def __init__(self, owner:Subject, later:bool=False):
       '''
       :param owner: The subject doing the calling.
@@ -145,9 +150,21 @@ class Subject:
         self.owner._topics = [] # [(topic, params)]
         self.owner._confirmedCount = 0
     def __enter__(self) -> Subject.ChangeMgr:
+      '''
+      :returns:
+      :rtype: Subject.ChangeMgr
+      '''
       self.owner._changeDepth += 1
       return self
     def __exit__(self, _exc_type, _exc_val, _exc_tb):
+      '''
+      :param _exc_type:
+      :type _exc_type:
+      :param _exc_val:
+      :type _exc_val:
+      :param _exc_tb:
+      :type _exc_tb:
+      '''
       self.owner._changeDepth -= 1
       if not self.cancelled:
         self.owner._confirmedCount += 1
@@ -161,6 +178,10 @@ class Subject:
     def cancel(self):
       self.cancelled = True
     def registerTopics(self, topics:list[tuple[str, tuple[Any, ...]]]|tuple[str, tuple[Any, ...]]):
+      '''
+      :param topics:
+      :type topics: list[tuple[str, tuple[Any, ...]]] | tuple[str, tuple[Any, ...]]
+      '''
       if not isinstance(topics, list):
         topics = [topics]
       for t in topics:
@@ -179,6 +200,12 @@ class Subject:
     self.callbackCode = 0
   
   def attach(self, observer: Observer, *topics:str) -> None:
+    '''
+    :param observer:
+    :type observer: Observer
+    :param topics:
+    :type topics: str
+    '''
     assert isinstance(observer, Observer)
     o:tuple[Observer, set[str]]
     for o in self._observers:
@@ -239,6 +266,9 @@ class Subject:
         
     Trigger an update in each subscriber iff either it has no specific topics
     or one or more of it's topics matches.
+
+    :returns:
+    :rtype: None
     '''
     if enabled and (self._observers or self._callbacks):
       return self.notifyLater(*topics) if alwaysLater else self._notify(*topics)
@@ -368,7 +398,7 @@ class Subject:
     asked to send. None of the four scheduling mechanisms below reliably
     accepts extra keyword arguments to forward to the deferred call (Tk's
     after_idle() and asyncio's call_soon()/call_soon_threadsafe() only take
-    *args at all; threading.Timer does take a kwargs= param, but there's no
+    ``*args`` at all; threading.Timer does take a kwargs= param, but there's no
     reason to special-case it), so the snapshot is captured as plain local
     variables and closed over by a single, argument-less _fireNow(), which
     every scheduler is just asked to call once, later, with nothing further
@@ -421,5 +451,10 @@ class Observer(ABC):
   def update(self, subject: Subject, *topics:tuple[str, tuple[Any, ...]]) -> None:
       """
       Receive update from subject.
+
+      :param subject:
+      :type subject: Subject
+      :param topics:
+      :type topics: tuple[str, tuple[Any, ...]]
       """
       pass

@@ -20,9 +20,13 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 '''
+*Dirtyable*: a mix-in for objects that need to know whether they've changed
+since they were last saved (a "dirty bit"), including through the objects they
+contain.
+
 Created on Sep 11, 2026
 
-@author: robkremer
+.. codeauthor:: Rob Kremer <robkremer@me.com>
 '''
 
 class Dirtyable:
@@ -73,6 +77,8 @@ class Dirtyable:
     
     :param value: (default True) The value to set *dirty* to.
     :type value: bool
+    :param dirty:
+    :type dirty: bool
     '''
     self._dirty = dirty
     

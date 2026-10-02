@@ -19,15 +19,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
-import inspect
-from typing import SupportsIndex, override
-from util.dirtyable import Dirtyable
 '''
+*ValidatedList*: a list that checks every item put in it against a predicate,
+and that's *Dirtyable* (see *util.dirtyable*).
+
 Created on Jul 13, 2026
 
 .. codeauthor:: Rob Kremer <robkremer@me.com>
-
 '''
+import inspect
+from typing import SupportsIndex, override
+from util.dirtyable import Dirtyable
 
 from collections.abc import Callable, Iterable
 
@@ -44,6 +46,12 @@ class ValidatedList[T](list[T], Dirtyable):
   """
 
   def __init__(self, f: Callable[[T], bool], iterable: Iterable[T] = ()) -> None:
+    '''
+    :param f:
+    :type f: Callable[[T], bool]
+    :param iterable:
+    :type iterable: Iterable[T]
+    '''
     Dirtyable.__init__(self)
     self._f: Callable[[T], bool] = f
     initial = list(iterable)
@@ -151,6 +159,10 @@ class ValidatedList[T](list[T], Dirtyable):
   
   @override
   def __delitem__(self, key:SupportsIndex | slice)->None:
+    '''
+    :param key:
+    :type key: SupportsIndex | slice
+    '''
     super().__delitem__(key)
     self.setDirty()
     

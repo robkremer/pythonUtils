@@ -1,5 +1,5 @@
-util.prefs
-==========
+util.prefs module
+=================
 
 .. automodule:: util.prefs
    :members:

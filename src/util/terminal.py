@@ -19,6 +19,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
+'''
+Terminals for an application's command line, and the routing of its output to
+them:
+
+- *TerminalWidget*: a Tk text widget that behaves like a terminal (a prompt,
+  typed commands, history).
+- *PlainTextTerminal*: the same interface on the real console (a REPL).
+- *TerminalRegistry* and *installGlobalIORouting()*: send *stdout*, *stderr*,
+  logging and *input()* to the terminal of whichever window is active.
+'''
 from __future__ import annotations
 from typing import override, Any, TextIO
 from abc import abstractmethod
@@ -54,6 +64,10 @@ to a printable string. This is usually defaulted the builtin str() function,
 but more exotic functions can be passed in in the terminal's constructor.'''
 
 class AbstractTerminal:
+  '''
+  What a terminal does, whatever it's drawn on: show a prompt, take a line of
+  input and hand it to the *onLine* callback, and print the result.
+  '''
   def __init__(
       self,
       onLine:OnLineType,
@@ -67,6 +81,10 @@ class AbstractTerminal:
     :type onLine: Callable[[str], None]
     :param prompt: The prompt string shown before each new command line.
     :type prompt: str|Callable[[],str]
+    :param resultToStringFun:
+    :type resultToStringFun: ResultToStringFunType
+    :param _kwargs:
+    :type _kwargs:
     '''
     self.onLine:OnLineType = onLine
     self._prompt:PromptType = prompt
@@ -78,6 +96,10 @@ class AbstractTerminal:
     
   @property
   def prompt(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     if callable(self._prompt):
       return self._prompt()
     assert type(self._prompt) is str
@@ -86,7 +108,12 @@ class AbstractTerminal:
   @abstractmethod
   def input(self, prompt: str = "") -> str:
     '''
-    Method to imitate *buildins.input()*. 
+    Method to imitate *buildins.input()*.
+
+    :param prompt:
+    :type prompt: str
+    :returns:
+    :rtype: str
     '''
     pass
   
@@ -154,6 +181,14 @@ class PlainTextTerminal(AbstractTerminal):
   
   @staticmethod
   def _getStyleSeq(name:str, default:str="") -> str:
+    '''
+    :param name:
+    :type name: str
+    :param default:
+    :type default: str
+    :returns:
+    :rtype: str
+    '''
     seq = PlainTextTerminal.TERMINAL_SEQUENCES.get(name, None)
     if seq is not None:
       return f'\033[{seq}m'
@@ -187,6 +222,10 @@ class PlainTextTerminal(AbstractTerminal):
     :param promptfg: The colour of text for the prompt. Default "yellow".
     :param queryfg: The colour of text prompts from self.input(). Default "green".
     :param resultfg: The colour of text for command returned results. Default "blue".
+    :param resultToStringFun:
+    :type resultToStringFun: ResultToStringFunType
+    :param _kwargs:
+    :type _kwargs:
     '''
     super().__init__(onLine, prompt, resultToStringFun)
     self.styleTags: dict[str, str] = {
@@ -225,6 +264,12 @@ class PlainTextTerminal(AbstractTerminal):
 
   @override
   def input(self, prompt:str="")->str:
+    '''
+    :param prompt:
+    :type prompt: str
+    :returns:
+    :rtype: str
+    '''
     return input(f'{self.styleTags.get("prompt","")}{prompt}\033[0m')
 
   @override
@@ -311,6 +356,8 @@ class LineBufferedStream(io.TextIOBase):
     :param line: The line to emit.
     :type line: str
     :rtype: None
+    :param end:
+    :type end: str
     """
     raise NotImplementedError
 
@@ -333,6 +380,12 @@ class LineFilteringStream(LineBufferedStream):
     target: "TextIO",
     transform: Optional[Callable[[str], Optional[str]]] = None,
   ) -> None:
+    '''
+    :param target:
+    :type target: TextIO
+    :param transform:
+    :type transform: Optional[Callable[[str], Optional[str]]]
+    '''
     super().__init__()
     self.target = target
     self.transform = transform
@@ -344,6 +397,8 @@ class LineFilteringStream(LineBufferedStream):
     :param line: The line to emit.
     :type line: str
     :rtype: None
+    :param end:
+    :type end: str
     """
     result = line if self.transform is None else self.transform(line)
     if result is not None:
@@ -512,6 +567,7 @@ class TerminalRegistry:
     each Toplevel's Python-level .master.
 
     :rtype: Optional[TerminalWidget]
+    :returns:
     """
     if not self._windows:
       return None
@@ -560,6 +616,12 @@ class LineBufferedRoutingStream(io.TextIOBase):
   """
 
   def __init__(self, registry: TerminalRegistry, style: Optional[str]=None) -> None:
+    '''
+    :param registry:
+    :type registry: TerminalRegistry
+    :param style:
+    :type style: Optional[str]
+    '''
     self.registry = registry
     self.style = style
     self._buffer = ""
@@ -615,6 +677,10 @@ class TerminalLogHandler(logging.Handler):
   """
 
   def __init__(self, registry: TerminalRegistry) -> None:
+    '''
+    :param registry:
+    :type registry: TerminalRegistry
+    '''
     super().__init__()
     self.registry = registry
 
@@ -858,6 +924,38 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     queryFlashIntervalMs: int = 150,
     **kwargs: object,
   ) -> None:
+    '''
+    :param master:
+    :type master: tk.Widget
+    :param onLine:
+    :type onLine: OnLineType
+    :param prompt:
+    :type prompt: PromptType
+    :param resultToStringFun:
+    :type resultToStringFun: ResultToStringFunType
+    :param registry:
+    :type registry: Optional[TerminalRegistry]
+    :param stdoutfg:
+    :type stdoutfg: str
+    :param stderrfg:
+    :type stderrfg: str
+    :param promptfg:
+    :type promptfg: str
+    :param queryfg:
+    :type queryfg: str
+    :param resultfg:
+    :type resultfg: str
+    :param queryFont:
+    :type queryFont: Optional[tuple[str, int, str]]
+    :param queryFlashColor:
+    :type queryFlashColor: Optional[str]
+    :param queryFlashCount:
+    :type queryFlashCount: int
+    :param queryFlashIntervalMs:
+    :type queryFlashIntervalMs: int
+    :param kwargs:
+    :type kwargs: object
+    '''
     if "borderwidth" not in kwargs:
       kwargs["borderwidth"] = 0
     tk.Text.__init__(self, master, kwargs)  # remaining kwargs (bg, fg, font, ...) go to tk.Text
@@ -987,6 +1085,9 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     """Handle Enter: feed a pending input() request, or start a new command.
 
     :rtype: str
+    :param event:
+    :type event: tk.Event
+    :returns:
     """
     line = self._currentLine()
     self.insert("end", "\n")
@@ -1189,6 +1290,9 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     """Signal EOF to a pending input() call, mimicking terminal Ctrl+D semantics.
 
     :rtype: str
+    :param event:
+    :type event: tk.Event
+    :returns:
     """
     if self._awaitingReply:
       self._awaitingReply = False
@@ -1202,6 +1306,9 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     """Recall the previous history entry.
 
     :rtype: str
+    :param event:
+    :type event: tk.Event
+    :returns:
     """
     if self._awaitingReply or not self.history:
       return "break"
@@ -1216,6 +1323,9 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     """Recall the next history entry, or clear the line at the end of history.
 
     :rtype: str
+    :param event:
+    :type event: tk.Event
+    :returns:
     """
     if self._awaitingReply or self.historyIndex is None:
       return "break"
@@ -1231,6 +1341,9 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     """Prevent backspacing past the start of the input region.
 
     :rtype: Optional[str]
+    :param event:
+    :type event: tk.Event
+    :returns:
     """
     if self.compare("insert", "<=", "inputStart"):
       return "break"
@@ -1240,6 +1353,9 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     """Block edits (other than at/after inputStart) to protect prior output.
 
     :rtype: Optional[str]
+    :param event:
+    :type event: tk.Event
+    :returns:
     """
     if self.compare("insert", "<", "inputStart") and event.keysym not in (
       "Left", "Right", "Up", "Down", "Home", "End",
@@ -1391,6 +1507,10 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     self.see("end")
     
   def wrap(self, on:bool=True):
+    '''
+    :param on:
+    :type on: bool
+    '''
     self.config({"wrap": tk.WORD if on else tk.NONE})
 
 
@@ -1413,6 +1533,7 @@ if __name__ == "__main__":
     :param line: The submitted command line.
     :type line: str
     :rtype: None
+    :returns:
     """
     line = line.strip()
     if len(line) > 0:
@@ -1420,6 +1541,10 @@ if __name__ == "__main__":
 
   n = 0
   def nprompt():
+    '''
+    :returns:
+    :rtype:
+    '''
     global n
     n += 1
     return f'{n}> '

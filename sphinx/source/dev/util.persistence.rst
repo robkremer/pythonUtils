@@ -7,14 +7,15 @@ util.persistence package
    :show-inheritance:
    :undoc-members:
 
-Modules and subpackages
------------------------
+Submodules
+----------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
-   util.persistence
-   util.persistence.serialize
-   util.persistence.serializeXML
-   util.persistence.serializeJSON
    util.persistence.pRef
+   util.persistence.serialize
+   util.persistence.serializeJSON
+   util.persistence.serializePlist
+   util.persistence.serializeXML
+   util.persistence.serializeXML2

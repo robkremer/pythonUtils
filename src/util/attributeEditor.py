@@ -19,12 +19,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
-import util
-from util.persistence.serialize import SerializationStrategy, strdict
-from util.persistence.serialize import DEFAULT_STRATEGY
-from util import attribute
 '''
-  .. inheritance-diagram:: 
+A Tk dialog for viewing and editing the attributes of an *AttributedObject*
+(see *util.attribute*): one row per attribute -- its value, type and
+inheritance restrictions -- with the values it inherits shown above it.
+*editAttrsBox()* returns the edits; *applyEditAttrsBox()* applies them.
+
+.. inheritance-diagram:: 
         AttrEditor
         ChangeDescr
         ColorEditor
@@ -36,9 +37,11 @@ from util import attribute
 Created on Mar 17, 2025
 
 .. codeauthor:: Rob Kremer <robkremer@me.com>
-
-----------------
 '''
+import util
+from util.persistence.serialize import SerializationStrategy, strdict
+from util.persistence.serialize import DEFAULT_STRATEGY
+from util import attribute
 
 import logging
 import tkinter as tk
@@ -91,7 +94,12 @@ def editAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes Edito
    
   displays an *AttrsEditor* or a *HierarchicalAttrsEditor* (depanding on whether 
   *attrs* is an *AttributedObject* or a *AttributedObject* ) and
-  updates the result to *attrs* .  
+  updates the result to *attrs* .
+
+  :param editKey:
+  :type editKey: Optional[str]
+  :param disabled:
+  :type disabled: bool
   '''
   if isinstance(attrs, AttributedObject):
     editor = HierarchicalAttrEditor(parent, attrs, title=title, disabled=disabled, displayValues=displayValues)
@@ -106,6 +114,15 @@ def applyEditAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes 
                       editKey:Optional[str]=None) -> None:
   '''
   Same as *editAttrsBox*, but applies the changes.
+
+  :param parent:
+  :type parent: tk.Misc
+  :param attrs:
+  :type attrs: AttributedObject
+  :param title:
+  :type title: str
+  :param editKey:
+  :type editKey: Optional[str]
   '''
   attrChangeList = editAttrsBox(parent, attrs, title, editKey)
   if attrChangeList is not None:
@@ -121,10 +138,25 @@ def applyEditAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes 
       #cm.registerTopics(topics)
       
 def _updateWith(attrs:AttributedObject, attrChangeList):
+  '''
+  :param attrs:
+  :type attrs: AttributedObject
+  :param attrChangeList:
+  :type attrChangeList:
+  '''
   pass
   
 def _keyedMessage(key:str, ex:Exception) -> str:
-  'An error message that names *key* exactly once.'
+  '''
+  An error message that names *key* exactly once.
+
+  :param key:
+  :type key: str
+  :param ex:
+  :type ex: Exception
+  :returns:
+  :rtype: str
+  '''
   msg = str(ex)
   return msg if msg.startswith(f'key "{key}"') else f'key "{key}": {msg}'
 
@@ -133,17 +165,38 @@ def getEditedAttrsCommandObj(parent:tk.Widget, attrs:AttributedObject, title="At
   :return: An *UpdateAttrsCommand* object that displays an *AttrsEditor* or a
       *HierarchicalAttrsEditor* (depending on whether *attrs* is an *AttributedObject*
       or a *HierarchicalAttributedObject* ) with the appropriate do/undo properties.
+  :param parent:
+  :type parent: tk.Widget
+  :param attrs:
+  :type attrs: AttributedObject
+  :param title:
+  :type title: str
+  :param editKey:
+  :type editKey: Optional[str]
+  :param disabled:
+  :type disabled: bool
   '''
   updates = editAttrsBox(parent, attrs, title=title, editKey=editKey, disabled=disabled)
   return UpdateAttrsCommand(attrs, updates) if updates is not None else None
   
 ## Utility
 def clearGrid(widget:tk.Widget, row=None, column=None):
+  '''
+  :param widget:
+  :type widget: tk.Widget
+  :param row:
+  :type row:
+  :param column:
+  :type column:
+  '''
   for w in widget.grid_slaves(row=row, column=column):
     w.destroy()
 
 @dataclass
 class ChangeDescr:
+  '''
+  The editor's record of one attribute's row: its Tk variable and widget, whether it's to be deleted, and how to save it.
+  '''
   tkVar:tk.Variable|None #= None
   editor:tk.Widget|None #= None
   delete:bool #= False
@@ -157,12 +210,22 @@ class ChangeDescr:
   qual:Restriction|None = None
   
   def getValue(self) -> Any:
+    '''
+    :returns:
+    :rtype: Any
+    '''
     if isinstance(self.editor, tk.Text):
       return self.editor.get("1.0", tk.END)
     else:
       return None if self.tkVar is None else self.tkVar.get()
 
   def setValue(self, val:Any):
+    '''
+    :param val:
+    :type val: Any
+    :returns:
+    :rtype:
+    '''
     if isinstance(self.editor, tk.Text):
       self.editor.delete("1.0", tk.END)
       self.editor.insert("1.0", val)
@@ -173,7 +236,18 @@ SYS_ATTRIBUTES = ['name']
 "Used to highlight the 'system' labels on the grid"
 
 class ColorEditor(tk.Frame):
+  '''
+  An editor for a colour value: a swatch that opens the system colour chooser, and a button to make it transparent.
+  '''
   def __init__(self, master, var:tk.StringVar, color:str):
+    '''
+    :param master:
+    :type master:
+    :param var:
+    :type var: tk.StringVar
+    :param color:
+    :type color: str
+    '''
     self.var = var
     #self.style = ttk.Style()
     #self.style.configure('My.TFrame', background="purple")#color)
@@ -212,6 +286,10 @@ class ColorEditor(tk.Frame):
     
   def config(self, **conf):
     
+    '''
+    :param conf:
+    :type conf:
+    '''
     def setSwatch(key:str):
       self.c = "systemWindowBackgroundColor" if conf[key]=="" else conf[key]
       d = {key: self.c}
@@ -264,6 +342,18 @@ class AttrEditor(tk.Toplevel):
   #TODO: Implement "disabled" param
   def __init__(self, parent, attrs:AttributedObject, title="Attribute Editor", disabled=False,
                displayValues:Optional[dict[str,Any]]=None):
+    '''
+    :param parent:
+    :type parent:
+    :param attrs:
+    :type attrs: AttributedObject
+    :param title:
+    :type title: str
+    :param disabled:
+    :type disabled: bool
+    :param displayValues:
+    :type displayValues: Optional[dict[str, Any]]
+    '''
     super().__init__(parent)
     self.parent = parent
     self.displayValues:dict[str,Any] = dict(displayValues or {})
@@ -445,6 +535,12 @@ class AttrEditor(tk.Toplevel):
     self.ask("Enter the new key:", lambda event, ans: self._addNewAttribute2(event, ans), bg="yellow")
 
   def _addNewAttribute2(self, event, name:str):
+    '''
+    :param event:
+    :type event:
+    :param name:
+    :type name: str
+    '''
     self.clearMessage()
     if name is None:
       return
@@ -457,6 +553,18 @@ class AttrEditor(tk.Toplevel):
     self.rows += self.rowsPerEntry
     
   def deleteAttr(self, key, item, editor, row, button):
+    '''
+    :param key:
+    :type key:
+    :param item:
+    :type item:
+    :param editor:
+    :type editor:
+    :param row:
+    :type row:
+    :param button:
+    :type button:
+    '''
     text = button.config()['text'][-1]
     logger.debug(f"deleteAttr: text = '{text}'")
     if text == 'delete':
@@ -469,6 +577,18 @@ class AttrEditor(tk.Toplevel):
       self.vars[key].delete =  False
 
   def typeInconsistent(self, event, ans, key, row, newType):
+    '''
+    :param event:
+    :type event:
+    :param ans:
+    :type ans:
+    :param key:
+    :type key:
+    :param row:
+    :type row:
+    :param newType:
+    :type newType:
+    '''
     ans = (ans or "").strip().upper()
     if ans not in ["Y", "N"]:
       return # give up
@@ -480,6 +600,15 @@ class AttrEditor(tk.Toplevel):
     '''
     Change *key*'s type to *kind*, with *value* (default: its current one) --
     which must suit *kind* (see *_convertValue()*).
+
+    :param kind:
+    :type kind:
+    :param key:
+    :type key:
+    :param row:
+    :type row:
+    :param value:
+    :type value: Any
     '''
     clearGrid(self.editorsListFrame, column=self.cKind, row=row)
     self.makeKind(self.editorsListFrame, key, kind, self.cKind, row, None, False, "")
@@ -497,6 +626,18 @@ class AttrEditor(tk.Toplevel):
     self.vars[key].typeLabel = typeLabel
     
   def editTypeAnswer(self, button, event, ans, key, row): 
+    '''
+    :param button:
+    :type button:
+    :param event:
+    :type event:
+    :param ans:
+    :type ans:
+    :param key:
+    :type key:
+    :param row:
+    :type row:
+    '''
     if ans is None:
       return
     ans = ans.strip()
@@ -524,11 +665,31 @@ class AttrEditor(tk.Toplevel):
     self.clearMessage()
     
   def editType(self, b:tk.Button, parent, key, typ, column, row):
+    '''
+    :param b:
+    :type b: tk.Button
+    :param parent:
+    :type parent:
+    :param key:
+    :type key:
+    :param typ:
+    :type typ:
+    :param column:
+    :type column:
+    :param row:
+    :type row:
+    '''
     self.ask(f'Enter new type for key "{key}":', 
              lambda event, ans, b=b, key=key, row=row: self.editTypeAnswer(b, event, ans, key, row),
              default=self.vars[key].typeLabel["text"], bg="yellow") 
 
   def hasChanged(self, k:str) -> bool:
+    '''
+    :param k:
+    :type k: str
+    :returns:
+    :rtype: bool
+    '''
     if k not in strdict.keys(self.attrs): # not local definition
       return False
     try:
@@ -571,6 +732,12 @@ class AttrEditor(tk.Toplevel):
       return False
     
   def _saveKey(self, k:str, origAttr:Attribute):
+    '''
+    :param k:
+    :type k: str
+    :param origAttr:
+    :type origAttr: Attribute
+    '''
     logger.info(f'AttribueEditor changeing: "{k}"')
     v:ChangeDescr = self.vars[k]
     self.updatedKeys[k] = copy(origAttr) if origAttr is not None else Attribute(k)
@@ -707,6 +874,22 @@ class AttrEditor(tk.Toplevel):
   
   def getEditorForType(self, parent:Any, key:str, typ:Union[type, str, NoneType], value:Any, keyExt, inhType:str|type|None=None) -> Any:
     
+    '''
+    :param parent:
+    :type parent: Any
+    :param key:
+    :type key: str
+    :param typ:
+    :type typ: Union[type, str, NoneType]
+    :param value:
+    :type value: Any
+    :param keyExt:
+    :type keyExt:
+    :param inhType:
+    :type inhType: str | type | None
+    :returns:
+    :rtype: Any
+    '''
     def getHeight(text:str):
       return min(text.count('\n')+1, 4)
       
@@ -807,6 +990,20 @@ class AttrEditor(tk.Toplevel):
     return editor
 
   def makeNewEntry(self, k, v, row, disabled, keyExt, inhType:type|str|None=None):
+    '''
+    :param k:
+    :type k:
+    :param v:
+    :type v:
+    :param row:
+    :type row:
+    :param disabled:
+    :type disabled:
+    :param keyExt:
+    :type keyExt:
+    :param inhType:
+    :type inhType: type | str | None
+    '''
     label = self.makeLabel(self.editorsListFrame, k, k+":", self.cLabel, row, foreground="grey" if disabled else "black")
     self.addTooltip(label, v.note)
     ed = self.makeEditor(self.editorsListFrame, k, v, self.cEdit, row, disabled or not self.attrs.isValueEditable(k), keyExt, inhType=inhType)
@@ -821,11 +1018,29 @@ class AttrEditor(tk.Toplevel):
     
   def makeTitle(self, col:int, text:str, helpText:str, row:int, **kwargs):
     # Note: background= option doesn't work on aqua
+    '''
+    :param col:
+    :type col: int
+    :param text:
+    :type text: str
+    :param helpText:
+    :type helpText: str
+    :param row:
+    :type row: int
+    :param kwargs:
+    :type kwargs:
+    '''
     label = ttk.Label(self.editorsListFrame, text=text, font=('Helvetica', 12, 'bold'), relief=tk.GROOVE, anchor=tk.CENTER, background="blue", **kwargs)
     label.grid_configure(column=col, row=row, sticky=tk.W+tk.E)
     self.addTooltip(label, helpText)
     
   def addTooltip(self, widget:Widget, helpText:str):
+    '''
+    :param widget:
+    :type widget: Widget
+    :param helpText:
+    :type helpText: str
+    '''
     if helpText is None or helpText == "":
       return
     # A fixed-width font, so notes that line things up with spaces display as
@@ -835,12 +1050,38 @@ class AttrEditor(tk.Toplevel):
     CreateToolTip(widget, helpText, background="yellow", wrapLength=width, font=font)
 
   def makeHeader(self, row, **kwargs):
+    '''
+    :param row:
+    :type row:
+    :param kwargs:
+    :type kwargs:
+    '''
     self.makeTitle(self.cLabel, "ATTR NAME", f'The name of the Attribute (NOT the value).', row, **kwargs)
     self.makeTitle(self.cEdit, "VALUE", f'The value of the Attribute.', row, **kwargs)
     self.makeTitle(self.cDel, "ACTIONS", f'The actions you can perform on the Attribute.', row, **kwargs)
     self.makeTitle(self.cKind, "TYPE", f'The type of the value.', row, **kwargs)
     
   def makeEditor(self, parent, key, item, column, row, disabled, keyExt, inhType:str|type|None=None):
+    '''
+    :param parent:
+    :type parent:
+    :param key:
+    :type key:
+    :param item:
+    :type item:
+    :param column:
+    :type column:
+    :param row:
+    :type row:
+    :param disabled:
+    :type disabled:
+    :param keyExt:
+    :type keyExt:
+    :param inhType:
+    :type inhType: str | type | None
+    :returns:
+    :rtype:
+    '''
     value = self.displayValues[key] if keyExt == "" and key in self.displayValues else item.value
     editor = self.getEditorForType(parent, key, item.type, value, keyExt, inhType=inhType)
     editor.grid(column=column, row=row, sticky='EW', padx=0, pady=0)
@@ -855,6 +1096,21 @@ class AttrEditor(tk.Toplevel):
     Unlike the other "make*() methods, this one takes a parent that is a frame that
     will be used as a *pack()* frame as opposed to the others that take a parent
     that's a *grid()* frame.
+
+    :param parent:
+    :type parent:
+    :param key:
+    :type key:
+    :param item:
+    :type item:
+    :param text:
+    :type text:
+    :param command:
+    :type command:
+    :param kwargs:
+    :type kwargs:
+    :returns:
+    :rtype:
     '''
     if item.type == 'unknown':
       return
@@ -865,6 +1121,24 @@ class AttrEditor(tk.Toplevel):
     return button
 
   def makeLabel(self, parent, key, text, column, row, justify=tk.E, **kwargs):
+    '''
+    :param parent:
+    :type parent:
+    :param key:
+    :type key:
+    :param text:
+    :type text:
+    :param column:
+    :type column:
+    :param row:
+    :type row:
+    :param justify:
+    :type justify:
+    :param kwargs:
+    :type kwargs:
+    :returns:
+    :rtype:
+    '''
     font = ('Helvetica', 14, 'bold italic') if key in SYS_ATTRIBUTES else ('Helvetica', 14, 'normal')
     label = ttk.Label(parent, text=text, font=font, **kwargs)
     label.grid(column=column, row=row, sticky=justify, ipadx=0, padx=0, pady=0)
@@ -872,6 +1146,30 @@ class AttrEditor(tk.Toplevel):
 
   def makeKind(self, parent, key, typ:Union[type,str], column, row, command, disabled, keyExt, inhType:str|type|None=None, **kwargs):
     #typeDisabled = disabled
+    '''
+    :param parent:
+    :type parent:
+    :param key:
+    :type key:
+    :param typ:
+    :type typ: Union[type, str]
+    :param column:
+    :type column:
+    :param row:
+    :type row:
+    :param command:
+    :type command:
+    :param disabled:
+    :type disabled:
+    :param keyExt:
+    :type keyExt:
+    :param inhType:
+    :type inhType: str | type | None
+    :param kwargs:
+    :type kwargs:
+    :returns:
+    :rtype:
+    '''
     command = None    
     if not disabled:
       command = command=lambda b, parent=self, key=key, typ=typ, column=self.cKind, row=row: \
@@ -895,6 +1193,24 @@ class AttrEditor(tk.Toplevel):
     return label
     
   def setStatus(self, parent, key, text, column, row, command=None, button=None, **kwargs):
+    '''
+    :param parent:
+    :type parent:
+    :param key:
+    :type key:
+    :param text:
+    :type text:
+    :param column:
+    :type column:
+    :param row:
+    :type row:
+    :param command:
+    :type command:
+    :param button:
+    :type button:
+    :param kwargs:
+    :type kwargs:
+    '''
     if button is not None:
       button.grid(column=column, row=row, padx=0, pady=0)#, sticky="sw")
     else:
@@ -903,6 +1219,14 @@ class AttrEditor(tk.Toplevel):
       
     
   def setMessage(self, text, hideButton=True, **kwargs):
+    '''
+    :param text:
+    :type text:
+    :param hideButton:
+    :type hideButton: bool
+    :param kwargs:
+    :type kwargs:
+    '''
     self.messageFrame = tk.Frame(self)
     self.messageFrame.grid(column=0, row=self.rMessage, columnspan=2, sticky=tk.E+tk.W)
     self.messageFrame.columnconfigure(0, weight=1)
@@ -916,6 +1240,10 @@ class AttrEditor(tk.Toplevel):
         .grid(column=1, row=0, sticky=tk.E+tk.W)
     
   def clearMessage(self, *args): # args are ignored: it's only here so we can call this an tk event.
+    '''
+    :param args:
+    :type args:
+    '''
     try:
       self.messageFrame.destroy()
     except:
@@ -939,6 +1267,8 @@ class AttrEditor(tk.Toplevel):
     :param handler: A *Callable* taking an event argument and a string argument containing the answer
     :param kwargs: A dictionary of legal arguments to *ttk.Text()* which controls
         the attributes of the question Text widget.
+    :param default:
+    :type default:
     '''
     self.setMessage(question, hideButton=False, **kwargs)
     # Doesn't check anything, just clears the question (like a "cancel" button)
@@ -959,9 +1289,21 @@ class AttrEditor(tk.Toplevel):
     self.askWidget.focus()
       
   def checkInt(self, newval):
+    '''
+    :param newval:
+    :type newval:
+    :returns:
+    :rtype:
+    '''
     return re.match(r'^[0-9]*$', newval) is not None and len(newval) <= 20
 
   def checkFloat(self, newval):
+    '''
+    :param newval:
+    :type newval:
+    :returns:
+    :rtype:
+    '''
     return re.match(r'^[0-9]*(\.[0-9]*)?$', newval) is not None and len(newval) <= 20
 
   # def colorChooser(self, tkVar, button):
@@ -981,6 +1323,11 @@ class AttrEditor(tk.Toplevel):
     '''
     Configure the tk widget *tkObj* with each of the key/value pairs in *kwargs*
     one at a time catching printing any exceptions but otherwise ignoring failures.
+
+    :param tkObj:
+    :type tkObj:
+    :param kwargs:
+    :type kwargs:
     '''
     for k,v in kwargs.items():
       if isinstance(tkObj, tk.Button) and k=="state" and v == "!disabled":  
@@ -1004,8 +1351,25 @@ class AttrEditor(tk.Toplevel):
                 
 class HierarchicalAttrEditor(AttrEditor):
   
+  '''
+  An *AttrEditor* for an *AttributedObject* with supertypes: it shows each
+  attribute's inherited values (greyed, above its own) and its inheritance
+  restrictions, which can be edited too.
+  '''
   def __init__(self, parent, attrs:AttributedObject, title="Attribute Editor", disabled=False,
                displayValues:Optional[dict[str,Any]]=None):
+    '''
+    :param parent:
+    :type parent:
+    :param attrs:
+    :type attrs: AttributedObject
+    :param title:
+    :type title: str
+    :param disabled:
+    :type disabled: bool
+    :param displayValues:
+    :type displayValues: Optional[dict[str, Any]]
+    '''
     super().__init__(parent, attrs, title=title, disabled=disabled, displayValues=displayValues)
     
     # "constants" for the columns in the Editors grid
@@ -1024,6 +1388,20 @@ class HierarchicalAttrEditor(AttrEditor):
   
   @override
   def makeNewEntry(self, k, v, row, disabled, keyExt, inhType:str|type|None=None):
+    '''
+    :param k:
+    :type k:
+    :param v:
+    :type v:
+    :param row:
+    :type row:
+    :param disabled:
+    :type disabled:
+    :param keyExt:
+    :type keyExt:
+    :param inhType:
+    :type inhType: str | type | None
+    '''
     localRec = self.attrs.getLocalAttr(k)
     inhRec = self.attrs.getInhAttr(k)
     if self.editKey == k and localRec == None:
@@ -1058,11 +1436,35 @@ class HierarchicalAttrEditor(AttrEditor):
    
   @override
   def makeHeader(self, row, **kwargs):
+    '''
+    :param row:
+    :type row:
+    :param kwargs:
+    :type kwargs:
+    '''
     self.makeTitle(self.cStatus, "S", f'Status:\n  {DOWN_ARROW}: inherited record (not editable)', row, **kwargs)
     AttrEditor.makeHeader(self, row, **kwargs)
     self.makeTitle(self.cQuals, "QUALIFIERS", DOC_QUALIFIER, row, **kwargs)
     
   def makeQuals(self, parent, key, quals:Restriction, column, row, disabled, keyExt, **kwargs):
+    '''
+    :param parent:
+    :type parent:
+    :param key:
+    :type key:
+    :param quals:
+    :type quals: Restriction
+    :param column:
+    :type column:
+    :param row:
+    :type row:
+    :param disabled:
+    :type disabled:
+    :param keyExt:
+    :type keyExt:
+    :param kwargs:
+    :type kwargs:
+    '''
     if quals is None:
       inhRec = self.attrs.getInhAttr(key)
       if inhRec is not None:
@@ -1103,6 +1505,12 @@ class HierarchicalAttrEditor(AttrEditor):
     
   @override
   def hasChanged(self, k:str)->bool:
+    '''
+    :param k:
+    :type k: str
+    :returns:
+    :rtype: bool
+    '''
     if AttrEditor.hasChanged(self, k):
       return True
     origAttr:Attribute|None = self.attrs.getLocalAttr(k) if k in list(strdict.keys(self.attrs)) else None
@@ -1121,6 +1529,10 @@ class HierarchicalAttrEditor(AttrEditor):
     '''
     :returns: The restriction the qualifier menu started with: the local one,
       or failing that the inherited one (see *makeQuals()*).
+    :param k:
+    :type k: str
+    :param origAttr:
+    :type origAttr: Attribute | None
     '''
     if origAttr is not None and origAttr.restriction is not None:
       return origAttr.restriction
@@ -1128,11 +1540,25 @@ class HierarchicalAttrEditor(AttrEditor):
     return None if inhRec is None else inhRec.restriction
 
   def _restrictionChanged(self, k:str, origAttr:Attribute|None) -> bool:
+    '''
+    :param k:
+    :type k: str
+    :param origAttr:
+    :type origAttr: Attribute | None
+    :returns:
+    :rtype: bool
+    '''
     qual = self.vars[k].qual
     return qual is not None and qual != self._effectiveRestriction(k, origAttr)
     
   @override
   def _saveKey(self, k:str, origAttr:Attribute):
+    '''
+    :param k:
+    :type k: str
+    :param origAttr:
+    :type origAttr: Attribute
+    '''
     AttrEditor._saveKey(self, k, origAttr) # drops the restriction on inherited overrides
     assert self.updatedKeys is not None
     if self._restrictionChanged(k, origAttr):
@@ -1160,6 +1586,12 @@ if __name__ == "__main__":
   root.protocol("WM_DELETE_WINDOW", onClosing)
   root.createcommand('::tk::mac::Quit', onClosing)
   def edit(parent, attrs):
+    '''
+    :param parent:
+    :type parent:
+    :param attrs:
+    :type attrs:
+    '''
     command = getEditedAttrsCommandObj(parent, attrs)
     if command is None:
       print("cancelled")
@@ -1178,6 +1610,10 @@ def _convertValue(typ:str, text:str) -> Any:
   :returns: *text* (an editor's value) as a value of the type named *typ*, or
     NOVALUE if it can't be one. Text types take any text; "" isn't a number or
     boolean.
+  :param typ:
+  :type typ: str
+  :param text:
+  :type text: str
   '''
   t = TYPE_EQUIVALENTS.get(typ) if typ in TYPE_EQUIVALENTS else None
   if t is str:
@@ -1198,7 +1634,14 @@ def _convertValue(typ:str, text:str) -> Any:
   return NOVALUE
 
 def _defaultValue(typ:str) -> Any:
-  'A reasonable starting value for the type named *typ*.'
+  '''
+  A reasonable starting value for the type named *typ*.
+
+  :param typ:
+  :type typ: str
+  :returns:
+  :rtype: Any
+  '''
   if typ.startswith("choices[") and typ.endswith("]"):
     return typ[8:-1].split(",")[0].strip()
   t = TYPE_EQUIVALENTS.get(typ) if typ in TYPE_EQUIVALENTS else None

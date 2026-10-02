@@ -7,16 +7,28 @@ util package
    :show-inheritance:
    :undoc-members:
 
-Modules and subpackages
------------------------
+Subpackages
+-----------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
    util.persistence
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   util.abstractGraph
+   util.actionDialog
    util.attribute
+   util.attributeEditor
    util.command
    util.commandParser
+   util.dirtyable
+   util.errorReportingObject
    util.observer
    util.prefs
    util.rtValuesDialog

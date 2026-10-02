@@ -201,6 +201,12 @@ class strdict[T](dict[str, T]): # should really be dict[str, SerializableType] b
   A simple subclass of *dict* that restricts the type of keys to type *str*.
   '''
   def __init__(self, *args, **kwargs):
+    '''
+    :param args:
+    :type args:
+    :param kwargs:
+    :type kwargs:
+    '''
     incoming = dict(*args, **kwargs)
     for k,v in incoming.items():
       if not isinstance(k, str):
@@ -210,6 +216,12 @@ class strdict[T](dict[str, T]): # should really be dict[str, SerializableType] b
     self.update(incoming)
       
   def __setitem__(self, key, value)->None:
+    '''
+    :param key:
+    :type key:
+    :param value:
+    :type value:
+    '''
     if not isinstance(key, str):
       raise KeyError(f'strdict is restricted to keys of type str only; got key {key} of type {type(key)}.')
     if not (type(value) in SerializableTypes or isinstance(value, Serializable)):
@@ -300,6 +312,10 @@ class ParamInfo:
     :param setter: A function called just before restoring this object that takes
       the object stored by *getter()* and returns an object to be applied as
       the relevant argument in the constructor.
+    :param unique:
+    :type unique: bool
+    :param optional:
+    :type optional: bool
     '''
     self.name:str = name
     'the name of the parameter'
@@ -353,6 +369,10 @@ class PropertyInfo():
       *name* will be taken to the a property of this object that property will
       be updated with the restored *getter()* object at the appropriate time.
     :type setter: Optional[Callable[[Serializable, SerializableType], None]]=None
+    :param unique:
+    :type unique: bool
+    :param optional:
+    :type optional: bool
     '''
     self.name:str = name
     'the name of the parameter'
@@ -445,12 +465,18 @@ class SerializationStrategy[T](ABC):
 
   
   class Strategy(NamedTuple):
+    '''
+    A serialization strategy's name, file extension and class.
+    '''
     name:str
     extension:str
     cls:type
     
   @dataclass
   class _MemStrategy():
+    '''
+    A known serialization strategy (see *knownStrategies*), with its instance.
+    '''
     name:str
     extension:str
     cls:type
@@ -549,11 +575,20 @@ class SerializationStrategy[T](ABC):
   @property
   @final
   def version(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     return f'{self.appVerion}:{self.serializationStrategyVersion}:{self.protocolVersion()}'
   
   @classmethod
   def _byPreference(cls) -> list[SerializationStrategy.Strategy]:
-    'The available strategies (see *getAvailableStrategies()*), preferred ones first.'
+    '''
+    The available strategies (see *getAvailableStrategies()*), preferred ones first.
+
+    :returns:
+    :rtype: list[SerializationStrategy.Strategy]
+    '''
     strats = cls.getAvailableStrategies()
     assert isinstance(strats, list)
     return sorted(strats, key=lambda s: not getattr(s.cls, "preferred", False))
@@ -561,6 +596,12 @@ class SerializationStrategy[T](ABC):
   @classmethod
   def findStrategy(cls, strategy:str) -> SerializationStrategy:
     # an extension matched by several strategies: the preferred one
+    '''
+    :param strategy:
+    :type strategy: str
+    :returns:
+    :rtype: SerializationStrategy
+    '''
     if strategy.startswith("."):
       for s0 in cls._byPreference():
         if s0.extension == strategy:
@@ -621,6 +662,10 @@ class SerializationStrategy[T](ABC):
     :type wrap: Union[bool,dict[
     :returns: The serialized object as a string.
     :rtype: str
+    :param assume:
+    :type assume: list[Any]
+    :param kwargs:
+    :type kwargs:
     """
     strat = cls.findStrategy(strategy)
     return strat.tostring(obj, wrap=wrap, assume=assume, **kwargs)
@@ -689,6 +734,9 @@ class SerializationStrategy[T](ABC):
       >>> tree = ET.parse("data.xml")
       >>> write("file:///tmp/output.xml", tree)
       >>> write("https://example.com/api/document", tree)
+
+    :param wrap:
+    :type wrap: Union[bool, dict]
     """
     strat:Optional[SerializationStrategy] = None
     if strategy is not None:
@@ -726,7 +774,12 @@ class SerializationStrategy[T](ABC):
       required methods.
     
     Converts a byte array to an object using *_decode_()* and 
-    *_speicializeBytes()*. 
+    *_speicializeBytes()*.
+
+    :param replaceExt:
+    :type replaceExt: bool | None
+    :param mode:
+    :type mode: str
     '''
     strat:Optional[SerializationStrategy] = None
     if strategy is not None:
@@ -749,6 +802,14 @@ class SerializationStrategy[T](ABC):
     :raises OSError: At once, if *url* can't be opened (eg: it doesn't exist):
       no other strategy would do better.
     :raises LookupError: If every strategy fails; the message says why each did.
+    :param url:
+    :type url: str
+    :param caller:
+    :type caller: str
+    :param action:
+    :type action: Callable[[SerializationStrategy], R]
+    :returns:
+    :rtype: R
     '''
     parsed = urlparse(url)
     filename = os.path.basename(parsed.path)
@@ -796,6 +857,9 @@ class SerializationStrategy[T](ABC):
     :py:meth:`peekType() <SerializationStrategy.peekType>` instead of
     :py:meth:`read() <SerializationStrategy.read>` -- returning the top-level
     object's class WITHOUT constructing it (or anything it contains).
+
+    :param mode:
+    :type mode: str
     '''
     strat:Optional[SerializationStrategy] = None
     if strategy is not None:
@@ -809,16 +873,28 @@ class SerializationStrategy[T](ABC):
   @classmethod
   @abstractmethod
   def defaultExtension(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     raise NotImplementedError("Call on abstract method SerializationStrategy.defaultExtension()")
   
   @classmethod
   @abstractmethod
   def protocolName(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     raise NotImplementedError("Call on abstract method SerializationStrategy.name()")
   
   @classmethod
   @abstractmethod
   def protocolVersion(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     raise NotImplementedError("Call on abstract method SerializationStrategy.version()")
   
   def write(self, url:str, obj:SerializableType, replaceExt:Optional[bool]=True, wrap:Union[bool,dict]=True, **kwargs) -> None:
@@ -854,6 +930,9 @@ class SerializationStrategy[T](ABC):
       >>> tree = ET.parse("data.xml")
       >>> write("file:///tmp/output.xml", tree)
       >>> write("https://example.com/api/document", tree)
+
+    :param wrap:
+    :type wrap: Union[bool, dict]
     """
     parsedUrl:ParseResult
     url, parsedUrl = fixURL(url, replaceExt=replaceExt, mode="w", extension=self.defaultExtension())
@@ -894,6 +973,9 @@ class SerializationStrategy[T](ABC):
     
     Converts a byte array to an object using *_decode_()* and
     *_speicializeBytes()*.
+
+    :param mode:
+    :type mode: str
     '''
     self._finalMethodsList = []
     parsedUrl:ParseResult
@@ -1004,6 +1086,16 @@ class SerializationStrategy[T](ABC):
       "root") of the document at *url* -- eg: ("root", "url") for a stored
       PRDb's URL -- or None if there isn't one (or it isn't a string). Like
       *peekType()*, nothing in the document is constructed.
+    :param url:
+    :type url: str
+    :param section:
+    :type section: str
+    :param key:
+    :type key: str
+    :param mode:
+    :type mode: str
+    :param kwargs:
+    :type kwargs:
     '''
     url, parsedUrl = fixURL(url, replaceExt=None, mode=mode, extension=self.defaultExtension())
     contents:str = self._fetchContents(url, parsedUrl)
@@ -1023,7 +1115,22 @@ class SerializationStrategy[T](ABC):
 
   @classmethod
   def peekStringx(cls, url:str, section:str, key:str, mode:str="w", **kwargs) -> Optional[str]:
-    'Like *peekString()*, choosing the strategy as *readx()* does.'
+    '''
+    Like *peekString()*, choosing the strategy as *readx()* does.
+
+    :param url:
+    :type url: str
+    :param section:
+    :type section: str
+    :param key:
+    :type key: str
+    :param mode:
+    :type mode: str
+    :param kwargs:
+    :type kwargs:
+    :returns:
+    :rtype: Optional[str]
+    '''
     return cls._tryInOrder(url, "peekStringx", lambda strat: strat.peekString(url, section, key, mode=mode, **kwargs))
 
   def tostring(self, obj:SerializableType, *, wrap:Union[bool,dict]=False, assume:list[Any]=[], **kwargs) -> str:
@@ -1040,6 +1147,10 @@ class SerializationStrategy[T](ABC):
     :type wrap: Union[bool,dict[
     :returns: The serialized object as a string.
     :rtype: str
+    :param assume:
+    :type assume: list[Any]
+    :param kwargs:
+    :type kwargs:
     """
     self.writeDB:dict[int, Optional[T]] = dict()
     for o in assume:
@@ -1141,18 +1252,40 @@ class SerializationStrategy[T](ABC):
   
   @abstractmethod
   def _encodeStr(self, obj:str) -> T:
+    '''
+    :param obj:
+    :type obj: str
+    :returns:
+    :rtype: T
+    '''
     raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _encodeStr().')
     
   @abstractmethod
   def _decodeStr(self, readerObj:T) -> str:
+    '''
+    :param readerObj:
+    :type readerObj: T
+    :returns:
+    :rtype: str
+    '''
     raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _decodeStr().')
     
   @abstractmethod
   def _encodeList(self) -> T:
+    '''
+    :returns:
+    :rtype: T
+    '''
     raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _encodeList().')
     
   @abstractmethod
   def _decodeList(self, readerObj:T) -> list[T]:
+    '''
+    :param readerObj:
+    :type readerObj: T
+    :returns:
+    :rtype: list[T]
+    '''
     raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _decodeList().')
     
   ## PRIMITIVES USED BY OTHER OPTIONAL IMPLEMENTATIONS
@@ -1168,6 +1301,13 @@ class SerializationStrategy[T](ABC):
     are left the default implementations in this class. 
     
     May be called for ANY type.
+
+    :param elem:
+    :type elem: T
+    :param name:
+    :type name: str
+    :param value:
+    :type value: str
     '''
     raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _addAttr().')
     
@@ -1180,21 +1320,40 @@ class SerializationStrategy[T](ABC):
     _decodeBool(), _decodeTuple(), _decodeSet()*, or *_decodeSerializable()*
     are left the default implementations in this class.
     
-    May be called for ANY type. 
+    May be called for ANY type.
+
+    :param elem:
+    :type elem: T
+    :param name:
+    :type name: str
+    :param default:
+    :type default: Any
+    :returns:
+    :rtype: Any
     '''
     raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _getAttr().')
     
   @abstractmethod
   def _appendItem(self, elem:T, newItem:T) -> None:
     '''
-    May be called for list, tuple, and set types only. 
+    May be called for list, tuple, and set types only.
+
+    :param elem:
+    :type elem: T
+    :param newItem:
+    :type newItem: T
     '''
     raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _appendItem().')
   
   @abstractmethod
   def _getItems(self, elem:T) -> list[T]:
     '''
-    May be called for list, tuple, and set types only. 
+    May be called for list, tuple, and set types only.
+
+    :param elem:
+    :type elem: T
+    :returns:
+    :rtype: list[T]
     '''
     raise NotImplementedError(f'Class {self.__class__.__name__} failed to implement abstract method _getItems().')
   
@@ -1235,7 +1394,14 @@ class SerializationStrategy[T](ABC):
 
   def _getKVPair(self, elem:T, key:str) -> Optional[T]:
     '''
-    May be called for strdict types Serializable subtypes only. 
+    May be called for strdict types Serializable subtypes only.
+
+    :param elem:
+    :type elem: T
+    :param key:
+    :type key: str
+    :returns:
+    :rtype: Optional[T]
     '''
     props = self._getKVPairs(elem)
     for k,v in props if isinstance(props, list) else props.items():
@@ -1244,94 +1410,188 @@ class SerializationStrategy[T](ABC):
     return None
   
   def _encodeInt(self, obj:int) -> T:
+    '''
+    :param obj:
+    :type obj: int
+    :returns:
+    :rtype: T
+    '''
     ret = self._encodeStr(str(obj))
     self._setAttr(ret, ATTR_TYPE, "int")
     return ret
     
   def _decodeInt(self, elem:T) -> int:
+    '''
+    :param elem:
+    :type elem: T
+    :returns:
+    :rtype: int
+    '''
     assert self._getAttr(elem, ATTR_TYPE) == "int"
     self._setAttr(elem, ATTR_TYPE, "str")
     return int(self._decodeStr(elem))
     
   def _encodeNone(self) -> T:
+    '''
+    :returns:
+    :rtype: T
+    '''
     ret = self._encodeStr("None")
     self._setAttr(ret, ATTR_TYPE, "NoneType")
     return ret
     
   def _decodeNone(self, elem:T) -> None:
+    '''
+    :param elem:
+    :type elem: T
+    '''
     assert self._getAttr(elem, ATTR_TYPE) == "NoneType"
     return None
     
   def _encodeFloat(self, obj:float) -> T:
+    '''
+    :param obj:
+    :type obj: float
+    :returns:
+    :rtype: T
+    '''
     ret = self._encodeStr(str(obj))
     self._setAttr(ret, ATTR_TYPE, "float")
     return ret
     
   def _decodeFloat(self, elem:T) -> float:
+    '''
+    :param elem:
+    :type elem: T
+    :returns:
+    :rtype: float
+    '''
     assert self._getAttr(elem, ATTR_TYPE) == "float"
     self._setAttr(elem, ATTR_TYPE, "str")
     return float(self._decodeStr(elem))
     
   def _encodeBool(self, obj:bool) -> T:
+    '''
+    :param obj:
+    :type obj: bool
+    :returns:
+    :rtype: T
+    '''
     ret = self._encodeStr(str(obj))
     self._setAttr(ret, ATTR_TYPE, "bool")
     return ret
     
   def _decodeBool(self, elem:T) -> bool:
+    '''
+    :param elem:
+    :type elem: T
+    :returns:
+    :rtype: bool
+    '''
     assert self._getAttr(elem, ATTR_TYPE) == "bool"
     self._setAttr(elem, ATTR_TYPE, "str")
     return self._decodeStr(elem) != "False"
     
   def _encodeTuple(self) -> T:
+    '''
+    :returns:
+    :rtype: T
+    '''
     elem:T = self._encodeList()
     self._setAttr(elem, ATTR_TYPE, "tuple")
     return elem
     
   def _decodeTuple(self, elem:T) -> tuple[T,...]:
+    '''
+    :param elem:
+    :type elem: T
+    :returns:
+    :rtype: tuple[T, ...]
+    '''
     assert self._getAttr(elem, ATTR_TYPE) == "tuple"
     self._setAttr(elem, ATTR_TYPE, "list")
     lst = self._decodeList(elem)
     return tuple(lst)
     
   def _encodeSet(self) -> T:
+    '''
+    :returns:
+    :rtype: T
+    '''
     elem:T = self._encodeList()
     self._setAttr(elem, ATTR_TYPE, "set")
     return elem
     
   def _decodeSet(self, elem:T) -> set[T]:
+    '''
+    :param elem:
+    :type elem: T
+    :returns:
+    :rtype: set[T]
+    '''
     assert self._getAttr(elem, ATTR_TYPE) == "set"
     self._setAttr(elem, ATTR_TYPE, "list")
     lst = self._decodeList(elem)
     return set(lst)
     
   def _encodeDict(self) -> T:
+    '''
+    :returns:
+    :rtype: T
+    '''
     elem = self._encodeList()
     self._setAttr(elem, ATTR_TYPE, "dict")
     return elem
     
   def _decodeDict(self, elem:T) -> list[tuple[T,T]]:
+    '''
+    :param elem:
+    :type elem: T
+    :returns:
+    :rtype: list[tuple[T, T]]
+    '''
     assert self._getAttr(elem, ATTR_TYPE) == "dict"
     ret = self._getKVPairs(elem)
     assert isinstance(ret, list)
     return ret
     
   def _encodeStrdict(self) -> T:
+    '''
+    :returns:
+    :rtype: T
+    '''
     elem = self._encodeList()
     self._setAttr(elem, ATTR_TYPE, strdict_className)
     return elem
     
   def _decodeStrdict(self, elem:T) -> dict[str,T]:
+    '''
+    :param elem:
+    :type elem: T
+    :returns:
+    :rtype: dict[str, T]
+    '''
     assert self._getAttr(elem, ATTR_TYPE) == strdict_className
     ret = self._getKVPairs(elem)
     assert isinstance(ret, dict)
     return ret
     
   def _encodeSerializable(self) -> T:
+    '''
+    :returns:
+    :rtype: T
+    '''
     ret = self._encodeStrdict()
     self._setAttr(ret, ATTR_TYPE, getFullClassName(Serializable))
     return ret
     
   def _decodeSerializable(self, elem:T) -> dict[str,T]:
+    '''
+    :param elem:
+    :type elem: T
+    :returns:
+    :rtype: dict[str, T]
+    '''
     typeName = self._getAttr(elem, ATTR_TYPE)
     typ = getFullyQualifiedClass(typeName)
     assert typ is not None
@@ -1347,6 +1607,13 @@ class SerializationStrategy[T](ABC):
     '''
     ..note:
       Tuple members referencing the tuple **are NOT** supported.
+
+    :param obj:
+    :type obj: SerializableType
+    :param unique:
+    :type unique: bool
+    :returns:
+    :rtype: T
     '''
     def encodeClass(obj:Serializable, unique:bool) -> T:
       elem = self._encodeSerializable()
@@ -1440,6 +1707,12 @@ class SerializationStrategy[T](ABC):
     
   def _decode_(self, elem:T) -> SerializableType:
 
+    '''
+    :param elem:
+    :type elem: T
+    :returns:
+    :rtype: SerializableType
+    '''
     def decodeClass(elem:T):
 
       def getParams(desc:list[ParamInfo]) -> list[tuple[str, SerializableType]]: 
@@ -1643,17 +1916,32 @@ del _populateKnownStrategiesAtLoad
 
 
 class _Reference(Serializable):
+  '''
+  A reference to an object already written, by its id: how an object referred to more than once is written only once.
+  '''
   def __init__(self, referenceID:int) -> None:
+    '''
+    :param referenceID:
+    :type referenceID: int
+    '''
     super().__init__()
     self.referenceID:int = referenceID
     
   @override
   @classmethod
   def getInstantiationInfo(cls)->InstantiationInfo:
+    '''
+    :returns:
+    :rtype: InstantiationInfo
+    '''
     return InstantiationInfo(cls, [ParamInfo("referenceID", int)])
   
   @override
   def __repr__(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return f'_Reference({self.referenceID})@{id(self)}'
 
 

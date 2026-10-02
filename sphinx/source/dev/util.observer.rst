@@ -1,5 +1,5 @@
-util.observer
-=============
+util.observer module
+====================
 
 .. automodule:: util.observer
    :members:

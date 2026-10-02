@@ -1,5 +1,5 @@
-util.command
-============
+util.command module
+===================
 
 .. automodule:: util.command
    :members:

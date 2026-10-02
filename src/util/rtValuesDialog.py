@@ -19,18 +19,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
+'''
+*RTValueDialog*: a dialog of sliders for adjusting a running program's
+parameters (each described by a *Param*) as it runs. (It uses matplotlib for its
+scales.)
+
+Created on Nov 28, 2025
+
+.. codeauthor:: Rob Kremer <robkremer@me.com>
+'''
 from typing import Type, Any, Callable
 from matplotlib.widgets import Widget
 from math import log10, isfinite, floor
 from dataclasses import dataclass
 from matplotlib.scale import LogScale
 from util.tooltip import CreateToolTip
-'''
-Created on Nov 28, 2025
-
-.. codeauthor:: Rob Kremer <robkremer@me.com>
-
-'''
 import tkinter as tk
 from tkinter import ttk, N, S, E, W
 
@@ -61,6 +64,9 @@ class Param[T]:
   
 @dataclass
 class SliderInfo:
+  '''
+  A slider in an *RTValueDialog*, with its value's type and whether its scale is logarithmic.
+  '''
   slider:ttk.Scale
   typ:Type
   log:bool
@@ -68,7 +74,7 @@ class SliderInfo:
 
 class RTValueDialog(tk.Toplevel):
   '''
-  classdocs
+  A dialog of sliders, one per *Param*, for adjusting a running program's parameters.
   '''
 
   COL_NAME = 0
@@ -77,6 +83,14 @@ class RTValueDialog(tk.Toplevel):
   COL_DEF = 3
   
   def __init__(self, parent, title="Attribute Editor", disabled=False):
+    '''
+    :param parent:
+    :type parent:
+    :param title:
+    :type title: str
+    :param disabled:
+    :type disabled: bool
+    '''
     super().__init__(parent)
     self.title(title)
     self.parent = parent
@@ -131,10 +145,33 @@ class RTValueDialog(tk.Toplevel):
   
   def makeEntries(self, entries:dict[str, Param]):
     '''
-    Convenience method to construct entries from a simple dictionary of entries. 
+    Convenience method to construct entries from a simple dictionary of entries.
+
+    :param entries:
+    :type entries: dict[str, Param]
     '''
     
   def appendSlider(self, name:str, typ:Type, value:Any, default:Any, minValue:Any, maxValue:Any, fun:Callable[[str,Any], Any], helpText:str="", logScale:bool=False):
+    '''
+    :param name:
+    :type name: str
+    :param typ:
+    :type typ: Type
+    :param value:
+    :type value: Any
+    :param default:
+    :type default: Any
+    :param minValue:
+    :type minValue: Any
+    :param maxValue:
+    :type maxValue: Any
+    :param fun:
+    :type fun: Callable[[str, Any], Any]
+    :param helpText:
+    :type helpText: str
+    :param logScale:
+    :type logScale: bool
+    '''
     font = ('Helvetica', 14, 'normal')
     label = ttk.Label(self.frame, text=name+":", font=font)
     label.grid(column=RTValueDialog.COL_NAME, row=self.numRows, sticky=tk.E, ipadx=0, padx=5, pady=0)
@@ -161,6 +198,22 @@ class RTValueDialog(tk.Toplevel):
     self.numRows += 1
     
   def sliderCallbackHandler(self, _, fun:Callable, name:str, ctl:ttk.Scale, disp:ttk.Label, typ:Type, log:bool):
+    '''
+    :param _:
+    :type _:
+    :param fun:
+    :type fun: Callable
+    :param name:
+    :type name: str
+    :param ctl:
+    :type ctl: ttk.Scale
+    :param disp:
+    :type disp: ttk.Label
+    :param typ:
+    :type typ: Type
+    :param log:
+    :type log: bool
+    '''
     def round_to_N_sig_figs(x, N):
       if x == 0 or not isfinite(x):
         return x
@@ -173,12 +226,24 @@ class RTValueDialog(tk.Toplevel):
     disp.configure(text=f'{val:.3g}' if val < 0.000001 or val > 1000000.0 else str(round_to_N_sig_figs(val, 6)))
   
   def __setitem__(self, key:str, value:Any)->None:
+    '''
+    :param key:
+    :type key: str
+    :param value:
+    :type value: Any
+    '''
     if self.pairs[key].log:
       value = log10(value)
     value = int(value) if self.pairs[key].typ is int else float(value)
     self.pairs[key].slider.set(value)
     
   def __getitem__(self, key:str):
+    '''
+    :param key:
+    :type key: str
+    :returns:
+    :rtype:
+    '''
     ret = self.pairs[key].slider.get()
     if self.pairs[key].log:
       ret = 10 ** ret

@@ -1,23 +1,32 @@
 
-Developer's Documentation
-=========================
+pythonUtils
+===========
 
-Packages and Modules (:doc:`Simplified contents <devindex>`)
-------------------------------------------------------------
+*pythonUtils* is a library of building blocks for Python applications:
+persistent objects that refer to one another across files, attributes that are
+inherited down a type hierarchy, commands that can be undone and typed, the
+observer pattern, preferences, and some Tk widgets -- a terminal, an attribute
+editor, dialogs and tooltips. It grew out of *Semantic Nets*, which is built on
+it, but doesn't depend on it.
+
+The documentation is in two parts:
+
+- The :doc:`Developer Guide <developer/index>`: what's in the library, and how
+  the parts fit together.
+- The :doc:`API reference <dev/util>`, generated from the code's
+  documentation.
 
 .. toctree::
    :maxdepth: 2
-   
-   dev/util.attribute
-   dev/util.command
-   dev/util.commandParser
-   dev/util.observer
-   dev/util.prefs
-   dev/util.rtValuesDialog
-   dev/util.terminal
-   dev/util.tooltip
-   dev/util.utils
-   dev/util.persistence
+   :caption: Developer Guide
+
+   developer/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Reference
+
+   dev/util
 
 
 Indices and tables
@@ -26,6 +35,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-
-

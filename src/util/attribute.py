@@ -97,6 +97,8 @@ def restrictionTypesToString(r:RestrictionTypes|None) -> str:
   '''
   :returns: The flag's name; a combination is "|"-separated (eg: "NOINHERIT|PRIVATE"),
     or "None" for None.
+  :param r:
+  :type r: RestrictionTypes | None
   '''
   if r is None:
     return "None"
@@ -106,7 +108,14 @@ def restrictionTypesToString(r:RestrictionTypes|None) -> str:
                   and m.value & (m.value - 1) == 0 and m.name is not None) # single bits only
 
 def restrictionTypesFromString(s:str) -> RestrictionTypes|None:
-  'The inverse of :py:func:`restrictionTypesToString`.'
+  '''
+  The inverse of :py:func:`restrictionTypesToString`.
+
+  :param s:
+  :type s: str
+  :returns:
+  :rtype: RestrictionTypes | None
+  '''
   s = s.strip()
   if s == "None":
     return None
@@ -117,6 +126,11 @@ def restrictionTypesFromString(s:str) -> RestrictionTypes|None:
 
 @dataclass
 class Restriction:
+  '''
+  How an attribute may be inherited: one *RestrictionTypes* for individuals
+  that inherit it (*individual*) and one for subtypes (*type*); None means no
+  restriction.
+  '''
   global RESTRICTION_TYPES
   individual:Optional[RestrictionTypes]
   "The restriction on individuals inheriting the attribute."
@@ -127,6 +141,8 @@ class Restriction:
     '''
     :returns: True iff an inheriting individual (or type, if *isIndividual* is
       False) can't see the attribute at all.
+    :param isIndividual:
+    :type isIndividual: bool
     '''
     r = self.individual if isIndividual else self.type
     return r is not None and bool(r & PRIVATE)
@@ -146,6 +162,12 @@ class Restriction:
 
   @classmethod
   def fromstring(cls, name:str) -> Restriction:
+    '''
+    :param name:
+    :type name: str
+    :returns:
+    :rtype: Restriction
+    '''
     choices =[x for x in RESTRICTION_TYPES if x.startswith(name.upper())]
     if len(choices) > 1:
       if "VAR" in choices and len(choices)==2:
@@ -158,6 +180,10 @@ class Restriction:
       raise ValueError("Illegal restriction string.")
     return RESTRICTION_TYPES[choices[0]]
   def tostring(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     for k,v in RESTRICTION_TYPES.items():
       if self == v:
         return k
@@ -205,12 +231,24 @@ class NoValue(Serializable):
   NOVALUE = None
   @classmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
+    '''
+    :returns:
+    :rtype: InstantiationInfo
+    '''
     return InstantiationInfo(cls)
   def __new__(cls) -> "NoValue":
+    '''
+    :returns:
+    :rtype: NoValue
+    '''
     if cls.NOVALUE is None:
       cls.NOVALUE = super().__new__(cls)
     return cls.NOVALUE
   def __repr__(self)->str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return "NOVALUE"
   
 NOVALUE = NoValue()
@@ -333,6 +371,13 @@ def typeAsString(t:AttributeValueTypes, throw:bool=False) -> AttributeValueTypes
   type is in string form, it is converted to a type and back again to check
   it's validity, thus it could change from a mere type name to a fully qualified
   class name.
+
+  :param t:
+  :type t: AttributeValueTypes
+  :param throw:
+  :type throw: bool
+  :returns:
+  :rtype: AttributeValueTypes | None
   '''
   if isinstance(t, str):
     if t in KNOWN_TYPES or t.startswith('choices'):
@@ -353,6 +398,13 @@ def typeAsCanonical(t:AttributeValueTypes, throw:bool=False) -> AttributeValueTy
   Attempts to return the given type t as an actual class.  Note that a string may
   also be returned in the case of the few supported "types" that do not correspond 
   to actual classes, currently "mtext", "color", "colour", "choices".
+
+  :param t:
+  :type t: AttributeValueTypes
+  :param throw:
+  :type throw: bool
+  :returns:
+  :rtype: AttributeValueTypes | None
   '''
   if isinstance(t, str):
     if t in TYPE_EQUIVALENTS:
@@ -370,10 +422,26 @@ def typeAsCanonical(t:AttributeValueTypes, throw:bool=False) -> AttributeValueTy
   
 
 class Attribute(Serializable, Dirtyable):
+  '''
+  An attribute's value, with its *type* (a type, or a type name such as
+  "color" or "choices[...]"), its *restriction* on how it's inherited (see
+  *Restriction*), and a *note* describing it (shown as a tooltip by the attribute
+  editor).
+  '''
   def __init__(self, value:Union[SerializableType, NoValue], 
                      typ:Optional[AttributeValueTypes], 
                      restriction:Optional[Restriction|tuple[int,int]|tuple[RestrictionTypes,RestrictionTypes]],
                      note:str|None=None):
+    '''
+    :param value:
+    :type value: Union[SerializableType, NoValue]
+    :param typ:
+    :type typ: Optional[AttributeValueTypes]
+    :param restriction:
+    :type restriction: Optional[Restriction | tuple[int, int] | tuple[RestrictionTypes, RestrictionTypes]]
+    :param note:
+    :type note: str | None
+    '''
     Serializable.__init__(self)
     Dirtyable.__init__(self)
     assert value is NOVALUE or typ is None or isValidType(typ, value), f'Invalid Attribute type/value: {typ}/{value}.'
@@ -390,10 +458,18 @@ class Attribute(Serializable, Dirtyable):
     
   @property
   def value(self) -> SerializableType|NoValue:
+    '''
+    :returns:
+    :rtype: SerializableType | NoValue
+    '''
     return self._value
 
   @value.setter
   def value(self, value:SerializableType|NoValue):
+    '''
+    :param value:
+    :type value: SerializableType | NoValue
+    '''
     assert self.type is None or isValidType(self.type, value)
     if value != self._value:
       self.setDirty()
@@ -401,10 +477,18 @@ class Attribute(Serializable, Dirtyable):
   
   @property
   def type(self) -> AttributeValueTypes|None:
+    '''
+    :returns:
+    :rtype: AttributeValueTypes | None
+    '''
     return self._type
 
   @type.setter
   def type(self, value:AttributeValueTypes|None):
+    '''
+    :param value:
+    :type value: AttributeValueTypes | None
+    '''
     if value != self._type:
       if isValidType(value, self.value):
         self.setDirty()
@@ -414,10 +498,18 @@ class Attribute(Serializable, Dirtyable):
   
   @property
   def restriction(self) -> Restriction|None:
+    '''
+    :returns:
+    :rtype: Restriction | None
+    '''
     return self._restriction
 
   @restriction.setter
   def restriction(self, value:Restriction|None):
+    '''
+    :param value:
+    :type value: Restriction | None
+    '''
     if value != self._restriction:
       self.setDirty()
       self._restriction = value
@@ -430,6 +522,10 @@ class Attribute(Serializable, Dirtyable):
   
   @classmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
+    '''
+    :returns:
+    :rtype: InstantiationInfo
+    '''
     def saveRest(r:Restriction) -> str:
       return f'{restrictionTypesToString(r.individual)}:{restrictionTypesToString(r.type)}'
     def restoreRest(string:str) -> Restriction:
@@ -456,13 +552,28 @@ class Attribute(Serializable, Dirtyable):
               ])
 
   def __str__(self)->str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return f'Attribute({self.value}, {self._type}, {self.restriction}, {self.note})'
   
 class AttributedObject(Serializable, Dirtyable, strdict, Subject):
 
+  '''
+  An object with named *Attribute* objects, which inherits more from its
+  supertypes (*getSupers()*, which subclasses must define), as their
+  *Restriction* objects allow. *get()* finds a key's effective value -- the
+  object's own, or else the one it inherits; *getLocal()* and *getInh()* find
+  only one or the other.
+  '''
   @override
   @classmethod
   def getInstantiationInfo(cls)->InstantiationInfo:
+    '''
+    :returns:
+    :rtype: InstantiationInfo
+    '''
     return InstantiationInfo(cls,
                 postconSetters=[PropertyInfo("attributes", strdict,
                                             lambda slf: strdict({k:dict.get(slf,k) for k in dict.keys(slf)}), #type: ignore[call-overload,arg-type,var-annotated]
@@ -500,6 +611,9 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
     '''
     Returns True iff the object (or an of it's contained *Attributes*) have
     been modified and should probably be saved on exit.
+
+    :returns:
+    :rtype: bool
     '''
     if super().isDirty():
       return True
@@ -551,6 +665,8 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
           - if *storeDefault* is specified, the value of *storeDefault*, or 
           - if *default* is specified, the value of *default*, or
           - *None*.
+    :param note:
+    :type note: str | None
     '''
     attr = self.getAttr(key)
     if attr != None:
@@ -740,6 +856,10 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
       
   @override
   def __delitem__(self, key:str)->None:
+    '''
+    :param key:
+    :type key: str
+    '''
     super().__delitem__(key)
     self.setDirty()
     self.notify(("del attribute", (key,)))
@@ -911,6 +1031,11 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
     
     Validates the *attr* against the inherited attribute. If *attr* is not legal
     against the inherited attribute, an exception will be raised.
+
+    :param isIndividual:
+    :type isIndividual: bool
+    :param superAttr:
+    :type superAttr: Optional[Attribute]
     '''
     #superAttr = self._getSuperAttr(key)
     # no super attribute

@@ -1,0 +1,63 @@
+<project name="pythonUtils" default="doc" basedir=".">
+  <description>
+    Builds pythonUtils' documentation (and runs its tests).
+  </description>
+  <property name="src" location="src"/>
+  <!--property name="html" location="${src}/util/help"/-->
+  <property name="html" location="/Users/kremer/webserver/dev/pythonUtils"/> <!-- (where the built HTML is copied, to be served; also read by Semantic Nets' doc build, through intersphinx) -->
+  <property name="sphinx" location="sphinx"/>
+  <property name="sphinxBuild" location="${sphinx}/build"/>
+  <property name="sphinxHTML" location="${sphinxBuild}/html"/>
+  <property name="pythonVersion" value="3.14"/>
+  <property name="pythonVersionPath" location="/Library/Frameworks/Python.framework/Versions/${pythonVersion}"/>
+  <property name="pythonLibPath" location="${pythonVersionPath}/lib/python${pythonVersion}"/>
+
+  <target name="rebuildAutoDoc" description="Regenerate the API pages, sphinx/source/dev, from the code (it's wiped and rewritten: put nothing else there).">
+    <exec executable="${pythonVersionPath}/bin/sphinx-apidoc" failonerror="true"> <!-- (the same Python as the code and sphinx/Makefile: see pythonVersion) -->
+      <arg value="--separate"/>
+      <arg value="--private"/>
+      <arg value="--implicit-namespaces"/>
+      <arg value="--module-first"/>
+      <arg value="--remove-old"/>
+      <arg value="--force"/> <!-- (regenerate the package pages too, so they don't list modules that have gone) -->
+      <arg value="-o"/>
+      <arg value="${sphinx}/source/dev"/>
+      <arg value="${src}/util"/>
+      <!-- exclude: -->
+      <arg value="${src}/util/x_*"/>  <!-- (old versions) -->
+      <arg value="${src}/util/persistence/x_*"/>
+      <arg value="${src}/util/test.py"/> <!-- (scratch) -->
+      <arg value="${src}/util/help"/>
+    </exec>
+  </target>
+
+  <target name="doc" depends="rebuildAutoDoc" description="Build the documentation (regenerating the API pages from the code first), and copy it to ${html}.">
+    <delete includeEmptyDirs="false"> <!-- clean the build directory -->
+      <fileset dir="${sphinxBuild}" erroronmissingdir="false"/>
+    </delete>
+    <exec executable="make" dir="${sphinx}" searchpath="true" failonerror="true">
+      <arg value="html"/>
+      <env key="PATH" path="/usr/local/bin:/usr/local/sbin:${pythonVersionPath}/bin"/>
+      <env key="PYTHONPATH" path=":${pythonLibPath}:${pythonLibPath}/site-packages"/><!-- (Python ${pythonVersion}'s packages only: not anaconda's 3.12 ones) -->
+    </exec>
+    <delete includeEmptyDirs="false"> <!-- clean the served directory -->
+      <fileset dir="${html}" erroronmissingdir="false"/>
+    </delete>
+    <copy todir="${html}">
+      <fileset dir="${sphinxHTML}" includes="**"/>
+    </copy>
+  </target>
+
+  <target name="logo" description="Redraw the documentation's logo and favicon (sphinx/makeLogo.py: needs Pillow, eg: ../semanticNets/.venv-build).">
+    <exec executable="${basedir}/../semanticNets/.venv-build/bin/python" dir="${basedir}" failonerror="true">
+      <arg value="${sphinx}/makeLogo.py"/>
+    </exec>
+  </target>
+
+  <target name="test" description="Run the unit tests (in test/).">
+    <exec executable="${pythonVersionPath}/bin/python${pythonVersion}" dir="${basedir}/test" failonerror="true">
+      <arg line="-m unittest discover -s . -p test*.py"/>
+      <env key="PYTHONPATH" path="${src}"/>
+    </exec>
+  </target>
+</project>

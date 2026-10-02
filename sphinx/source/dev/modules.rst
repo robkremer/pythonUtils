@@ -1,14 +1,7 @@
-Programmer's Documentation
-==========================
+util
+====
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
-   util.utils
-   util.tooltip
-   util.persistence.serialize
-   util.persistence.serializeXML
-   util.persistence.serializeJSON
-   util.persistence.pRef
-   util.observer
-   util.attribute
+   util

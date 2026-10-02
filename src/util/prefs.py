@@ -20,6 +20,10 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 '''
+*Prefs*: an application's preferences -- an *AttributedObject* (see
+*util.attribute*) saved to a file of its own, with callbacks for when a
+preference changes.
+
 Created on Sep. 5, 2023
 
 .. codeauthor:: Rob Kremer <robkremer@me.com>
@@ -41,7 +45,9 @@ PREFS_VERSION = "0.0"
 
 class Prefs(util.attribute.AttributedObject):
   '''
-  classdocs
+  An application's preferences: an *AttributedObject* with no supertypes,
+  saved to a file of its own (*read()*, *save()*). Setting a preference calls the
+  callbacks registered for its key (*addCallback()*).
   '''
       
   def __init__(self): #, appname:str):
@@ -74,6 +80,12 @@ class Prefs(util.attribute.AttributedObject):
 
   @classmethod
   def read(cls, file:str) -> Prefs:
+    '''
+    :param file:
+    :type file: str
+    :returns:
+    :rtype: Prefs
+    '''
     from util.persistence.serialize import SerializationStrategy
     ret = SerializationStrategy.readx(file)
     assert isinstance(ret, Prefs)
@@ -121,6 +133,10 @@ class Prefs(util.attribute.AttributedObject):
     '''
     :param format: The serialization strategy to save with (see
       *SerializationStrategy*); by default, *DEFAULT_STRATEGY*.
+    :param saveas:
+    :type saveas: str | None
+    :param overwrite:
+    :type overwrite: bool
     '''
     from util.persistence.serialize import SerializationStrategy, DEFAULT_STRATEGY
     if format is None:
@@ -149,6 +165,11 @@ class Prefs(util.attribute.AttributedObject):
     
     Also calls any registered callbacks with the key and value. If a callback
     raises and exception, it is removed from the callback list.
+
+    :param key:
+    :type key: str
+    :param value:
+    :type value: SerializableType
     '''
     # create an Attribute if necessary
     if not isinstance(value, Attribute):

@@ -76,16 +76,31 @@ class XML2SerializationStrategy(XMLSerializationStrategy):
   @override
   @classmethod
   def protocolName(cls) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return "XML2"
 
   @override
   @classmethod
   def protocolVersion(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return "1.0"
 
   @classmethod
   def _refID(cls, value:Element) -> Optional[str]:
-    'If *value* (an encoded object) is a *_Reference*, its id (as text); else None.'
+    '''
+    If *value* (an encoded object) is a *_Reference*, its id (as text); else None.
+
+    :param value:
+    :type value: Element
+    :returns:
+    :rtype: Optional[str]
+    '''
     if value.tag != TAG_OBJECT or value.attrib.get(ATTR_TYPE) != serialize.REF_CLASSNAME or len(value) != 1:
       return None
     prop = value[0]
@@ -98,7 +113,14 @@ class XML2SerializationStrategy(XMLSerializationStrategy):
 
   @classmethod
   def _packable(cls, value:Element) -> bool:
-    'Whether *value* (an encoded object) is simple enough to pack into its property tag.'
+    '''
+    Whether *value* (an encoded object) is simple enough to pack into its property tag.
+
+    :param value:
+    :type value: Element
+    :returns:
+    :rtype: bool
+    '''
     if value.tag != TAG_OBJECT or len(value) or set(value.attrib) != {ATTR_TYPE, ATTR_VALUE}:
       return False
     typ = value.attrib[ATTR_TYPE]
@@ -109,6 +131,11 @@ class XML2SerializationStrategy(XMLSerializationStrategy):
     '''
     The value of property *prop*: its child, or, if it's packed, the object tag
     it stands for (made from its type and value, or its reference id).
+
+    :param prop:
+    :type prop: Element
+    :returns:
+    :rtype: Optional[Element]
     '''
     child = prop.find("*")
     if child is not None:
@@ -123,6 +150,14 @@ class XML2SerializationStrategy(XMLSerializationStrategy):
 
   @override
   def _setKVPair(self, elem:Element, key:Element|str, value:Element) -> None:
+    '''
+    :param elem:
+    :type elem: Element
+    :param key:
+    :type key: Element | str
+    :param value:
+    :type value: Element
+    '''
     packs = isinstance(key, str) and elem.attrib[ATTR_TYPE] != 'dict'
     if packs and self._packable(value):
       elem.append(Element(TAG_KVPAIR, {TAG_KEY: key, ATTR_TYPE: value.attrib[ATTR_TYPE], ATTR_VALUE: value.attrib[ATTR_VALUE]}))
@@ -133,6 +168,14 @@ class XML2SerializationStrategy(XMLSerializationStrategy):
 
   @override
   def _getKVPair(self, elem:Element, key:str) -> Optional[Element]:
+    '''
+    :param elem:
+    :type elem: Element
+    :param key:
+    :type key: str
+    :returns:
+    :rtype: Optional[Element]
+    '''
     if elem.attrib[ATTR_TYPE] == 'dict':
       return super()._getKVPair(elem, key)
     prop = elem.find(f"./{TAG_KVPAIR}[@{TAG_KEY}='{key}']")
@@ -140,6 +183,12 @@ class XML2SerializationStrategy(XMLSerializationStrategy):
 
   @override
   def _getKVPairs(self, elem:Element) -> list[tuple[Element,Element]]|dict[str,Element]:
+    '''
+    :param elem:
+    :type elem: Element
+    :returns:
+    :rtype: list[tuple[Element, Element]] | dict[str, Element]
+    '''
     if elem.attrib[ATTR_TYPE] == 'dict':
       return super()._getKVPairs(elem)
     ret:dict[str,Element] = {}

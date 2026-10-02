@@ -19,27 +19,48 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
+'''
+Graphs whose nodes and relations are persistent objects: an *AbstractGraph*
+is a *PRDb* (see *util.persistence.pRef*) of *AGObject* objects, each of which keeps
+track of the relations (*AGRelation*: an object with a *src* and a *dst*) that
+come in to it and go out from it. Relations are objects in their own right, so
+they can relate relations.
+
+Created on Sep 10, 2026
+
+.. codeauthor:: Rob Kremer <robkremer@me.com>
+'''
 from __future__ import annotations
 from util.persistence.pRef import PRDb, PRObject
 from util.validatedList import ValidatedList
 from typing import override
 from util.utils import delOne
-'''
-Created on Sep 10, 2026
-
-@author: robkremer
-'''
 
 class AbstractGraph[T:"AGObject", R:"AGRelation"](PRDb[T]):
   '''
-  classdocs
+  A persistent graph: a *PRDb* of *AGObject* objects -- nodes and the relations between them.
   '''
   def  __init__(self, url:str, mode:str="w", memoryResident:bool=True, _reading:bool=False):
+    '''
+    :param url:
+    :type url: str
+    :param mode:
+    :type mode: str
+    :param memoryResident:
+    :type memoryResident: bool
+    :param _reading:
+    :type _reading: bool
+    '''
     PRDb.__init__(self, url, mode=mode, memoryResident=memoryResident, _reading=_reading)
 
         
 class AGObject[TDB:AbstractGraph, R:"AGRelation"](PRObject[TDB]):
   
+  '''
+  An object in an *AbstractGraph*: it keeps the relations that come in to it
+  and go out from it (*AGRelation* objects whose *dst* or *src* it is), which the
+  relations maintain as they're connected and disconnected.
+  '''
   def __init__(self, db:TDB, **kwargs):
     '''
     :param db: The db to which this object will belong.
@@ -68,6 +89,10 @@ class AGObject[TDB:AbstractGraph, R:"AGRelation"](PRObject[TDB]):
     "Should only be assigned by *Relation* objects where self is at the src end and not write-locked."
     
   def _isConnected(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     return self.id in self.db
 
   def _disconnect(self, **kwargs) -> None:
@@ -84,6 +109,9 @@ class AGObject[TDB:AbstractGraph, R:"AGRelation"](PRObject[TDB]):
       User this method when deleting an object with the potential to undo the 
       deletion.  Keep a pointer to the object and undo the deletion by calling
       its _reconnect() method.
+
+    :param kwargs:
+    :type kwargs:
     '''
     #TODO: This is a potential problem for chains of transitive relations.
     if not self._isConnected():
@@ -125,6 +153,8 @@ class AGObject[TDB:AbstractGraph, R:"AGRelation"](PRObject[TDB]):
       -- is what keeps that second encounter from trying to reconnect (and
       re-*assert*) an already-reconnected *r*.
 
+    :param kwargs:
+    :type kwargs:
     '''
     assert not self._isConnected(), self
 
@@ -141,10 +171,19 @@ class AGObject[TDB:AbstractGraph, R:"AGRelation"](PRObject[TDB]):
 
         
 class AGNode[TDB:AbstractGraph](AGObject[TDB, "AGRelation"]):
+  '''
+  A node in an *AbstractGraph*: an *AGObject* that isn't a relation.
+  '''
   pass
 
 
 class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
+  '''
+  A relation in an *AbstractGraph*: an *AGObject* from a source (*src*) to a
+  destination (*dst*), either of which may be any *AGObject* -- including another
+  relation -- or None. Setting an end updates the ends' lists of incoming and
+  outgoing relations.
+  '''
   def __init__(self, db:TDB,
                src:T|None=None,
                dst:T|None=None,
@@ -176,8 +215,10 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
   @property
   def dst(self, localOnly:bool=False) -> T|None: #AGObject|None:
     '''
-    :return: The **calculated* destination of this relation; ie: if this relation
+    :return: The *calculated* destination of this relation; ie: if this relation
       does not have a specific destination, look it up in the ISA hierarchy.
+    :param localOnly:
+    :type localOnly: bool
     '''
 #    if localOnly or self._dst is not None:
     return self._dst
@@ -197,6 +238,10 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
 #    self.connect(destination=obj)
 #    assert self._dst is obj
 #    self.setDirty()
+    '''
+    :param obj:
+    :type obj: T | None
+    '''
     if self._dst is obj: # don't do anything if it's already done.
       return
     if self._dst is not None:
@@ -210,8 +255,10 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
   @property
   def src(self, localOnly:bool=False) -> T|None: #AGObject|None:
     '''
-    :return: The **calculated* source of this relation; ie: if this relation
+    :return: The *calculated* source of this relation; ie: if this relation
       does not have a specific source, look it up in the ISA hierarchy.
+    :param localOnly:
+    :type localOnly: bool
     '''
 #    if localOnly or self._src is not None:
     return self._src
@@ -231,6 +278,10 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
 #    self.connect(source=obj)
 #    assert self._src is obj
 #    self.setDirty()
+    '''
+    :param obj:
+    :type obj: T | None
+    '''
     if self._src is obj: # don't do anything if it's already done.
       return
     if self._src is not None:
@@ -251,8 +302,8 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
     
       Use this method during Relation construction or when modifying the source 
       and/or destination of the Relation. This method ONLY applies to *Relations*.
-      (contrast :py:method:`AGObject._disconnect` and 
-      :py:method:`AGObject._reconnect`) 
+      (contrast :py:meth:`AGObject._disconnect` and 
+      :py:meth:`AGObject._reconnect`) 
     
     :param source: The :py:class:`AGObject` for the *src* link.
     :type source: AGObject
@@ -276,6 +327,12 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
     
   @override
   def _reconnect(self, kept:T|None=None, **kwargs):
+    '''
+    :param kept:
+    :type kept: T | None
+    :param kwargs:
+    :type kwargs:
+    '''
     super()._reconnect(**kwargs)
     if self._src is not None and self._src is not kept:
       self._src._outgoing.append(self) 
@@ -299,7 +356,11 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
     :param source: [default: *False*] Iff True the *src* side is disconnected.
     :type source: bool  
     :param destination: [default: *False*] Iff True the *dst* side is disconnected.
-    :type destination: bool  
+    :type destination: bool
+    :param keep:
+    :type keep: T | None
+    :param kwargs:
+    :type kwargs:
     '''
     if self._src is not None and self._src is not keep:
       delOne(self._src._outgoing, self) 

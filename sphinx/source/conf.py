@@ -13,13 +13,7 @@
 import os
 import sys
 #from objc._convenience import __call__
-sys.path.insert(0, os.path.abspath('../..'))
-sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('../src'))
-sys.path.insert(0, os.path.abspath('../src/util'))
-sys.path.insert(0, os.path.abspath('../../src'))
-sys.path.insert(0, os.path.abspath('../../src/util'))
-sys.path.insert(0, os.path.abspath('/opt/homebrew/bin'))
+sys.path.insert(0, os.path.abspath('../../src')) # (the util package; not util/ itself, which would make each module importable twice, eg: as "attribute" and "util.attribute")
 print(f'python version {sys.version}, cwd="{os.getcwd()}"')
 import typing
 typing.TYPE_CHECKING = False
@@ -27,7 +21,7 @@ typing.TYPE_CHECKING = False
 
 # -- Project information -----------------------------------------------------
 
-project = 'Python Util'
+project = 'pythonUtils'
 #copyright = '\u00A9 2023-2025, Rob Kremer'
 copyright = '2023-2026, Rob Kremer'
 author = 'Rob Kremer'
@@ -60,7 +54,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["dev/test*", "*_deprecated*"]
+exclude_patterns = ["dev/test*", "*_deprecated*", "dev/modules.rst", "dev/util.x_*", "dev/util.test.rst"] # (modules.rst: sphinx-apidoc's own contents page; x_*: old versions; util.test: scratch)
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -91,7 +85,7 @@ elif html_theme == "classic":
 		}
 elif html_theme == "alabaster":
   html_theme_options = {
-      "logo": "../_images/tygra-logo-small.png",
+      "logo": "../_images/pu-logo.png",
       "logo_name": True,
       "sidebar_collapse": True,
       "fixed_sidebar": True,
@@ -105,7 +99,10 @@ elif html_theme == "alabaster":
       "page_width": 'auto',
     }
 
-html_logo = "./images/tygra-logo-small.png"
+suppress_warnings = ["ref.python"] # (eg: ":type x: type" -- Sphinx can't tell whether the word "type" means the built-in or Attribute.type/Restriction.type, and says so each time)
+
+html_logo = "./images/pu-logo.png" # (drawn by sphinx/makeLogo.py)
+html_favicon = "./images/pu-favicon.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

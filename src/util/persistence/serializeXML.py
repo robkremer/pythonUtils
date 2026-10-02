@@ -42,48 +42,103 @@ TAG_VALUE = "value"
 
 class XMLSerializationStrategy(SerializationStrategy[Element]):
   
+  '''
+  The *SerializationStrategy* for the original, verbose XML format (see *serializeXML2* for the compact one).
+  '''
   SerializableTypesInAttrs = (int, float, bool, str)
   SerializableTypesInSubs = (Serializable, list, dict, tuple, set)
 
   @override
   @classmethod
   def protocolName(cls) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return "XML"
     
   @override
   @classmethod
   def protocolVersion(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return "1.0"
   
   @override
   @classmethod
   def defaultExtension(cls) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     return ".xml"
 
   @override
   def _encodeStr(self, obj:str) -> Element:
+    '''
+    :param obj:
+    :type obj: str
+    :returns:
+    :rtype: Element
+    '''
     return Element(TAG_OBJECT, {ATTR_TYPE: "str", 
                                 ATTR_VALUE: obj})
     
   @override
   def _decodeStr(self, elem:Element) -> str:
+    '''
+    :param elem:
+    :type elem: Element
+    :returns:
+    :rtype: str
+    '''
     return elem.attrib[ATTR_VALUE]
     
   @override
   def _encodeList(self) -> Element:
+      '''
+      :returns:
+      :rtype: Element
+      '''
       return Element(TAG_OBJECT, 
                      {ATTR_TYPE: "list"})
     
   @override
   def _decodeList(self, elem:Element) -> list[Element]:
+    '''
+    :param elem:
+    :type elem: Element
+    :returns:
+    :rtype: list[Element]
+    '''
     return elem.findall(f"./{TAG_OBJECT}")
     
   @override
   def _setAttr(self, elem:Element, name:str, value:str):
+    '''
+    :param elem:
+    :type elem: Element
+    :param name:
+    :type name: str
+    :param value:
+    :type value: str
+    '''
     elem.attrib[name] = value
   
   @override
   def _getAttr(self, elem:Element, name:str, default:Any=KeyError) -> Any:
+    '''
+    :param elem:
+    :type elem: Element
+    :param name:
+    :type name: str
+    :param default:
+    :type default: Any
+    :returns:
+    :rtype: Any
+    '''
     if name in elem.attrib:
       return elem.attrib[name]
     if default is KeyError:
@@ -93,17 +148,37 @@ class XMLSerializationStrategy(SerializationStrategy[Element]):
   
   @override
   def _appendItem(self, elem:Element, newItem:Element) -> None:
+    '''
+    :param elem:
+    :type elem: Element
+    :param newItem:
+    :type newItem: Element
+    '''
     assert elem.attrib[ATTR_TYPE] in ["list", "tuple", "set"], f'type must be one of "list", "tuple", "set", got "{elem.attrib["type"]}".'
     elem.append(newItem)
   
   @override
   def _getItems(self, elem:Element) -> list[Element]:
+    '''
+    :param elem:
+    :type elem: Element
+    :returns:
+    :rtype: list[Element]
+    '''
     assert elem.attrib[ATTR_TYPE] in ["list", "tuple", "set"]
     items:list[Element] = elem.findall('*')
     return items
     
   @override
   def _setKVPair(self, elem:Element, key:Element|str, value:Element) -> None:
+    '''
+    :param elem:
+    :type elem: Element
+    :param key:
+    :type key: Element | str
+    :param value:
+    :type value: Element
+    '''
     typ = elem.attrib[ATTR_TYPE]
     assert typ in ('dict', strdict_className) or issubclass(cast(type,getFullyQualifiedClass(typ)), Serializable)
     if typ == 'dict':
@@ -122,6 +197,14 @@ class XMLSerializationStrategy(SerializationStrategy[Element]):
   
   @override
   def _getKVPair(self, elem:Element, key:str) -> Optional[Element]:
+    '''
+    :param elem:
+    :type elem: Element
+    :param key:
+    :type key: str
+    :returns:
+    :rtype: Optional[Element]
+    '''
     typ = elem.attrib[ATTR_TYPE]
     assert typ is not None
     cls = getFullyQualifiedClass(typ)
@@ -143,6 +226,12 @@ class XMLSerializationStrategy(SerializationStrategy[Element]):
   
   @override
   def _getKVPairs(self, elem:Element) -> list[tuple[Element,Element]]|dict[str,Element]:
+    '''
+    :param elem:
+    :type elem: Element
+    :returns:
+    :rtype: list[tuple[Element, Element]] | dict[str, Element]
+    '''
     typ = elem.attrib[ATTR_TYPE]
     assert typ is not None
     cls = getFullyQualifiedClass(typ)
@@ -218,6 +307,8 @@ class XMLSerializationStrategy(SerializationStrategy[Element]):
     :type string: str
     :returns: The object interpreted from *string*.
     :rtype: SerializableTypes
+    :param kwargs:
+    :type kwargs: dict[str, Any]
     """
     root:Optional[Element] = ET.fromstring(string)
     if root is None:
