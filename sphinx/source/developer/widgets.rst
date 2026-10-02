@@ -40,7 +40,17 @@ chooser) for a ``color``, a menu for ``choices[...]``, a text box for text,
 lists and dicts, and an entry otherwise.
 :py:class:`~util.attributeEditor.HierarchicalAttrEditor` also shows the
 values each attribute inherits, greyed, above its own. Attributes can be
-added and deleted, and their types and restrictions changed.
+added and deleted, and their types and restrictions changed. Each has a
+**note** button, which opens its note (its description, also shown as its
+name's tooltip) in a small pop-up editor.
+
+Attributes whose names have a "/" in them are **grouped** like folders (see
+:py:func:`~util.attributeEditor.treeOrder`): eg: ``gui/label`` and
+``gui/colors/fill`` go under a *gui* group, the latter in a *colors* group
+inside it. Each group has a grey header line with a triangle that collapses
+or expands it (the collapsed groups are remembered for the next editor), and
+each attribute is labelled with just the last part of its name, indented
+under its group. Names without a "/" come first.
 
 :py:func:`~util.attributeEditor.editAttrsBox` returns the edits (for the
 caller to apply -- eg: as an undoable command); :py:func:`~util.attributeEditor.applyEditAttrsBox`

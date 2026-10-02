@@ -70,6 +70,56 @@ INHERIT_KEY_EXT = "-\u2193"
 
 KIND_WIDTH = 10
 
+GROUP_SEPARATOR = "/"
+"Attribute names are grouped, like folders, by the parts of their names between these (eg: \"gui/label\")."
+TRIANGLE_OPEN = "\u25BC"   # (a down-pointing triangle)
+TRIANGLE_CLOSED = "\u25B6" # (a right-pointing triangle)
+GROUP_BACKGROUND = "grey85"
+"The background of a group's header line (see *AttrEditor.makeGroupHeader()*)."
+TREE_INDENT = 18
+"How far (in pixels) each level of the grouped attribute names is indented."
+
+def treeOrder(keys:list[str]) -> list[tuple[str, str, int]]:
+  '''
+  The order to show attributes in, grouped by the parts of their names (see
+  *GROUP_SEPARATOR*), like a tree of folders: at each level, the names with no
+  more separators first, then each group -- its header, and then its own
+  contents, likewise -- all sorted (ignoring case). Eg: "a", "b", "a/a", "a/b",
+  "a/a/a", "a/a/b", "b/a" are shown as::
+
+    a
+    b
+    a/      (a group)
+      a/a
+      a/b
+      a/a/    (a group)
+        a/a/a
+        a/a/b
+    b/      (a group)
+      b/a
+
+  :param keys: The attribute names.
+  :type keys: list[str]
+  :returns: (kind, name, depth) for each line: kind is "key" (name is an
+    attribute's name) or "group" (name is the group's path, eg: "a/a").
+  :rtype: list[tuple[str, str, int]]
+  '''
+  out:list[tuple[str, str, int]] = []
+  def build(prefix:str, names:list[str], depth:int) -> None:
+    leaves = [k for k in names if GROUP_SEPARATOR not in k[len(prefix):]]
+    groups:dict[str, list[str]] = {}
+    for k in names:
+      rest = k[len(prefix):]
+      if GROUP_SEPARATOR in rest:
+        groups.setdefault(rest.split(GROUP_SEPARATOR, 1)[0], []).append(k)
+    for k in sorted(leaves, key=str.lower):
+      out.append(("key", k, depth))
+    for g in sorted(groups, key=str.lower):
+      out.append(("group", prefix + g, depth))
+      build(prefix + g + GROUP_SEPARATOR, groups[g], depth + 1)
+  build("", keys, 0)
+  return out
+
 DOC_QUALIFIER = \
 '''Qualifiers:
 f:   final:
@@ -329,16 +379,24 @@ class AttrEditor(tk.Toplevel):
 
   where <editor lines> look like this:
   
-  +------+---------+----------------+----------------------+--------+
-  |<stat>| <label> | <value editor> | <button> <button>... | <type> |
-  +------+---------+----------------+----------------------+--------+
-  |<stat>| <label> | <value editor> | <button> <button>... | <type> |
-  +------+---------+----------------+----------------------+--------+
+  +------+---------+----------------+--------+--------+----------------------+
+  |<stat>| <label> | <value editor> | <type> | <note> | <button> <button>... |
+  +------+---------+----------------+--------+--------+----------------------+
+  |<stat>| <label> | <value editor> | <type> | <note> | <button> <button>... |
+  +------+---------+----------------+--------+--------+----------------------+
+
+  If any attribute's name has a "/" in it, the lines are grouped by the parts of
+  the names, like folders (see *treeOrder()*): each group has a header line with
+  a triangle that collapses or expands it, and each attribute is labelled with
+  just the last part of its name, indented under its group.
   
   The <Message line> and <Answer iine> are only visiable when the *setMessage()* 
   or *ask()* methods are called.
   
   '''
+  collapsedGroups:set[str] = set()
+  "The groups collapsed when an editor was last closed: the next one starts with them collapsed too."
+
   #TODO: Implement "disabled" param
   def __init__(self, parent, attrs:AttributedObject, title="Attribute Editor", disabled=False,
                displayValues:Optional[dict[str,Any]]=None):
@@ -371,6 +429,18 @@ class AttrEditor(tk.Toplevel):
     
     self.editKey:Optional[str] = None
     self.editWidget:Optional[Widget] = None
+
+    self.noteEdits:dict[str, str] = {}
+    "Attributes' notes as edited (see *editNote()*), by key: only those that have been."
+    self.treeMode:bool = False
+    "Whether the attributes are shown grouped by the parts of their names (see *treeOrder()*)."
+    self._labels:dict[str, tuple[str, int]] = {}
+    "Each attribute's label, and its depth in the tree (see *makeNewEntry()*)."
+    self._groupSpans:dict[str, tuple[int, int]] = {}
+    "Each group's rows in the grid -- the first and the one after the last -- below its header."
+    self._groupHeaders:dict[str, tk.Label] = {}
+    self._hiddenWidgets:dict[str, list[tk.Widget]] = {}
+    "The widgets each collapsed group hid (see *toggleGroup()*), to show again when it's expanded."
     
     #TODO: move these to the class level
     # "constants" for the outer grid
@@ -387,8 +457,9 @@ class AttrEditor(tk.Toplevel):
     self.cLabel:int = 1
     self.cEdit:int = 2
     self.cKind:int = 3
-    self.cDel:int = 4
-    self.cspan:int = 5
+    self.cNote:int = 4
+    self.cDel:int = 5
+    self.cspan:int = 6
     
     self.outerSpan:int = 2
     
@@ -400,7 +471,7 @@ class AttrEditor(tk.Toplevel):
     '''
     self.editKey = editKey
     
-    self.geometry("700x600")
+    self.geometry("820x600")
     #self.title('Attributes')
     self.resizable(1, 1)
 
@@ -420,6 +491,7 @@ class AttrEditor(tk.Toplevel):
     self.editorsListFrame.columnconfigure(self.cLabel, weight=0)
     self.editorsListFrame.columnconfigure(self.cEdit,  weight=2, minsize=200)
     self.editorsListFrame.columnconfigure(self.cKind,  weight=0)
+    self.editorsListFrame.columnconfigure(self.cNote,  weight=0)
     self.editorsListFrame.columnconfigure(self.cDel,   weight=0)
     
     self.makeHeader(0)
@@ -428,19 +500,44 @@ class AttrEditor(tk.Toplevel):
     i = 2
     keys = list(self.attrs.keys())
     keys = [k for k in keys if not k.startswith(".")] # filter out anything beginning with "."
-    keys.sort(key=lambda k: ('\x00'+k.lower() if not '/' in k else k.lower()))
-    for k in keys:
+    self.treeMode = any(GROUP_SEPARATOR in k for k in keys)
+    if self.treeMode:
+      items = treeOrder(keys)
+    else:
+      items = [("key", k, 0) for k in sorted(keys, key=str.lower)]
+    starts:list[tuple[str, str, int, int]] = [] # (kind, name, depth, first row) of each line shown
+    for kind, name, depth in items:
       try:
+        if kind == "group":
+          starts.append((kind, name, depth, i+self.EntryOffset))
+          self.makeGroupHeader(name, depth, i+self.EntryOffset)
+          i += 1
+          continue
+        k = name
         v  = self.attrs.getAttr(k)
         self.vars[k] = ChangeDescr(None, None, False, str)
         row = i+self.EntryOffset
         if self.hide(v): continue # hide system attributes
+        shortName = k.rsplit(GROUP_SEPARATOR, 1)[-1] if self.treeMode else k
+        self._labels[k] = (shortName or k, depth)
+        starts.append((kind, k, depth, row))
         self.makeNewEntry(k, v, row, self.disabled, "")
         i += self.rowsPerEntry
       except:
-        logger.exception(f'Failed to load on key "{k}"')
+        logger.exception(f'Failed to load on key "{name}"')
       
     self.rows = i
+    # each group's rows: from below its header to the next line no deeper than it
+    end = i+self.EntryOffset
+    for n, (kind, name, depth, row) in enumerate(starts):
+      if kind == "group":
+        nxt = next((r for kd, nm, d, r in starts[n+1:] if d <= depth), end)
+        self._groupSpans[name] = (row + 1, nxt)
+    # collapse the groups that were collapsed when an editor was last shown (deepest first,
+    # so that expanding a group leaves its collapsed subgroups collapsed)
+    for name in sorted(self._groupSpans, key=lambda g: -g.count(GROUP_SEPARATOR)):
+      if name in AttrEditor.collapsedGroups and not (editKey is not None and editKey.startswith(name + GROUP_SEPARATOR)):
+        self.toggleGroup(name, remember=False)
       
     ttk.Separator(self, orient=tk.HORIZONTAL) \
       .grid(column=0, row=self.rMessage-1, columnspan=self.outerSpan, sticky=tk.W+tk.E, padx=0, pady=0)
@@ -724,8 +821,10 @@ class AttrEditor(tk.Toplevel):
         
       #TODO: check this
       typeChanged = (v.typeLabel["text"] != typeStr) if v.typeLabel is not None else False
+
+      noteChanged = k in self.noteEdits and self.noteEdits[k] != ((origAttr.note if origAttr is not None else None) or "")
   
-      return valueChanged or typeChanged
+      return valueChanged or typeChanged or noteChanged
       
     except:
       logger.exception(f"AttributeEditor.hasChanged('{k}'):")
@@ -749,6 +848,9 @@ class AttrEditor(tk.Toplevel):
     strValue = v.getValue()
     value = v.saveMethod(strValue)
     a.value = value
+    if k in self.noteEdits: # (a note written here is the user's: it's saved, and the program's won't replace it -- see Attribute.userNote)
+      a.note = self.noteEdits[k] or None
+      a.userNote = bool(self.noteEdits[k]) # (cleared: back to the program's own note)
     if self.attrs.getInhAttr(k) is None: # we need to return a complete Attribute..
       if a.value is NOVALUE:
         logger.warning(f'AttrEditor adding None value for key "{k}".')
@@ -1004,8 +1106,15 @@ class AttrEditor(tk.Toplevel):
     :param inhType:
     :type inhType: type | str | None
     '''
-    label = self.makeLabel(self.editorsListFrame, k, k+":", self.cLabel, row, foreground="grey" if disabled else "black")
-    self.addTooltip(label, v.note)
+    shortName, depth = self._labels.get(k, (k, 0))
+    if self.treeMode: # left-aligned, indented under its group (lined up with the groups' names, after their triangles)
+      label = self.makeLabel(self.editorsListFrame, k, shortName+":", self.cLabel, row, justify=tk.W,
+                             padx=(depth*TREE_INDENT + TREE_INDENT, 4), foreground="grey" if disabled else "black")
+    else:
+      label = self.makeLabel(self.editorsListFrame, k, k+":", self.cLabel, row, foreground="grey" if disabled else "black")
+    note = self._noteFor(k, v, keyExt)
+    self.addTooltip(label, f"{k}\n\n{note}" if note and shortName != k else (k if shortName != k else note))
+    self.makeNoteButton(k, v, row, readonly=disabled or keyExt != "", keyExt=keyExt)
     ed = self.makeEditor(self.editorsListFrame, k, v, self.cEdit, row, disabled or not self.attrs.isValueEditable(k), keyExt, inhType=inhType)
     frame = tk.Frame(self.editorsListFrame)
     frame.grid(column=self.cDel, row=row, sticky=tk.W, padx=0, pady=0)
@@ -1016,6 +1125,176 @@ class AttrEditor(tk.Toplevel):
     if disabled or not self.attrs.isTypeEditable(k):
       kind.configure(state=tk.DISABLED)
     
+  ### GROUPS (see treeOrder()) ##################################################
+
+  def makeGroupHeader(self, path:str, depth:int, row:int) -> tk.Label:
+    '''
+    The header line for a group of attributes (see *treeOrder()*): a triangle
+    and the group's name, indented by its depth. Clicking it collapses or
+    expands the group (see *toggleGroup()*).
+
+    :param path: The group's path, eg: "gui/colors".
+    :type path: str
+    :param depth: How deep the group is in the tree (0 at the top).
+    :type depth: int
+    :param row: Its row in the grid.
+    :type row: int
+    :returns: The header's text (the triangle and name).
+    :rtype: tk.Label
+    '''
+    name = path.rsplit(GROUP_SEPARATOR, 1)[-1]
+    band = tk.Frame(self.editorsListFrame, background=GROUP_BACKGROUND, cursor="hand2") # (a grey band across the whole line)
+    band.grid(column=self.cStatus, row=row, columnspan=self.cspan, sticky=tk.W+tk.E, padx=0, pady=(4, 0))
+    header = tk.Label(band, text=f"{TRIANGLE_OPEN} {name}", font=('Helvetica', 14, 'bold'), background=GROUP_BACKGROUND,
+                      foreground="black", cursor="hand2")
+    header.pack(side=tk.LEFT, padx=(depth*TREE_INDENT + 2, 0), pady=1)
+    for w in (band, header):
+      w.bind("<Button-1>", lambda _e, p=path: self.toggleGroup(p))
+    self.addTooltip(header, f"{path}{GROUP_SEPARATOR}\n\nClick to collapse or expand the group.")
+    self._groupHeaders[path] = header
+    return header
+
+  def toggleGroup(self, path:str, remember:bool=True) -> None:
+    '''
+    Collapse the group *path* -- hide all the rows below its header, up to the
+    end of the group -- or, if it's collapsed, expand it: show again what it
+    hid. (A collapsed subgroup's rows were hidden by the subgroup, so they stay
+    hidden until it's expanded too.)
+
+    :param path: The group's path.
+    :type path: str
+    :param remember: Whether to remember the change for the next editor shown
+      (see *collapsedGroups*).
+    :type remember: bool
+    '''
+    header = self._groupHeaders.get(path)
+    name = path.rsplit(GROUP_SEPARATOR, 1)[-1]
+    if path in self._hiddenWidgets: # expand
+      for w in self._hiddenWidgets.pop(path):
+        w.grid()
+      if header is not None:
+        header.config(text=f"{TRIANGLE_OPEN} {name}")
+      if remember:
+        AttrEditor.collapsedGroups.discard(path)
+    else: # collapse
+      start, end = self._groupSpans[path]
+      hidden:list[tk.Widget] = []
+      for r in range(start, end):
+        for w in self.editorsListFrame.grid_slaves(row=r):
+          w.grid_remove() # (grid() puts it back as it was)
+          hidden.append(w)
+      self._hiddenWidgets[path] = hidden
+      if header is not None:
+        header.config(text=f"{TRIANGLE_CLOSED} {name}")
+      if remember:
+        AttrEditor.collapsedGroups.add(path)
+
+  ### NOTES ######################################################################
+
+  def _noteFor(self, key:str, attr:Attribute, keyExt:str="") -> str:
+    '''
+    :param key: The attribute's name.
+    :type key: str
+    :param attr: The attribute shown on the line (its own, or the inherited one).
+    :type attr: Attribute
+    :param keyExt: "" for the attribute's own line; *INHERIT_KEY_EXT* for its inherited one.
+    :type keyExt: str
+    :returns: The note to show for the line: as edited, if it has been; else the
+      attribute's own note, or failing that the one it inherits.
+    :rtype: str
+    '''
+    if keyExt == "" and key in self.noteEdits:
+      return self.noteEdits[key]
+    note = getattr(attr, "note", None)
+    if not note and keyExt == "" and isinstance(self.attrs, AttributedObject):
+      inh = self.attrs.getInhAttr(key)
+      note = None if inh is None else inh.note
+    return note or ""
+
+  def makeNoteButton(self, key:str, attr:Attribute, row:int, readonly:bool, keyExt:str="") -> ttk.Button:
+    '''
+    The button in the NOTE column, which shows the note in a pop-up (see
+    *editNote()*): "note" if there is one, "+" if not. Its tooltip shows the note.
+
+    :param key: The attribute's name.
+    :type key: str
+    :param attr: The attribute shown on the line.
+    :type attr: Attribute
+    :param row: The line's row in the grid.
+    :type row: int
+    :param readonly: Whether the note can only be read (eg: an inherited one).
+    :type readonly: bool
+    :param keyExt: "" for the attribute's own line; *INHERIT_KEY_EXT* for its inherited one.
+    :type keyExt: str
+    :returns: The button.
+    :rtype: ttk.Button
+    '''
+    note = self._noteFor(key, attr, keyExt)
+    button = ttk.Button(self.editorsListFrame, text="note" if note else ("" if readonly else "+"), width=4, padding=-15)
+    button.config(command=lambda: self.editNote(key, attr, button, readonly, keyExt))
+    if readonly and not note:
+      button.state(["disabled"])
+    button.grid(column=self.cNote, row=row, padx=2, pady=0)
+    font = tkfont.nametofont("TkFixedFont")
+    CreateToolTip(button, lambda: self._noteFor(key, attr, keyExt) or "(no note)", background="yellow", wrapLength=720, font=font)
+    return button
+
+  def editNote(self, key:str, attr:Attribute, button:ttk.Button, readonly:bool, keyExt:str="") -> None:
+    '''
+    Show the attribute's note in a small pop-up text editor -- or, if
+    *readonly*, viewer. OK keeps the edited note (it's saved with the other
+    changes: see *save()*).
+
+    :param key: The attribute's name.
+    :type key: str
+    :param attr: The attribute shown on the line.
+    :type attr: Attribute
+    :param button: The line's note button (its text is updated).
+    :type button: ttk.Button
+    :param readonly: Whether the note can only be read.
+    :type readonly: bool
+    :param keyExt: "" for the attribute's own line; *INHERIT_KEY_EXT* for its inherited one.
+    :type keyExt: str
+    '''
+    current = self._noteFor(key, attr, keyExt)
+    win = tk.Toplevel(self)
+    win.title(f'Note: {key}' + (" (inherited)" if keyExt else ""))
+    win.transient(self)
+    win.columnconfigure(0, weight=1)
+    win.rowconfigure(0, weight=1)
+    text = tk.Text(win, width=64, height=10, wrap="word", font=tkfont.nametofont("TkFixedFont"), undo=True)
+    text.grid(column=0, row=0, columnspan=2, sticky="NSEW", padx=6, pady=6)
+    text.insert("1.0", current)
+    if readonly:
+      text.config(state=tk.DISABLED)
+    def close(keep:bool) -> None:
+      if keep:
+        edited = text.get("1.0", "end-1c").rstrip()
+        if edited != current:
+          self.noteEdits[key] = edited
+          button.config(text="note" if edited else "+")
+      win.grab_release()
+      win.destroy()
+    if readonly:
+      ttk.Button(win, text="Close", command=lambda: close(False)).grid(column=1, row=1, sticky=tk.E, padx=6, pady=6)
+    else:
+      ttk.Button(win, text="Cancel", command=lambda: close(False)).grid(column=0, row=1, sticky=tk.W, padx=6, pady=6)
+      ttk.Button(win, text="OK", command=lambda: close(True)).grid(column=1, row=1, sticky=tk.E, padx=6, pady=6)
+    win.protocol("WM_DELETE_WINDOW", lambda: close(False))
+    # (this editor holds the grab: lend it to the pop-up, then take it back)
+    try:
+      self.grab_release()
+      win.wait_visibility()
+      win.grab_set()
+    except tk.TclError:
+      pass
+    text.focus_set()
+    self.wait_window(win)
+    try:
+      self.grab_set_global()
+    except tk.TclError:
+      pass
+
   def makeTitle(self, col:int, text:str, helpText:str, row:int, **kwargs):
     # Note: background= option doesn't work on aqua
     '''
@@ -1060,6 +1339,7 @@ class AttrEditor(tk.Toplevel):
     self.makeTitle(self.cEdit, "VALUE", f'The value of the Attribute.', row, **kwargs)
     self.makeTitle(self.cDel, "ACTIONS", f'The actions you can perform on the Attribute.', row, **kwargs)
     self.makeTitle(self.cKind, "TYPE", f'The type of the value.', row, **kwargs)
+    self.makeTitle(self.cNote, "NOTE", 'The note describing the Attribute (shown as its name\'s tooltip): click to see or edit it.', row, **kwargs)
     
   def makeEditor(self, parent, key, item, column, row, disabled, keyExt, inhType:str|type|None=None):
     '''
@@ -1120,7 +1400,7 @@ class AttrEditor(tk.Toplevel):
       button.config(command=lambda b=button: command(b))
     return button
 
-  def makeLabel(self, parent, key, text, column, row, justify=tk.E, **kwargs):
+  def makeLabel(self, parent, key, text, column, row, justify=tk.E, padx:int|tuple[int,int]=0, **kwargs):
     '''
     :param parent:
     :type parent:
@@ -1134,6 +1414,8 @@ class AttrEditor(tk.Toplevel):
     :type row:
     :param justify:
     :type justify:
+    :param padx: Space to the left and right of it (eg: an indent).
+    :type padx: int | tuple[int, int]
     :param kwargs:
     :type kwargs:
     :returns:
@@ -1141,7 +1423,7 @@ class AttrEditor(tk.Toplevel):
     '''
     font = ('Helvetica', 14, 'bold italic') if key in SYS_ATTRIBUTES else ('Helvetica', 14, 'normal')
     label = ttk.Label(parent, text=text, font=font, **kwargs)
-    label.grid(column=column, row=row, sticky=justify, ipadx=0, padx=0, pady=0)
+    label.grid(column=column, row=row, sticky=justify, ipadx=0, padx=padx, pady=0)
     return label
 
   def makeKind(self, parent, key, typ:Union[type,str], column, row, command, disabled, keyExt, inhType:str|type|None=None, **kwargs):
@@ -1380,8 +1662,9 @@ class HierarchicalAttrEditor(AttrEditor):
     self.cEdit = 2
     self.cKind = 3
     self.cQuals = 4
-    self.cDel = 5
-    self.cspan = 6
+    self.cNote = 5
+    self.cDel = 6
+    self.cspan = 7
     
     self.iEntryOffset = 0
     self.sepOffset = 2
@@ -1407,9 +1690,7 @@ class HierarchicalAttrEditor(AttrEditor):
     if self.editKey == k and localRec == None:
       self.attrs.setAttr(k, Attribute(None, None if inhRec is None else inhRec.type, None if inhRec is None else inhRec.restriction))
       localRec = self.attrs.getLocalAttr(k)
-    if localRec is not None:
-      if localRec.note is None and inhRec is not None and inhRec.note is not None:
-        localRec.note = inhRec.note
+    if localRec is not None: # (an inherited note is shown for it -- see _noteFor() -- but not copied into it)
       super().makeNewEntry(k, localRec, row+self.EntryOffset, disabled, keyExt="", inhType=None if inhRec is None else inhRec.type)
       #super().makeNewEntry(k, v, row+self.EntryOffset, disabled, keyExt="", inhType=None if inhRec is None else inhRec.type)
       #assert localRec.restriction is not None

@@ -21,4 +21,5 @@ src/util/help/
 # --- Ad hoc scratch/test output left in the tree ---
 # (uncomment any of these once you've confirmed they're throwaway, not fixtures)
 *.xml
+!/build.xml
 *.json
