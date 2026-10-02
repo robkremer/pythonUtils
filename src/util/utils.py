@@ -1239,15 +1239,17 @@ def pointInPoly(pt:Iterable[PointIndici], poly:Iterable[PointIndici]) -> bool:
   :param poly: (x,y [,x1,y1]...)
   :return: *True* iff the give *pt* lies inside *poly*.
   """
-  import matplotlib.path as mplPath
-  from numpy import array
-  pt = iterableToList(pt)
+  # Ray casting: count the polygon's edges crossed by a ray from *pt* to the
+  # right; an odd number means it's inside. (Pure Python: this used to use
+  # matplotlib, which a packaged app would then have to carry along.)
+  x, y = iterableToList(pt)[:2]
   poly = iterableToList(poly)
-  arr = []
-  for i in range(0, len(poly), 2):
-    arr.append([poly[i], poly[i+1]])
-  bbPath = mplPath.Path(array(arr))
-  return bbPath.contains_point(tuple(pt))
+  vertices = [(poly[i], poly[i+1]) for i in range(0, len(poly) - 1, 2)]
+  inside = False
+  for (x1, y1), (x2, y2) in zip(vertices, vertices[1:] + vertices[:1]):
+    if (y1 > y) != (y2 > y) and x < x1 + (y - y1) * (x2 - x1) / (y2 - y1):
+      inside = not inside
+  return inside
 
 def midpoint(*pts:Iterable[PointIndici]) -> Tuple[PointIndici, PointIndici]:
   """

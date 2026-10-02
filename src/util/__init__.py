@@ -91,7 +91,9 @@ def setupLogger(loggerClass:type|None=None, logFileName:str|None=None):
   :param logFileName: The name of the file to log to.  By default it will
     be the stem (filename only) of current executable, and it will be in
     the current directory.  If it doesn't have a file extension, ".log" will be
-    appended.
+    appended. A relative name is put in *~/Library/Logs/<program>/* instead when
+    the program is packaged (eg: a .app) or the current directory can't be
+    written.
   :type logFileName: str|None
   '''
   if loggerClass is None:
@@ -105,6 +107,13 @@ def setupLogger(loggerClass:type|None=None, logFileName:str|None=None):
   else:
     if '.' not in logFileName:
       logFileName += ".log"
+  if not os.path.isabs(logFileName) and (getattr(sys, "frozen", False) or not os.access(os.getcwd(), os.W_OK)):
+    # A packaged app (eg: a .app started from the Finder, whose current
+    # directory is "/") -- or anywhere the current directory can't be written:
+    # log in the user's log folder instead, eg: ~/Library/Logs/Semantic Nets/.
+    folder = os.path.join(os.path.expanduser("~"), "Library", "Logs", Path(sys.argv[0]).stem)
+    os.makedirs(folder, exist_ok=True)
+    logFileName = os.path.join(folder, logFileName)
   if os.path.isfile(logFileName): os.remove(logFileName)
   fileHandler = logging.FileHandler(logFileName)
   fileHandler.setFormatter(logging.Formatter('**%(levelname)s: %(name)s: %(message)s\n  at %(filename)s, func=%(funcName)s, line=%(lineno)d', style='%'))

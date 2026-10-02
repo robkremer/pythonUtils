@@ -23,7 +23,6 @@ import util
 from util.persistence.serialize import SerializationStrategy, strdict
 from util.persistence.serialize import DEFAULT_STRATEGY
 from util import attribute
-from mypyc.primitives import str_ops
 '''
   .. inheritance-diagram:: 
         AttrEditor
