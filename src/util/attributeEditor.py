@@ -49,7 +49,7 @@ import tkinter.font as tkfont
 import re
 from tkinter import colorchooser, ttk, messagebox
 from dataclasses import dataclass
-from typing import Any, Callable, Union, Optional, override, Type
+from typing import Any, Callable, Iterable, Union, Optional, override, Type
 from types import NoneType
 from copy import copy
 
@@ -78,6 +78,18 @@ GROUP_BACKGROUND = "grey85"
 "The background of a group's header line (see *AttrEditor.makeGroupHeader()*)."
 TREE_INDENT = 18
 "How far (in pixels) each level of the grouped attribute names is indented."
+
+def isHiddenKey(key:str) -> bool:
+  '''
+  :param key: An attribute's name.
+  :type key: str
+  :returns: Whether the editor hides it: if any part of its name (see
+    *GROUP_SEPARATOR*) starts with "." -- eg: ".openWindows" (hidden itself),
+    "gui/.cache" (likewise, in the *gui* group), or ".internal/x" (in a hidden
+    group). Such attributes are for the program, not the user, to edit.
+  :rtype: bool
+  '''
+  return any(part.startswith(".") for part in key.split(GROUP_SEPARATOR))
 
 def treeOrder(keys:list[str]) -> list[tuple[str, str, int]]:
   '''
@@ -131,7 +143,8 @@ vni: value not inheritable:
 
 def editAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes Editor", 
                  editKey:Optional[str]=None, disabled:bool=False,
-                 displayValues:Optional[dict[str,Any]]=None) -> Optional[dict[str,Attribute]]:
+                 displayValues:Optional[dict[str,Any]]=None,
+                 hideColumns:Iterable[str]=()) -> Optional[dict[str,Attribute]]:
   '''
   :param parent: The parent widget
   :param attrs: The *AttributedObject* object to be updated.
@@ -150,18 +163,20 @@ def editAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes Edito
   :type editKey: Optional[str]
   :param disabled:
   :type disabled: bool
+  :param hideColumns: The columns not to show (see *AttrEditor.HIDEABLE_COLUMNS*).
+  :type hideColumns: Iterable[str]
   '''
   if isinstance(attrs, AttributedObject):
-    editor = HierarchicalAttrEditor(parent, attrs, title=title, disabled=disabled, displayValues=displayValues)
+    editor = HierarchicalAttrEditor(parent, attrs, title=title, disabled=disabled, displayValues=displayValues, hideColumns=hideColumns)
   else:  
-    editor = AttrEditor(parent, attrs, title=title, disabled=disabled, displayValues=displayValues)
+    editor = AttrEditor(parent, attrs, title=title, disabled=disabled, displayValues=displayValues, hideColumns=hideColumns)
   editor.show(editKey=editKey)
   logger.debug(f'editAttrsBox(): updated: {editor.updatedKeys}')
   editor.destroy()
   return editor.updatedKeys
   
 def applyEditAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes Editor", 
-                      editKey:Optional[str]=None) -> None:
+                      editKey:Optional[str]=None, hideColumns:Iterable[str]=()) -> None:
   '''
   Same as *editAttrsBox*, but applies the changes.
 
@@ -173,8 +188,10 @@ def applyEditAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes 
   :type title: str
   :param editKey:
   :type editKey: Optional[str]
+  :param hideColumns: The columns not to show (see *AttrEditor.HIDEABLE_COLUMNS*).
+  :type hideColumns: Iterable[str]
   '''
-  attrChangeList = editAttrsBox(parent, attrs, title, editKey)
+  attrChangeList = editAttrsBox(parent, attrs, title, editKey, hideColumns=hideColumns)
   if attrChangeList is not None:
     with attrs.ChangeMgr(attrs) as cm:
       #attrs.updateWith(attrChangeList)
@@ -398,8 +415,13 @@ class AttrEditor(tk.Toplevel):
   "The groups collapsed when an editor was last closed: the next one starts with them collapsed too."
 
   #TODO: Implement "disabled" param
+  HIDEABLE_COLUMNS:dict[str, str] = {"type": "cKind", "qualifiers": "cQuals", "note": "cNote", "actions": "cDel"}
+  '''The columns that can be hidden (see *hideColumns*), by name: name -> the
+  attribute holding the column's number. ("qualifiers" -- the inheritance
+  restrictions -- is only in a *HierarchicalAttrEditor*.)'''
+
   def __init__(self, parent, attrs:AttributedObject, title="Attribute Editor", disabled=False,
-               displayValues:Optional[dict[str,Any]]=None):
+               displayValues:Optional[dict[str,Any]]=None, hideColumns:Iterable[str]=()):
     '''
     :param parent:
     :type parent:
@@ -411,9 +433,18 @@ class AttrEditor(tk.Toplevel):
     :type disabled: bool
     :param displayValues:
     :type displayValues: Optional[dict[str, Any]]
+    :param hideColumns: The columns not to show, by name (see
+      *HIDEABLE_COLUMNS*): eg: ("type", "qualifiers", "note") for settings,
+      whose notes are their documentation -- still shown as their names'
+      tooltips.
+    :type hideColumns: Iterable[str]
     '''
     super().__init__(parent)
     self.parent = parent
+    unknown = set(hideColumns) - set(self.HIDEABLE_COLUMNS)
+    assert not unknown, f'AttrEditor: unknown columns to hide: {sorted(unknown)} (expected some of {list(self.HIDEABLE_COLUMNS)}).'
+    self.hideColumns:set[str] = set(hideColumns)
+    "The columns not shown (see *_applyHiddenColumns()*)."
     self.displayValues:dict[str,Any] = dict(displayValues or {})
     "Values shown for some keys in place of their stored ones (see *editAttrsBox()*)."
     self.title(title if title else "Attribute Editor")
@@ -499,7 +530,7 @@ class AttrEditor(tk.Toplevel):
       .grid(column=0, row=1, columnspan=self.cspan, sticky=tk.W+tk.E, padx=0, pady=0)
     i = 2
     keys = list(self.attrs.keys())
-    keys = [k for k in keys if not k.startswith(".")] # filter out anything beginning with "."
+    keys = [k for k in keys if not isHiddenKey(k)] # (eg: ".openWindows", or anything in a ".internal" group)
     self.treeMode = any(GROUP_SEPARATOR in k for k in keys)
     if self.treeMode:
       items = treeOrder(keys)
@@ -527,6 +558,7 @@ class AttrEditor(tk.Toplevel):
         logger.exception(f'Failed to load on key "{name}"')
       
     self.rows = i
+    self._applyHiddenColumns() # (before collapsing: a collapsed group only puts back what it hid)
     # each group's rows: from below its header to the next line no deeper than it
     end = i+self.EntryOffset
     for n, (kind, name, depth, row) in enumerate(starts):
@@ -648,6 +680,7 @@ class AttrEditor(tk.Toplevel):
     self.attrs[name] = newAttr
     self.makeNewEntry(name, newAttr, self.rows+self.EntryOffset, False, keyExt="")
     self.rows += self.rowsPerEntry
+    self._applyHiddenColumns()
     
   def deleteAttr(self, key, item, editor, row, button):
     '''
@@ -709,6 +742,7 @@ class AttrEditor(tk.Toplevel):
     '''
     clearGrid(self.editorsListFrame, column=self.cKind, row=row)
     self.makeKind(self.editorsListFrame, key, kind, self.cKind, row, None, False, "")
+    self._applyHiddenColumns()
     if value is NOVALUE:
       value = self.vars[key].getValue()
     typeLabel = self.vars[key].typeLabel
@@ -1328,6 +1362,22 @@ class AttrEditor(tk.Toplevel):
     width = min(max(font.measure(line) for line in helpText.split("\n")) + 8, 720)
     CreateToolTip(widget, helpText, background="yellow", wrapLength=width, font=font)
 
+  def _applyHiddenColumns(self) -> None:
+    '''
+    Take the widgets in the hidden columns (see *hideColumns*) off the grid --
+    those made since last time too (eg: a new attribute's row). Only widgets
+    in just that column: not ones spanning it, like the separators and the
+    groups' header bands.
+    '''
+    for name in self.hideColumns:
+      column = getattr(self, self.HIDEABLE_COLUMNS[name], None)
+      if column is None: # (eg: "qualifiers" in a plain AttrEditor)
+        continue
+      for w in self.editorsListFrame.grid_slaves(column=column):
+        info = w.grid_info()
+        if int(info.get("column", -1)) == column and int(info.get("columnspan", 1)) == 1:
+          w.grid_remove()
+
   def makeHeader(self, row, **kwargs):
     '''
     :param row:
@@ -1639,7 +1689,7 @@ class HierarchicalAttrEditor(AttrEditor):
   restrictions, which can be edited too.
   '''
   def __init__(self, parent, attrs:AttributedObject, title="Attribute Editor", disabled=False,
-               displayValues:Optional[dict[str,Any]]=None):
+               displayValues:Optional[dict[str,Any]]=None, hideColumns:Iterable[str]=()):
     '''
     :param parent:
     :type parent:
@@ -1651,8 +1701,10 @@ class HierarchicalAttrEditor(AttrEditor):
     :type disabled: bool
     :param displayValues:
     :type displayValues: Optional[dict[str, Any]]
+    :param hideColumns: As for *AttrEditor*.
+    :type hideColumns: Iterable[str]
     '''
-    super().__init__(parent, attrs, title=title, disabled=disabled, displayValues=displayValues)
+    super().__init__(parent, attrs, title=title, disabled=disabled, displayValues=displayValues, hideColumns=hideColumns)
     
     # "constants" for the columns in the Editors grid
     self.rowsPerEntry = 3 # from 1
@@ -1711,7 +1763,7 @@ class HierarchicalAttrEditor(AttrEditor):
         #self.attrs.setRecord(attr)
         if not disabled:
           self.makeButton(frame, k, inhRec, "override", \
-                          command=lambda b, k=k, inhRec=inhRec, r=row, slf=self: (slf.makeNewEntry(k, slf.attrs.__setitem__(k, inhRec.value), r, disabled=False, keyExt="", inhType=inhRec.type), b.destroy()))
+                          command=lambda b, k=k, inhRec=inhRec, r=row, slf=self: (slf.makeNewEntry(k, slf.attrs.__setitem__(k, inhRec.value), r, disabled=False, keyExt="", inhType=inhRec.type), b.destroy(), slf._applyHiddenColumns()))
     ttk.Separator(self.editorsListFrame, orient=tk.HORIZONTAL) \
         .grid(column=0, row=row+self.sepOffset, columnspan=self.cspan, sticky=tk.W+tk.E, padx=0, pady=2)
    
