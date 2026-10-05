@@ -631,7 +631,9 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     :rtype:
     '''
     assert issubclass(cls, PRDb)
-    url = cls._relocate(fixURL(cls.absoluteURL(url), extension=".xml", replaceExt=None, mode=mode)[0])
+    # (relocated before fixURL() too: a copied or moved file's old URL may not exist any more -- eg: a
+    # placeholder it's stored as being in -- and after it, for a URL that only matches once it's fixed)
+    url = cls._relocate(fixURL(cls._relocate(cls.absoluteURL(url)), extension=".xml", replaceExt=None, mode=mode)[0])
     if not isValidURL(url):
       raise ValueError(f'PRDb.__init__(): Malformed URL: "{url}"')
     if memoryResident and url in PRDb.AllDBs:
@@ -694,7 +696,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     '''The (saved) URLs of super-DBs that couldn't be read when this was: kept,
     and saved again, so that they're used once they're there again.'''
     
-    url = self._relocate(fixURL(self.absoluteURL(url), extension=".xml", replaceExt=None, mode=mode)[0])
+    url = self._relocate(fixURL(self._relocate(self.absoluteURL(url)), extension=".xml", replaceExt=None, mode=mode)[0]) # (as in __new__())
     if not isValidURL(url):
       raise ValueError(f'PRDb.__init__(): Malformed URL: "{url}"')
     if url in PRDb.AllDBs:
