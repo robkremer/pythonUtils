@@ -188,9 +188,13 @@ class Serializable:
   @abstractmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
     '''
-    :returns: A :py:class:`InstantiationInfo` structure describing how to store
-      and retrieve objects of the class.
-    :rtype: :py:class:`InstantiationInfo`
+    :returns: A :py:class:`InstantiationInfo <util.persistence.serialize.InstantiationInfo>` 
+      structure describing the constructor parameters and how to fill them
+      (conArgs, conKWArgs), and a further description of any additional data to
+      be filled after immediately after the constructor (postconSetters) and 
+      more after any contained objects have been fully constructed (finalSetters),
+      both how to write them and read them.
+    :rtype: :py:class:`util.persistence.serialize.InstantiationInfo`
     '''
     raise NotImplementedError("Abstract method Serializable.getInstantiationInfo() not implemented.")
 
@@ -1939,10 +1943,6 @@ class _Reference(Serializable):
   @override
   @classmethod
   def getInstantiationInfo(cls)->InstantiationInfo:
-    '''
-    :returns:
-    :rtype: InstantiationInfo
-    '''
     return InstantiationInfo(cls, [ParamInfo("referenceID", int)])
   
   @override

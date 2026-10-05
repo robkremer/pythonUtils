@@ -119,10 +119,6 @@ class PRObject[DBT:"PRDb"](Serializable, Dirtyable):
   @override
   @classmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
-    '''
-    :returns:
-    :rtype: InstantiationInfo
-    '''
     return InstantiationInfo(
             cls, 
             conArgs=[ParamInfo("db", PRDb, lambda slf: cast(PRObject, slf)._db())])#,
@@ -302,6 +298,8 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     - update()
   """
   
+  #- ---- Class variables ---------------------------------------------------------
+  
   AllDBs:ClassVar[dict[str, PRDb]] = dict()
 
   _readingURLs:ClassVar[set[str]] = set()
@@ -313,6 +311,8 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
   URL again fails fast with a *CircularReferenceError* instead of recursing
   until the stack overflows: *AllDBs* alone can't catch this, since a URL is
   only added there *after* its read completes.'''
+
+  #- ---- Class methods -----------------------------------------------------------
 
   @classmethod
   def _initCache(cls):
@@ -601,6 +601,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
           return candidate + hash_ + frag
     return url
 
+  # TODO: this is in the wrong place...
   def serializationHeader(self) -> dict[str, str]:
     '''
     Header fields for when this is written (see *SerializationStrategy.tostring()*):
@@ -613,6 +614,8 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     if getattr(self, "previousURL", None):
       ret["previousURL"] = self.previousURL
     return ret
+  
+  #- ---- Initialization -------------------------------------------------------
   
   def __new__(cls, url:str, mode="w", memoryResident:bool=True, _reading:bool=False):
     '''
@@ -715,10 +718,6 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
   @classmethod
   @override
   def getInstantiationInfo(cls)->InstantiationInfo:
-    '''
-    :returns:
-    :rtype: InstantiationInfo
-    '''
     def convertDictToStrdict(d:dict[int, T]) -> strdict:
       ret:strdict = strdict()
       for k,v in d.items():
@@ -826,6 +825,8 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     path:Path = Path(url.path)
     return path.name
     
+  #- ---- Methods -------------------------------------------------------
+  
   def save(self, saveas:Optional[str]=None, overwrite=False, format:str=DEFAULT_STRATEGY) -> None:
     '''
     :param saveas:

@@ -357,9 +357,9 @@ def strToBool(b:str):
   '''
   b = b.lower()
   ln = len(b)
-  if b in ("on", "true"[:min(4,ln)]):
+  if b in ("on", "true"[:min(4,ln)], "yes"[:min(3,ln)]):
     return True
-  if b in ("off"[:min(3,max(2,ln))], "false"[:min(5,ln)]):
+  if b in ("off"[:min(3,max(2,ln))], "false"[:min(5,ln)], "no"[:min(2,ln)]):
     return False
   raise ValueError(f'Cannot interpret "{b}" as a boolean value.')
 
@@ -877,6 +877,32 @@ def getCallerIdInfoStr(stack:int=1, includeArgs=True) -> str:
   else:
     return f'{method}({argStr}) [{file}:{lineNo}]'
 
+def extendsDoc(base:type):
+  '''
+  A decorator to the decorated method's docstring its namesake's in *base*,
+  followed by its own.  Works on plain methods, classmethods and staticmethods,
+  whichever order the decorators are in. Usage:
+  
+  .. code-block:: python
+     :emphasize-lines: 2,2
+  
+     class Sub(Base):
+       @extendsDoc(Base)
+       def place(self, node):
+         """
+         In addition: relation labels are placed only if "place labels" is on.
+         """
+         ...  
+  '''
+  def decorate(f):
+    func = getattr(f, "__func__", f) # (a classmethod or staticmethod: the function inside it)
+    inherited = inspect.getdoc(getattr(base, func.__name__)) or ""
+    own = inspect.cleandoc(func.__doc__ or "")
+    func.__doc__ = f"{inherited}\n\n{own}" if inherited and own else inherited or own
+    if f is not func:
+      f.__doc__ = func.__doc__ # (the wrapper copied the old docstring when it was made)
+    return f
+  return decorate
 
 ################################################################################
 # ---- LIST MANIPULATION -------------------------------------------------------

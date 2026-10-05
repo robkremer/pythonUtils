@@ -51,7 +51,7 @@
 						<key>type</key>
 						<string>test_serialize.SamplePObject2</string>
 						<key>id</key>
-						<string>4413402080</string>
+						<string>4490916416</string>
 					</dict>
 					<key>items</key>
 					<dict>
@@ -80,7 +80,7 @@
 								<key>type</key>
 								<string>tuple</string>
 								<key>id</key>
-								<string>4392952704</string>
+								<string>4470553920</string>
 							</dict>
 							<key>items</key>
 							<array>
@@ -110,7 +110,7 @@
 									<key>items</key>
 									<dict>
 										<key>referenceID</key>
-										<integer>4392952704</integer>
+										<integer>4470553920</integer>
 									</dict>
 								</dict>
 								<key>alist</key>
@@ -139,7 +139,7 @@
 					<key>items</key>
 					<dict>
 						<key>referenceID</key>
-						<integer>4413402080</integer>
+						<integer>4490916416</integer>
 					</dict>
 				</dict>
 			</array>

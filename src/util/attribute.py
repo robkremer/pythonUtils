@@ -231,10 +231,6 @@ class NoValue(Serializable):
   NOVALUE = None
   @classmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
-    '''
-    :returns:
-    :rtype: InstantiationInfo
-    '''
     return InstantiationInfo(cls)
   def __new__(cls) -> "NoValue":
     '''
@@ -529,10 +525,6 @@ class Attribute(Serializable, Dirtyable):
   
   @classmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
-    '''
-    :returns:
-    :rtype: InstantiationInfo
-    '''
     def saveRest(r:Restriction) -> str:
       return f'{restrictionTypesToString(r.individual)}:{restrictionTypesToString(r.type)}'
     def restoreRest(string:str) -> Restriction:
@@ -582,10 +574,6 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
   @override
   @classmethod
   def getInstantiationInfo(cls)->InstantiationInfo:
-    '''
-    :returns:
-    :rtype: InstantiationInfo
-    '''
     return InstantiationInfo(cls,
                 postconSetters=[PropertyInfo("attributes", strdict,
                                             lambda slf: strdict({k:dict.get(slf,k) for k in dict.keys(slf)}), #type: ignore[call-overload,arg-type,var-annotated]
