@@ -265,6 +265,7 @@ TYPE_EQUIVALENTS:dict[str, AttributeValueTypes|None] = \
                     "color": str, 
                     "colour": str, 
                     "list": list, 
+                    "list[str]": list,
                     "dict": dict,
                     "choices[": None,
                     }
@@ -319,6 +320,8 @@ def isValidType(typ, value=None) -> bool:
   # test the string types
   if t in KNOWN_STRING_TYPES:
     return isinstance(value, str)
+  if t == "list[str]":
+    return isinstance(value, list) and all(isinstance(x, str) for x in value)
   if t.startswith('choices[') and t.endswith(']'):
     choices = typ[8:-1].split(",")
     for i in range(len(choices)):

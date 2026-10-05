@@ -47,7 +47,7 @@ import logging
 import tkinter as tk
 import tkinter.font as tkfont
 import re
-from tkinter import colorchooser, ttk, messagebox
+from tkinter import colorchooser, ttk, messagebox, simpledialog
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Union, Optional, override, Type
 from types import NoneType
@@ -144,7 +144,8 @@ vni: value not inheritable:
 def editAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes Editor", 
                  editKey:Optional[str]=None, disabled:bool=False,
                  displayValues:Optional[dict[str,Any]]=None,
-                 hideColumns:Iterable[str]=()) -> Optional[dict[str,Attribute]]:
+                 hideColumns:Iterable[str]=(),
+                 listItemMakers:Optional[dict[str, Callable[[tk.Misc], Optional[str]]]]=None) -> Optional[dict[str,Attribute]]:
   '''
   :param parent: The parent widget
   :param attrs: The *AttributedObject* object to be updated.
@@ -165,18 +166,21 @@ def editAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes Edito
   :type disabled: bool
   :param hideColumns: The columns not to show (see *AttrEditor.HIDEABLE_COLUMNS*).
   :type hideColumns: Iterable[str]
+  :param listItemMakers: For "list[str]" attributes: what their "Add..." does, by key (see *ListEditor*).
+  :type listItemMakers: Optional[dict[str, Callable[[tk.Misc], Optional[str]]]]
   '''
   if isinstance(attrs, AttributedObject):
-    editor = HierarchicalAttrEditor(parent, attrs, title=title, disabled=disabled, displayValues=displayValues, hideColumns=hideColumns)
+    editor = HierarchicalAttrEditor(parent, attrs, title=title, disabled=disabled, displayValues=displayValues, hideColumns=hideColumns, listItemMakers=listItemMakers)
   else:  
-    editor = AttrEditor(parent, attrs, title=title, disabled=disabled, displayValues=displayValues, hideColumns=hideColumns)
+    editor = AttrEditor(parent, attrs, title=title, disabled=disabled, displayValues=displayValues, hideColumns=hideColumns, listItemMakers=listItemMakers)
   editor.show(editKey=editKey)
   logger.debug(f'editAttrsBox(): updated: {editor.updatedKeys}')
   editor.destroy()
   return editor.updatedKeys
   
 def applyEditAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes Editor", 
-                      editKey:Optional[str]=None, hideColumns:Iterable[str]=()) -> None:
+                      editKey:Optional[str]=None, hideColumns:Iterable[str]=(),
+                      listItemMakers:Optional[dict[str, Callable[[tk.Misc], Optional[str]]]]=None) -> None:
   '''
   Same as *editAttrsBox*, but applies the changes.
 
@@ -190,8 +194,10 @@ def applyEditAttrsBox(parent:tk.Misc, attrs:AttributedObject, title="Attributes 
   :type editKey: Optional[str]
   :param hideColumns: The columns not to show (see *AttrEditor.HIDEABLE_COLUMNS*).
   :type hideColumns: Iterable[str]
+  :param listItemMakers: As for *editAttrsBox()*.
+  :type listItemMakers: Optional[dict[str, Callable[[tk.Misc], Optional[str]]]]
   '''
-  attrChangeList = editAttrsBox(parent, attrs, title, editKey, hideColumns=hideColumns)
+  attrChangeList = editAttrsBox(parent, attrs, title, editKey, hideColumns=hideColumns, listItemMakers=listItemMakers)
   if attrChangeList is not None:
     with attrs.ChangeMgr(attrs) as cm:
       #attrs.updateWith(attrChangeList)
@@ -283,6 +289,8 @@ class ChangeDescr:
     '''
     if isinstance(self.editor, tk.Text):
       return self.editor.get("1.0", tk.END)
+    elif isinstance(self.editor, ListEditor):
+      return self.editor.getList()
     else:
       return None if self.tkVar is None else self.tkVar.get()
 
@@ -296,11 +304,166 @@ class ChangeDescr:
     if isinstance(self.editor, tk.Text):
       self.editor.delete("1.0", tk.END)
       self.editor.insert("1.0", val)
+    elif isinstance(self.editor, ListEditor):
+      self.editor.setList(list(val or []))
     else:
       return self.tkVar.set(val)
 
 SYS_ATTRIBUTES = ['name']
 "Used to highlight the 'system' labels on the grid"
+
+class ListEditor(tk.Frame):
+  '''
+  An editor for a list of strings (an attribute of type "list[str]"): the items
+  in order, in a list box, with buttons to add one, remove the selected one,
+  and move it up or down (the order may matter: eg: super-models are searched
+  in order). Double-click an item to edit it.
+  '''
+  MAX_HEIGHT = 6
+  "The most items shown at once (the rest scroll)."
+
+  def __init__(self, master, items:list[str], newItem:Optional[Callable[[tk.Misc], Optional[str]]]=None):
+    '''
+    :param master:
+    :type master:
+    :param items: The list (not changed: see *getList()*).
+    :type items: list[str]
+    :param newItem: What "Add..." does: given this editor (as a parent for any
+      dialog), returns the item to add, or None to add nothing. By default, it
+      asks for a string.
+    :type newItem: Optional[Callable[[tk.Misc], Optional[str]]]
+    '''
+    tk.Frame.__init__(self, master)
+    self.newItem = newItem
+    self.state:str = tk.NORMAL
+    self.listbox = tk.Listbox(self, height=self._height(len(items)), exportselection=False, activestyle="none")
+    self.scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.listbox.yview)
+    self.listbox.configure(yscrollcommand=self.scrollbar.set)
+    self.listbox.grid(row=0, column=0, sticky="NSEW")
+    self.scrollbar.grid(row=0, column=1, sticky="NS")
+    self.columnconfigure(0, weight=1)
+    buttons = tk.Frame(self)
+    buttons.grid(row=0, column=2, sticky="N", padx=(4, 0))
+    self.buttons:dict[str, ttk.Button] = {}
+    for name, text, command in (("add", "Add...", self.add), ("remove", "Remove", self.remove),
+                                ("up", "\u25B2", lambda: self.move(-1)), ("down", "\u25BC", lambda: self.move(1))):
+      b = ttk.Button(buttons, text=text, width=7 if len(text) > 1 else 3, command=command)
+      b.pack(side=tk.TOP if name in ("add", "remove") else tk.LEFT, anchor="w")
+      self.buttons[name] = b
+    self.listbox.bind("<Double-Button-1>", lambda _e: self.editSelected())
+    self.listbox.bind("<<ListboxSelect>>", lambda _e: self._updateButtons())
+    self.setList(items)
+
+  def _height(self, n:int) -> int:
+    return max(2, min(n, self.MAX_HEIGHT))
+
+  def getList(self) -> list[str]:
+    '''
+    :returns: The items, in order.
+    :rtype: list[str]
+    '''
+    return [str(x) for x in self.listbox.get(0, tk.END)]
+
+  def setList(self, items:list[str]) -> None:
+    '''
+    :param items: The items to show, in order.
+    :type items: list[str]
+    '''
+    self.listbox.delete(0, tk.END)
+    for x in items:
+      self.listbox.insert(tk.END, str(x))
+    self.listbox.configure(height=self._height(len(items)))
+    self._updateButtons()
+
+  def _selected(self) -> Optional[int]:
+    sel = self.listbox.curselection()
+    return int(sel[0]) if sel else None
+
+  def _select(self, i:int) -> None:
+    self.listbox.selection_clear(0, tk.END)
+    self.listbox.selection_set(i)
+    self.listbox.see(i)
+    self._updateButtons()
+
+  def _updateButtons(self) -> None:
+    enabled = self.state != tk.DISABLED
+    i = self._selected()
+    n = self.listbox.size()
+    states = {"add": enabled, "remove": enabled and i is not None,
+              "up": enabled and i is not None and i > 0, "down": enabled and i is not None and i < n - 1}
+    for name, on in states.items():
+      self.buttons[name].state(["!disabled"] if on else ["disabled"])
+
+  def add(self) -> None:
+    '''"Add...": add an item (see *newItem*) after the selected one, or at the end.'''
+    if self.state == tk.DISABLED:
+      return
+    if self.newItem is not None:
+      item = self.newItem(self)
+    else:
+      item = simpledialog.askstring("Add", "New item:", parent=self)
+    if item is None:
+      return
+    i = self._selected()
+    at = self.listbox.size() if i is None else i + 1
+    self.listbox.insert(at, str(item))
+    self.listbox.configure(height=self._height(self.listbox.size()))
+    self._select(at)
+
+  def remove(self) -> None:
+    '''"Remove": remove the selected item.'''
+    i = self._selected()
+    if self.state == tk.DISABLED or i is None:
+      return
+    self.listbox.delete(i)
+    self.listbox.configure(height=self._height(self.listbox.size()))
+    if self.listbox.size() > 0:
+      self._select(min(i, self.listbox.size() - 1))
+    else:
+      self._updateButtons()
+
+  def move(self, step:int) -> None:
+    '''
+    Move the selected item up (*step* -1) or down (1).
+
+    :param step: -1 or 1.
+    :type step: int
+    '''
+    i = self._selected()
+    if self.state == tk.DISABLED or i is None or not 0 <= i + step < self.listbox.size():
+      return
+    item = self.listbox.get(i)
+    self.listbox.delete(i)
+    self.listbox.insert(i + step, item)
+    self._select(i + step)
+
+  def editSelected(self) -> None:
+    '''Edit the selected item's text (on a double-click).'''
+    i = self._selected()
+    if self.state == tk.DISABLED or i is None:
+      return
+    text = simpledialog.askstring("Edit", "Item:", initialvalue=self.listbox.get(i), parent=self)
+    if text is not None:
+      self.listbox.delete(i)
+      self.listbox.insert(i, text)
+      self._select(i)
+
+  def config(self, **conf):
+    '''
+    "state" ("normal" or "disabled") applies to the whole editor; colours to the
+    list box; anything else to the frame.
+    '''
+    if "state" in conf:
+      state = conf.pop("state")
+      self.state = tk.DISABLED if str(state) in (tk.DISABLED, "disabled") else tk.NORMAL
+      self.listbox.configure(state=self.state)
+      self._updateButtons()
+    for k in ("foreground", "fg", "background", "bg"):
+      if k in conf:
+        self.listbox.configure(**{k: conf.pop(k)})
+    if conf:
+      tk.Frame.config(self, **conf)
+  configure = config # type: ignore[assignment]
 
 class ColorEditor(tk.Frame):
   '''
@@ -421,7 +584,8 @@ class AttrEditor(tk.Toplevel):
   restrictions -- is only in a *HierarchicalAttrEditor*.)'''
 
   def __init__(self, parent, attrs:AttributedObject, title="Attribute Editor", disabled=False,
-               displayValues:Optional[dict[str,Any]]=None, hideColumns:Iterable[str]=()):
+               displayValues:Optional[dict[str,Any]]=None, hideColumns:Iterable[str]=(),
+               listItemMakers:Optional[dict[str, Callable[[tk.Misc], Optional[str]]]]=None):
     '''
     :param parent:
     :type parent:
@@ -438,9 +602,14 @@ class AttrEditor(tk.Toplevel):
       whose notes are their documentation -- still shown as their names'
       tooltips.
     :type hideColumns: Iterable[str]
+    :param listItemMakers: For "list[str]" attributes: what their "Add..."
+      does, by key -- eg: a file chooser (see *ListEditor*). By default, it
+      asks for a string.
+    :type listItemMakers: Optional[dict[str, Callable[[tk.Misc], Optional[str]]]]
     '''
     super().__init__(parent)
     self.parent = parent
+    self.listItemMakers:dict[str, Callable[[tk.Misc], Optional[str]]] = dict(listItemMakers or {})
     unknown = set(hideColumns) - set(self.HIDEABLE_COLUMNS)
     assert not unknown, f'AttrEditor: unknown columns to hide: {sorted(unknown)} (expected some of {list(self.HIDEABLE_COLUMNS)}).'
     self.hideColumns:set[str] = set(hideColumns)
@@ -1037,7 +1206,7 @@ class AttrEditor(tk.Toplevel):
       typ = type(value)
       
     # Change the standard type string into actual types to save code below.
-    if isinstance(typ, str) and typ not in ["color", "colour"] and typ in TYPE_EQUIVALENTS:
+    if isinstance(typ, str) and typ not in ["color", "colour", "list[str]"] and typ in TYPE_EQUIVALENTS:
       typ = TYPE_EQUIVALENTS[typ]
 
     if isinstance(typ, str):
@@ -1045,6 +1214,9 @@ class AttrEditor(tk.Toplevel):
         editor = tk.Text(parent, height=getHeight(value))
         editor.insert('1.0', value)
         self.vars[key+keyExt] = ChangeDescr(None, editor, False, str)
+      elif typ == 'list[str]':
+        editor = ListEditor(parent, [str(x) for x in (value or [])], self.listItemMakers.get(key))
+        self.vars[key+keyExt] = ChangeDescr(None, editor, False, lambda val: list(val))
       elif typ in ['color', 'colour']:
         if value is None:
           value = "black"
@@ -1689,7 +1861,8 @@ class HierarchicalAttrEditor(AttrEditor):
   restrictions, which can be edited too.
   '''
   def __init__(self, parent, attrs:AttributedObject, title="Attribute Editor", disabled=False,
-               displayValues:Optional[dict[str,Any]]=None, hideColumns:Iterable[str]=()):
+               displayValues:Optional[dict[str,Any]]=None, hideColumns:Iterable[str]=(),
+               listItemMakers:Optional[dict[str, Callable[[tk.Misc], Optional[str]]]]=None):
     '''
     :param parent:
     :type parent:
@@ -1703,8 +1876,10 @@ class HierarchicalAttrEditor(AttrEditor):
     :type displayValues: Optional[dict[str, Any]]
     :param hideColumns: As for *AttrEditor*.
     :type hideColumns: Iterable[str]
+    :param listItemMakers: As for *AttrEditor*.
+    :type listItemMakers: Optional[dict[str, Callable[[tk.Misc], Optional[str]]]]
     '''
-    super().__init__(parent, attrs, title=title, disabled=disabled, displayValues=displayValues, hideColumns=hideColumns)
+    super().__init__(parent, attrs, title=title, disabled=disabled, displayValues=displayValues, hideColumns=hideColumns, listItemMakers=listItemMakers)
     
     # "constants" for the columns in the Editors grid
     self.rowsPerEntry = 3 # from 1

@@ -36,8 +36,16 @@ The attribute editor
 attribute gets a row -- its name (with its note as a tooltip), its value, its
 type and its inheritance restrictions -- and each value an editor to suit its
 type: a checkbox for a ``bool``, a colour swatch (opening the system's colour
-chooser) for a ``color``, a menu for ``choices[...]``, a text box for text,
-lists and dicts, and an entry otherwise.
+chooser) for a ``color``, a menu for ``choices[...]``, a list editor for a
+``list[str]`` (see below), a text box for text, other lists and dicts, and an
+entry otherwise.
+
+A ``list[str]`` -- a list of strings, in order -- is edited with a
+:py:class:`~util.attributeEditor.ListEditor`: its items in a list box, with
+**Add...**, **Remove**, and **▲**/**▼** to move the selected item (the order
+may matter: eg: models are searched in order). Double-click an item to edit
+it. By default **Add...** asks for a string; the editor's *listItemMakers*
+gives it something else per attribute -- eg: a file chooser.
 :py:class:`~util.attributeEditor.HierarchicalAttrEditor` also shows the
 values each attribute inherits, greyed, above its own. Attributes can be
 added and deleted, and their types and restrictions changed. Each has a
