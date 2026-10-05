@@ -683,7 +683,13 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     'Can be used by contained objects to determine if a read operation is taking place.'
      
     self.superDBs:list[Self] = []
-    'List of other DBs that will be searched for indicies ([]) and get().'
+    '''List of other DBs that will be searched for indicies ([]) and get(): what
+    this one builds on, as though their contents were its own (but not
+    changed through it). Saved with it (see *getInstantiationInfo()*); change
+    it with *addSuperDB()* and *removeSuperDB()*.'''
+    self._missingSuperDBs:list[str] = []
+    '''The (saved) URLs of super-DBs that couldn't be read when this was: kept,
+    and saved again, so that they're used once they're there again.'''
     
     url = self._relocate(fixURL(self.absoluteURL(url), extension=".xml", replaceExt=None, mode=mode)[0])
     if not isValidURL(url):
@@ -733,17 +739,83 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     def clearReading(slf:Serializable, _:SerializableType):
       assert isinstance(slf, PRDb), f'Expected PRDb for param 1, got {type(slf)}.'
       slf.reading = False
+    def superDBURLs(slf:Serializable) -> list[str]:
+      # (relative to this one's file where they're near it -- see relativeURL() -- so a folder of them can be moved together)
+      assert isinstance(slf, PRDb)
+      return [PRDb.relativeURL(db.url) for db in slf.superDBs] + list(slf._missingSuperDBs)
+    def readSuperDBs(slf:Serializable, urls:SerializableType):
+      assert isinstance(slf, PRDb)
+      for u in cast(list, urls) or []:
+        try:
+          db = PRDb.getDB(str(u)) # (from memory, or read: relative to this one's file -- see basedOn())
+        except Exception as ex:
+          logger.error(f'"{slf.url}": its super-DB "{u}" couldn\'t be read ({type(ex).__name__}: {ex}); '
+                       f'carrying on without it (it\'s kept, for when it\'s there again).')
+          slf._missingSuperDBs.append(str(u))
+          continue
+        try:
+          slf.addSuperDB(db)
+        except ValueError as ex:
+          logger.error(f'"{slf.url}": not using "{u}" as a super-DB: {ex}')
     return InstantiationInfo(
             cls, 
             conArgs=[ParamInfo("url", str)],
             conKWArgs=[ParamInfo("_reading", bool, lambda _slf: True)],
             postconSetters=[PropertyInfo("nextID", int),
+                            # (before the objects: they may refer to the super-DBs' objects)
+                            PropertyInfo("superDBs", list, superDBURLs, readSuperDBs, optional=True), # optional: older files don't have it
                             PropertyInfo("_db", strdict, 
                                          lambda slf: convertDictToStrdict(cast(PRDb, slf)._db),
                                          fixDBElems)],
             finalSetters=[PropertyInfo("_", bool, setter=clearReading)]
             )
 
+  #- ---- Super-DBs -------------------------------------------------------------
+
+  def allSuperDBs(self) -> list[PRDb]:
+    '''
+    :returns: This one's super-DBs, theirs, and so on (each once), nearest first.
+    :rtype: list[PRDb]
+    '''
+    ret:list[PRDb] = []
+    pending:list[PRDb] = list(self.superDBs)
+    while pending:
+      db = pending.pop(0)
+      if db not in ret and db is not self:
+        ret.append(db)
+        pending.extend(db.superDBs)
+    return ret
+
+  def addSuperDB(self, db:PRDb) -> None:
+    '''
+    Make *db* a super-DB of this one (see *superDBs*), if it isn't already.
+
+    :param db: The DB.
+    :type db: PRDb
+    :raises ValueError: if *db* is this one, or builds on it (directly or not):
+      a cycle.
+    '''
+    if db is self or self in db.allSuperDBs():
+      raise ValueError(f'"{db.url}" can\'t be a super-DB of "{self.url}": it is, or builds on, "{self.url}".')
+    if db in self.superDBs:
+      return
+    self.superDBs.append(db) #type: ignore[arg-type]
+    if not self.reading:
+      self.setDirty()
+
+  def removeSuperDB(self, db:PRDb) -> None:
+    '''
+    Stop *db* being a super-DB of this one (see *superDBs*), if it is.
+
+    :param db: The DB.
+    :type db: PRDb
+    '''
+    if db in self.superDBs:
+      self.superDBs.remove(db) #type: ignore[arg-type]
+      self.setDirty()
+
+  #- ---- Properities ----------------------------------------------------------
+  
   @property
   def name(self):
     '''
