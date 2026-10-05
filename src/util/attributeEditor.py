@@ -1110,6 +1110,13 @@ class AttrEditor(tk.Toplevel):
         logger.exception(f'Failed on key {k}, value {v.getValue()}: {ex.__class__.__name__}: {ex}')
         errors.append(_keyedMessage(k, ex))
 
+    for k in getattr(self, "assertedKeys", ()): # (inferred ones made given: see assertAttr())
+      origAttr = self.attrs.getLocalAttr(k)
+      if origAttr is not None and getattr(origAttr, "inferred", False) and k not in self.updatedKeys:
+        attr = Attribute(origAttr.value, origAttr.type, origAttr.restriction, origAttr.note)
+        attr.userNote = origAttr.userNote
+        self.updatedKeys[k] = attr
+
     # Check the changes against the inheritance rules now, while the user can
     # still fix them: once the dialog is gone, a rejected setAttr() would only
     # be logged, and the change silently lost.
@@ -1879,6 +1886,8 @@ class HierarchicalAttrEditor(AttrEditor):
     :param listItemMakers: As for *AttrEditor*.
     :type listItemMakers: Optional[dict[str, Callable[[tk.Misc], Optional[str]]]]
     '''
+    self.assertedKeys:set[str] = set()
+    "The keys of the inferred attributes whose \"assert\" button was pressed (see *assertAttr()*)."
     super().__init__(parent, attrs, title=title, disabled=disabled, displayValues=displayValues, hideColumns=hideColumns, listItemMakers=listItemMakers)
     
     # "constants" for the columns in the Editors grid
@@ -1918,10 +1927,17 @@ class HierarchicalAttrEditor(AttrEditor):
       self.attrs.setAttr(k, Attribute(None, None if inhRec is None else inhRec.type, None if inhRec is None else inhRec.restriction))
       localRec = self.attrs.getLocalAttr(k)
     if localRec is not None: # (an inherited note is shown for it -- see _noteFor() -- but not copied into it)
-      super().makeNewEntry(k, localRec, row+self.EntryOffset, disabled, keyExt="", inhType=None if inhRec is None else inhRec.type)
+      inferred = getattr(localRec, "inferred", False) # (concluded, not given: greyed out, with an "assert" button -- see Attribute.inferred)
+      super().makeNewEntry(k, localRec, row+self.EntryOffset, disabled or inferred, keyExt="", inhType=None if inhRec is None else inhRec.type)
       #super().makeNewEntry(k, v, row+self.EntryOffset, disabled, keyExt="", inhType=None if inhRec is None else inhRec.type)
       #assert localRec.restriction is not None
-      self.makeQuals(self.editorsListFrame, k, localRec.restriction, self.cQuals, row+self.EntryOffset, disabled=disabled or not self.attrs.isQualifierEditable(k), keyExt="")
+      self.makeQuals(self.editorsListFrame, k, localRec.restriction, self.cQuals, row+self.EntryOffset, disabled=disabled or inferred or not self.attrs.isQualifierEditable(k), keyExt="")
+      if inferred:
+        self.setStatus(self.editorsListFrame, k, "I", self.cStatus, row+self.EntryOffset, foreground="gray")
+        if not disabled:
+          frame = tk.Frame(self.editorsListFrame)
+          frame.grid(column=self.cDel, row=row+self.EntryOffset, sticky=tk.E+tk.W, padx=0, pady=0)
+          self.makeButton(frame, k, localRec, "assert", command=lambda b, k=k: self.assertAttr(k, b))
     if inhRec is not None:
       super().makeNewEntry(k, inhRec, row+self.iEntryOffset, disabled=True, keyExt=INHERIT_KEY_EXT)
       assert inhRec.restriction is not None
@@ -1942,6 +1958,20 @@ class HierarchicalAttrEditor(AttrEditor):
     ttk.Separator(self.editorsListFrame, orient=tk.HORIZONTAL) \
         .grid(column=0, row=row+self.sepOffset, columnspan=self.cspan, sticky=tk.W+tk.E, padx=0, pady=2)
    
+  def assertAttr(self, key:str, button:ttk.Button) -> None:
+    '''
+    The "assert" button of an inferred attribute (see *Attribute.inferred*) was
+    pressed: saving makes it an ordinary (given) attribute, with the same value
+    (see *save()*).
+
+    :param key: The attribute's key.
+    :type key: str
+    :param button: The button pressed.
+    :type button: ttk.Button
+    '''
+    self.assertedKeys.add(key)
+    button.configure(text="asserted", state=tk.DISABLED)
+
   @override
   def makeHeader(self, row, **kwargs):
     '''
@@ -1950,7 +1980,7 @@ class HierarchicalAttrEditor(AttrEditor):
     :param kwargs:
     :type kwargs:
     '''
-    self.makeTitle(self.cStatus, "S", f'Status:\n  {DOWN_ARROW}: inherited record (not editable)', row, **kwargs)
+    self.makeTitle(self.cStatus, "S", f'Status:\n  {DOWN_ARROW}: inherited record (not editable)\n  I: inferred (concluded, not given: "assert" makes it given)', row, **kwargs)
     AttrEditor.makeHeader(self, row, **kwargs)
     self.makeTitle(self.cQuals, "QUALIFIERS", DOC_QUALIFIER, row, **kwargs)
     

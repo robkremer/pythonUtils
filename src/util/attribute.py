@@ -430,7 +430,7 @@ class Attribute(Serializable, Dirtyable):
   def __init__(self, value:Union[SerializableType, NoValue], 
                      typ:Optional[AttributeValueTypes], 
                      restriction:Optional[Restriction|tuple[int,int]|tuple[RestrictionTypes,RestrictionTypes]],
-                     note:str|None=None):
+                     note:str|None=None, inferred:bool=False):
     '''
     :param value:
     :type value: Union[SerializableType, NoValue]
@@ -440,6 +440,8 @@ class Attribute(Serializable, Dirtyable):
     :type restriction: Optional[Restriction | tuple[int, int] | tuple[RestrictionTypes, RestrictionTypes]]
     :param note:
     :type note: str | None
+    :param inferred: See *inferred*.
+    :type inferred: bool
     '''
     Serializable.__init__(self)
     Dirtyable.__init__(self)
@@ -458,6 +460,11 @@ class Attribute(Serializable, Dirtyable):
     '''Whether the note was written by the user (eg: in the attribute editor), not
     by the program: such a note is saved (see *getInstantiationInfo()*), and
     *AttributedObject.get()* doesn't replace it with the program's own.'''
+    self.inferred:bool = inferred
+    '''Whether the value was concluded (eg: by a reasoner), not given: such an
+    attribute isn't saved with its object (see *AttributedObject.getInstantiationInfo()*),
+    and the attribute editor shows it greyed out, with an "assert" button that
+    makes it an ordinary (given) one.'''
     
   @property
   def value(self) -> SerializableType|NoValue:
@@ -575,8 +582,9 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
   @classmethod
   def getInstantiationInfo(cls)->InstantiationInfo:
     return InstantiationInfo(cls,
-                postconSetters=[PropertyInfo("attributes", strdict,
-                                            lambda slf: strdict({k:dict.get(slf,k) for k in dict.keys(slf)}), #type: ignore[call-overload,arg-type,var-annotated]
+                postconSetters=[PropertyInfo("attributes", strdict, # (not inferred ones: see Attribute.inferred)
+                                            lambda slf: strdict({k:dict.get(slf,k) for k in dict.keys(slf) #type: ignore[call-overload,arg-type,var-annotated]
+                                                                 if not getattr(dict.get(slf,k), "inferred", False)}), #type: ignore[call-overload,arg-type]
                                             lambda slf, dic: [slf.update(dic), slf.setDirty(False)], #type: ignore[attr-defined,arg-type]
                                             unique=True)])
 
