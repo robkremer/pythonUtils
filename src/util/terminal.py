@@ -1259,21 +1259,38 @@ class TerminalWidget(AbstractTerminal, tk.Text):
       self.after_cancel(self._flashJob)  # a flash was already running — restart it
     self._flashTick(self.queryFlashCount * 2)
 
-  def _flashTick(self, ticksRemaining: int) -> None:
-    """One step of the input() attention-flash. Alternates the widget's
-    background between queryFlashColor and its normal color; reschedules
-    itself via after() until ticksRemaining reaches 0 or the reply arrives.
+  def flash(self) -> None:
+    """Flash the widget's background a few times (as for an input() prompt:
+    see *queryFlashColor*, *queryFlashCount*) to draw attention to something
+    just written to it -- whether or not a reply is wanted.
+
+    :rtype: None
+    """
+    if self.queryFlashColor is None or self.queryFlashCount <= 0:
+      return
+    if self._flashJob is not None:
+      self.after_cancel(self._flashJob)
+    self._flashTick(self.queryFlashCount * 2, untilReply=False)
+
+  def _flashTick(self, ticksRemaining: int, untilReply: bool = True) -> None:
+    """One step of the attention-flash. Alternates the widget's background
+    between queryFlashColor and its normal color; reschedules itself via
+    after() until ticksRemaining reaches 0 -- or, for an input() prompt, the
+    reply arrives.
 
     :param ticksRemaining: Number of color alternations left.
     :type ticksRemaining: int
+    :param untilReply: Whether to stop when no reply is awaited (an input()
+      prompt's flash), or just run its course (see *flash()*).
+    :type untilReply: bool
     :rtype: None
     """
-    if not self._awaitingReply or ticksRemaining <= 0:
+    if (untilReply and not self._awaitingReply) or ticksRemaining <= 0:
       self.configure(bg=self._normalBg)
       self._flashJob = None
       return
     self.configure(bg=self.queryFlashColor if ticksRemaining % 2 == 0 else self._normalBg)
-    self._flashJob = self.after(self.queryFlashIntervalMs, self._flashTick, ticksRemaining - 1)
+    self._flashJob = self.after(self.queryFlashIntervalMs, self._flashTick, ticksRemaining - 1, untilReply)
 
   def _stopQueryFlash(self) -> None:
     """Cancel any in-progress input() attention-flash and restore the normal
