@@ -1562,7 +1562,9 @@ def isGuiAvailable() -> bool:
 
 
 def askViaTk(prompt: str, title: str = "Input required") -> Optional[str]:
-  """Prompt the user for input using a Tkinter dialog.
+  """Prompt the user for input using a Tkinter dialog: in the running Tk
+  application, if there is one (over its focused window); otherwise in a Tk
+  interpreter of its own, made for it and destroyed afterwards.
 
   :param prompt: The message to display to the user.
   :type prompt: str
@@ -1578,6 +1580,17 @@ def askViaTk(prompt: str, title: str = "Input required") -> Optional[str]:
     return None
 
   try:
+    # In an app that's already running Tk, ask in it: a second Tk interpreter
+    # shares the app's menu bar (on macOS), and destroying it can leave the
+    # system's default menu bar in place of the app's.
+    existing = tk._default_root # type: ignore[attr-defined]
+    if existing is not None:
+      try:
+        focused = existing.focus_get()
+      except KeyError: # (eg: a menu's popdown, which isn't a Python widget)
+        focused = None
+      parent = focused.winfo_toplevel() if focused is not None else existing
+      return simpledialog.askstring(title, prompt, parent=parent)
     root = tk.Tk()
     root.withdraw()
     root.attributes("-topmost", True)
