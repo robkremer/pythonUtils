@@ -988,18 +988,11 @@ class SerializationStrategy[T](ABC):
     :param mode:
     :type mode: str
     '''
-    self._finalMethodsList = []
     parsedUrl:ParseResult
     url, parsedUrl = fixURL(url, replaceExt=replaceExt, mode=mode, extension=self.defaultExtension())
     contents:str = self._fetchContents(url, parsedUrl)
 
-    ret = self.fromstring(contents, **kwargs)
-
-    for finalMethod in self._finalMethodsList:
-      finalMethod()
-    self._finalMethodsList = []
-
-    return ret
+    return self.fromstring(contents, **kwargs) # (which runs the final methods)
 
   def _fetchContents(self, url:str, parsedUrl:ParseResult) -> str:
     '''
@@ -1205,21 +1198,24 @@ class SerializationStrategy[T](ABC):
     :returns: The object interpreted from *string*.
     :rtype: SerializableType
     """
+    # (re-entrant: reading one document can read another -- eg: a PRDb's
+    # super-DBs -- with this same strategy object, so the outer read's state
+    # is kept aside, and put back afterwards)
+    outer = (getattr(self, "readDB", dict()), self._finalMethodsList)
     self.readDB:dict[int, SerializableType] = dict() 
     self._finalMethodsList = []
-    
-    obj = self._decode_(self._fromstring(string, kwargs))
-    if isinstance(obj, dict) and "header" in obj and "root" in obj:
-      self.header = obj["header"]
-      obj = obj["root"]
-    else:
-      self.header = dict() 
+    try:
+      obj = self._decode_(self._fromstring(string, kwargs))
+      if isinstance(obj, dict) and "header" in obj and "root" in obj:
+        self.header = obj["header"]
+        obj = obj["root"]
+      else:
+        self.header = dict() 
 
-    for finalMethod in self._finalMethodsList:
-      finalMethod()
-
-    self._finalMethodsList = []
-    self.readDB = dict() 
+      for finalMethod in self._finalMethodsList:
+        finalMethod()
+    finally:
+      self.readDB, self._finalMethodsList = outer
     
     return obj
   
