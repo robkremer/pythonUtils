@@ -287,6 +287,27 @@ class Test(unittest.TestCase):
       self.assertEqual(restrictionTypesFromString(restrictionTypesToString(r)), r)
     self.assertEqual(restrictionTypesFromString("NOINHERIT|PRIVATE"), NOINHERIT | PRIVATE)
 
+  def test12CoerceValue(self):
+    from util.attribute import coerceValue
+    for typ, value, want in (("float", 30, 30.0), ("float", "2.5", 2.5), ("int", 3.0, 3), ("int", "3", 3),
+                             ("bool", "Yes", True), ("bool", 0, False), ("color", "blue", "blue"), ("str", 7, "7"),
+                             ("choices[a, b]", "b", "b"), (None, "x", "x")):
+      got = coerceValue(typ, value)
+      self.assertEqual(got, want)
+      self.assertIs(type(got), type(want))
+    for typ, value in (("int", 3.5), ("int", "abc"), ("bool", "maybe"), ("float", True), ("choices[a, b]", "c")):
+      with self.assertRaises(ValueError):
+        coerceValue(typ, value)
+
+  def test13SetItemCoerces(self):
+    'A value given for an inherited attribute is made its type, if it can be.'
+    person = TestAttrs("person", False)
+    person.setAttr("height", Attribute(1.5, float, Restriction.fromstring("VAR")))
+    fred = TestAttrs("fred", True, [person])
+    fred["height"] = "2"
+    self.assertEqual(fred["height"], 2.0)
+    self.assertIs(type(fred["height"]), float)
+
 
 if __name__ == "__main__":
   #import sys;sys.argv = ['', 'Test.testName']

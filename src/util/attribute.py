@@ -58,6 +58,7 @@ from __future__ import annotations
 from typing import Optional, override, Union, Any
 from types import NoneType
 import importlib
+import math
 from enum import Flag
 from dataclasses import dataclass
 from abc import abstractmethod
@@ -363,6 +364,57 @@ def isValidType(typ, value=None) -> bool:
     return False
   return False
   
+TRUE_STRINGS = ("true", "yes", "on", "t", "y", "1")
+FALSE_STRINGS = ("false", "no", "off", "f", "n", "0", "")
+"What *coerceValue()* takes as a bool, as text (in any case)."
+
+def coerceValue(typ:AttributeValueTypes|None, value:Any) -> Any:
+  '''
+  *value*, made the type *typ* says, if it isn't already and it can be without
+  losing anything: eg: 30 or "30" for a float is 30.0; 3.0 or "3" for an int
+  is 3 (but 3.5 isn't an int); "yes" or 1 for a bool is True; anything for a
+  string type ("str", "color", ...) is its text; " a " for "choices[a, b]" is
+  "a". For use where values come from somewhere that doesn't know the types
+  (eg: typed text, or a reasoner's conclusions).
+
+  :param typ: A type, as for *isValidType()*: None for "anything".
+  :type typ: AttributeValueTypes | None
+  :param value: The value.
+  :type value: Any
+  :returns: The value, as *typ*.
+  :rtype: Any
+  :raises ValueError: If it can't be made *typ* (eg: "abc" for an int, or a choice that isn't one).
+  '''
+  if typ is None or value is None or value is NOVALUE or isValidType(typ, value):
+    return value
+  t = str(typeAsString(typ) or "")
+  if t in KNOWN_STRING_TYPES:
+    return str(value)
+  if t.startswith("choices[") and t.endswith("]"):
+    choices = [c.strip() for c in t[8:-1].split(",")]
+    if str(value).strip() in choices:
+      return str(value).strip()
+    raise ValueError(f'"{value}" isn\'t one of the choices: {", ".join(choices)}.')
+  if t == "bool":
+    s = str(value).strip().lower()
+    if s in TRUE_STRINGS or s in FALSE_STRINGS:
+      return s in TRUE_STRINGS
+  elif t == "int" and not isinstance(value, bool):
+    try:
+      f = float(value)
+    except (TypeError, ValueError):
+      f = math.nan
+    if f.is_integer():
+      return int(f)
+  elif t == "float" and not isinstance(value, bool):
+    try:
+      return float(value)
+    except (TypeError, ValueError):
+      pass
+  elif t in ("list", "list[str]") and isinstance(value, (tuple, set)):
+    return [str(v) for v in value] if t == "list[str]" else list(value)
+  raise ValueError(f'"{value}" ({type(value).__name__}) can\'t be made a value of type "{t or typ}".')
+
 def typeAsString(t:AttributeValueTypes, throw:bool=False) -> AttributeValueTypes|None:
   '''
   Returns a either the string version of supported types or the
@@ -839,8 +891,9 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
       - if there is no local attribute and no super attribute, create a complete
         (default) local attribute.
         
-    In all cases, this method will throw if the value does not pass validation
-    checks.
+    The value is first made the attribute's type, if it can be (see
+    *coerceValue()*). In all cases, this method will throw if the value does
+    not pass validation checks.
     '''
     if isinstance(value, Attribute):
       self.setAttr(key, value)
@@ -848,8 +901,13 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
       return 
     
     current = super().get(key)
+    superAttr = self._getSuperAttr(key)
+    typ = current.type if current is not None and current.type is not None else superAttr.type if superAttr is not None else None
+    try: # (eg: "30" for an int: see coerceValue() -- if it can't be, it's left as it is, for validation to judge)
+      value = coerceValue(typ, value)
+    except ValueError:
+      pass
     if current is None: # not local attribute, so we need to create one to hold this value
-      superAttr = self._getSuperAttr(key)
       if superAttr is None: # create a complete default local attribute with the value
         attr = Attribute(value, type(value), Restriction(RestrictionTypes.UNRESTRICTED, RestrictionTypes.UNRESTRICTED))
         verb = "new"
