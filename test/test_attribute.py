@@ -308,6 +308,22 @@ class Test(unittest.TestCase):
     self.assertEqual(fred["height"], 2.0)
     self.assertIs(type(fred["height"]), float)
 
+  def test14InheritedTypeEnforced(self):
+    'A value for an inherited attribute must be (or be made) the inherited type: when it\'s first given, and when it\'s changed.'
+    person = TestAttrs("person", False)
+    person.setAttr("height", Attribute(1.5, float, Restriction.fromstring("VAR")))
+    fred = TestAttrs("fred", True, [person])
+    with self.assertRaises(ValueError):
+      fred["height"] = "tall"                                    # (a new value-only attribute)
+    self.assertNotIn("height", dict.keys(fred))
+    with self.assertRaises(ValueError):
+      fred.setAttr("height", Attribute("tall", None, None))
+    fred.setAttr("height", Attribute(2, None, None))             # (coerced)
+    self.assertIs(type(fred["height"]), float)
+    with self.assertRaises(ValueError):
+      fred["height"] = "tall"                                    # (changing the value-only attribute)
+    self.assertEqual(fred["height"], 2.0)
+
 
 if __name__ == "__main__":
   #import sys;sys.argv = ['', 'Test.testName']

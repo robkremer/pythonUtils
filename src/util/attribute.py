@@ -916,6 +916,8 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
         verb = "mod"
       self.setAttr(key, attr)
     else: # simply change the value of the local attribute
+      if value is not NOVALUE and typ is not None and not isValidType(typ, value):
+        raise ValueError(f'key "{key}": a value of type {type(value).__name__} ({value!r}) isn\'t a {typeAsString(typ) or typ}.')
       current.value = value
       verb = 'mod'
     self.notify((f"{verb} attribute", (key, value)))
@@ -1018,9 +1020,16 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
     :raises:
     
     Set a local attribute if it passes validation rules. Throws if the rules 
-    are violated. 
+    are violated. A value-only *attr* (one that inherits its type) has its
+    value made that type first, if it can be (see *coerceValue()*).
     '''
-    self._validateOverride(key, self.isIndividual(), attr, self._getSuperAttr(key)) # will throw if *attr* is not legal
+    superAttr = self._getSuperAttr(key)
+    if superAttr is not None and attr.type is None and attr.value is not NOVALUE:
+      try:
+        attr._value = coerceValue(superAttr.type, attr.value)
+      except ValueError:
+        pass # (for _validateOverride() to report)
+    self._validateOverride(key, self.isIndividual(), attr, superAttr) # will throw if *attr* is not legal
     super().__setitem__(key, attr)
     self.setDirty()
     self.notify(("new attribute", (key, attr.value)))
@@ -1123,9 +1132,9 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
       if attr.type is not None:
         raise TypeError(f'key "{key}": A subtype or instance may not override a type (read/write values are invariant).')
       
-      # value
-      if attr.value is not NOVALUE and not isValidType(attr.type, attr.value): #isinstance(attr.value, superAttr.type):
-        raise ValueError(f'key "{key}": Value of type {type(attr.value)} is not an instance of {attr.type}.')
+      # value (its type is the inherited one)
+      if attr.value is not NOVALUE and not isValidType(superAttr.type, attr.value):
+        raise ValueError(f'key "{key}": a value of type {type(attr.value).__name__} ({attr.value!r}) isn\'t a {typeAsString(superAttr.type) or superAttr.type}.')
       
       # inheritance restrictions (themselves over inheritance)
       assert superAttr.restriction is not None
