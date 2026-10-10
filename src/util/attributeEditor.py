@@ -909,6 +909,33 @@ class AttrEditor(tk.Toplevel):
     self.makeNewEntry(name, newAttr, self.rows+self.EntryOffset, False, keyExt="")
     self.rows += self.rowsPerEntry
     self._applyHiddenColumns()
+    self._showEntry(name)
+
+  def _showEntry(self, key:str) -> None:
+    '''
+    Scroll the list of attributes to show *key*'s row, and put the focus in
+    its value: eg: a new attribute, to type its value.
+
+    :param key:
+    :type key: str
+    '''
+    descr = self.vars.get(key)
+    editor = getattr(descr, "editor", None)
+    if not isinstance(editor, tk.Widget):
+      return
+    interior = self.editorsListFrame
+    canvas = interior.master
+    self.update_idletasks()
+    if isinstance(canvas, tk.Canvas):
+      height = max(1, interior.winfo_height())
+      y = editor.winfo_rooty() - interior.winfo_rooty() # (its place in the list)
+      view = canvas.winfo_height()
+      if not (canvas.canvasy(0) <= y and y + editor.winfo_height() <= canvas.canvasy(0) + view): # (not already in sight)
+        canvas.yview_moveto(max(0.0, (y - view / 2) / height))
+    try:
+      editor.focus_set()
+    except tk.TclError:
+      pass
     
   def deleteAttr(self, key, item, editor, row, button):
     '''
@@ -1826,7 +1853,7 @@ class AttrEditor(tk.Toplevel):
   def ask(self, question:str, handler:Callable[[tk.Event, str], Any], default=None, **kwargs):
     '''
     Asks a question and waits for an answer input within the window. The user
-    is expected to fill in the answer and hit <Return> to answer.  If the focus
+    is expected to fill in the answer and hit <Return> (or <Tab>) to answer.  If the focus
     is shifted to another widget, the question is removed (as if a "cancel"
     button was pressed.
     
@@ -1855,7 +1882,11 @@ class AttrEditor(tk.Toplevel):
     def h(event):
       handler(event, _var.get())
       #self.clearMessage()
-    self.askWidget.bind('<Return>', lambda event: h(event))
+    def answered(event): # (and no further: eg: <Tab> doesn't move the focus on as well)
+      h(event)
+      return "break"
+    self.askWidget.bind('<Return>', answered)
+    self.askWidget.bind('<Tab>', answered) # (the same: eg: the new key's typed, on to its value)
     self.askWidget.focus()
       
   def checkInt(self, newval):
