@@ -753,14 +753,17 @@ class AttrEditor(tk.Toplevel):
 
     ttk.Separator(self, orient=tk.HORIZONTAL) \
       .grid(column=0, row=self.rButtons2-1, columnspan=self.outerSpan, sticky=tk.W+tk.E, padx=0, pady=0)
-    ttk.Button(self, text="Dismiss" if self.disabled else "Cancel", command=self.dismiss) \
+    ttk.Button(self, text="Dismiss" if self.disabled else "Cancel", command=self.dismiss,
+               default="active" if self.disabled else "normal") \
       .grid(column=0, row=self.rButtons2, columnspan=1, sticky=tk.W, padx=20, pady=10)
     if not self.disabled:
-      ttk.Button(self, text="Save Changes", command=self.save) \
+      ttk.Button(self, text="Save Changes", command=self.save, default="active") \
         .grid(column=1, row=self.rButtons2, columnspan=1, sticky=tk.E, padx=20, pady=10)
 
     self.protocol("WM_DELETE_WINDOW", self.dismiss) # intercept close button
     self.bind("<Escape>", lambda _e: self.dismiss()) # (a way out, always)
+    self.bind("<Return>", self._onReturn)            # the default button: Save Changes (Dismiss, if it can't be edited)
+    self.bind("<KP_Enter>", self._onReturn)
     #self.overrideredirect(1) # deletes the title bar
     self._placeOverParent()
 
@@ -829,6 +832,26 @@ class AttrEditor(tk.Toplevel):
       except Exception as ex:
         errors.append(_keyedMessage(k, ex))
     return errors
+
+  def _onReturn(self, event:tk.Event) -> str|None:
+    '''
+    <Return>: the default button -- "Save Changes" (or "Dismiss", if nothing
+    can be edited) -- except in a multi-line text (where it's a new line), or
+    while answering a question (see *ask()*: the answer's own <Return>).
+
+    :param event:
+    :type event: tk.Event
+    :returns: "break" if it was dealt with.
+    :rtype: str | None
+    '''
+    w = event.widget
+    if isinstance(w, tk.Text) or w is getattr(self, "askWidget", None):
+      return None
+    if self.disabled:
+      self.dismiss()
+    else:
+      self.save()
+    return "break"
 
   def _placeOverParent(self) -> None:
     '''
