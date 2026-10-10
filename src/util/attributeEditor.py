@@ -760,7 +760,9 @@ class AttrEditor(tk.Toplevel):
         .grid(column=1, row=self.rButtons2, columnspan=1, sticky=tk.E, padx=20, pady=10)
 
     self.protocol("WM_DELETE_WINDOW", self.dismiss) # intercept close button
+    self.bind("<Escape>", lambda _e: self.dismiss()) # (a way out, always)
     #self.overrideredirect(1) # deletes the title bar
+    self._placeOverParent()
 
     # make this window modal
     # Force the widget tree built above to actually be laid out and drawn
@@ -770,6 +772,14 @@ class AttrEditor(tk.Toplevel):
     try: # this wait sometimes fails with "TclError: <window> was deleted before its visibility changed"
       self.wait_visibility() # can't grab until window appears, so we wait
     except:
+      pass
+    # In front, with the focus: it takes all the input (below), so if it were
+    # behind its parent -- or anywhere it can't be seen -- the app would seem
+    # to have hung.
+    try:
+      self.lift()
+      self.focus_force()
+    except tk.TclError:
       pass
     #self.grab_set()       # ensure all input goes to our window
     try:
@@ -819,6 +829,32 @@ class AttrEditor(tk.Toplevel):
       except Exception as ex:
         errors.append(_keyedMessage(k, ex))
     return errors
+
+  def _placeOverParent(self) -> None:
+    '''
+    Put this window over the middle of its parent's window, so it's seen
+    where it was asked for -- not at the window system's default place, which
+    may be behind the parent, or on another screen or desktop.
+    '''
+    try:
+      top = self.parent.winfo_toplevel()
+      if not top.winfo_viewable():
+        return
+      self.update_idletasks()
+      w, h = self.winfo_reqwidth(), self.winfo_reqheight()
+      geo = self.geometry().split("+")[0] # (eg: "820x600", set by show())
+      if "x" in geo:
+        gw, gh = (int(v) for v in geo.split("x"))
+        if gw > 1 and gh > 1:
+          w, h = gw, gh
+      # (not above or left of the parent's top left, so its title bar's on the
+      # parent's screen: Tk knows only the main screen's size, so it can't be
+      # kept inside another one)
+      x = top.winfo_rootx() + max(0, (top.winfo_width() - w) // 2)
+      y = top.winfo_rooty() + max(0, (top.winfo_height() - h) // 3)
+      self.geometry(f"{w}x{h}+{x}+{y}")
+    except (tk.TclError, ValueError):
+      pass
 
   def dismiss(self):
     '''
