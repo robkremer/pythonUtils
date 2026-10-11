@@ -39,6 +39,7 @@ import tkinter as tk
 from tkinter import ttk
 from html.parser import HTMLParser
 from typing import Callable, Optional
+from util.utils import ownDialog
 
 ActionCallback = Callable[[], None]
 'A zero-argument callback invoked when an action link is clicked.'
@@ -206,9 +207,9 @@ class ActionDialog(tk.Toplevel):
     :type maxHeight: int
     '''
     super().__init__(parent) # type: ignore[arg-type]
+    ownDialog(self, parent) # (over its parent's window, not full screen: see ownDialog())
     self.geometry("600x300")
     self.title(title)
-    self.transient(parent)
     self._actions:dict[str, ActionCallback] = actions or {}
     self._closeOnAction:bool = closeOnAction
     self._linkTagCount:int = 0

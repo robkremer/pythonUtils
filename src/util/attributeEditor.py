@@ -58,7 +58,7 @@ from util.attribute import AttributedObject, Attribute, \
   NoValue, NOVALUE
 from util.persistence.pRef import Serializable, PRObject
 from util.utils import getFullClassName, xmlToStringIndented
-from util.utils import VerticalScrolledFrame
+from util.utils import VerticalScrolledFrame, ownDialog
 from util.tooltip import CreateToolTip
 from tkinter.ttk import Widget
 
@@ -766,6 +766,10 @@ class AttrEditor(tk.Toplevel):
     self.bind("<KP_Enter>", self._onReturn)
     #self.overrideredirect(1) # deletes the title bar
     self._placeOverParent()
+    # Over its parent's window -- before it's shown: on macOS, a window shown
+    # first and made transient afterwards opens full screen when the app is
+    # (see util.utils.ownDialog(): only ever over a window that's on screen).
+    ownDialog(self, self.parent)
 
     # make this window modal
     # Force the widget tree built above to actually be laid out and drawn
@@ -789,18 +793,6 @@ class AttrEditor(tk.Toplevel):
       self.grab_set_global() #   used this version because grab_set() doesn't actually work.
     except:
       logger.exception("AttrEditor.show() failed on grab_set_global():")
-    # Only set transient if *parent* is actually viewable. On macOS/Aqua,
-    # marking an already-mapped window transient-for a withdrawn window (e.g.
-    # a hidden root Tk() used only as an app-wide anchor) can make the window
-    # server swap in a blank content view that never gets repainted — the
-    # dialog appears but shows empty. See the identical guard (and the "why")
-    # in util.utils.showExceptionDialog.
-    if self.parent.winfo_viewable():
-      try:
-        self.transient(self.parent) # dialog window is related to main
-      except:
-        logger.exception("AttrEditor.show() failed on transient():")
-    
     try:
       if self.editKey is None:
         self.focus_set()

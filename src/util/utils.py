@@ -1745,6 +1745,58 @@ import traceback
 import tkinter as tk
 from tkinter import scrolledtext
 
+def dialogOwner(parent:tk.Misc|None) -> tk.Misc|None:
+  """
+  :param parent: What a dialog is opened from (any widget), if anything.
+  :type parent: tk.Misc | None
+  :returns: The window the dialog belongs over: *parent*'s own window, if
+    it's on screen; else the app's window that has the focus, or failing that
+    one that's full screen, or any that's on screen -- eg: when *parent* is
+    an app's hidden root window; or None if none is.
+  :rtype: tk.Misc | None
+  """
+  if parent is None:
+    return None
+  try:
+    top = parent.winfo_toplevel()
+    if top.winfo_viewable():
+      return top
+    try:
+      focus = parent.focus_get()
+    except (KeyError, tk.TclError): # (focus_get() can't name some widgets: eg: a menu's clone)
+      focus = None
+    if focus is not None and focus.winfo_toplevel().winfo_viewable():
+      return focus.winfo_toplevel()
+    root = parent._root() #type: ignore[attr-defined]
+    shown = [w for w in [root, *root.winfo_children()] if isinstance(w, (tk.Tk, tk.Toplevel)) and w.winfo_viewable()]
+    full = [w for w in shown if str(w.attributes("-fullscreen")) in ("1", "True", "true")]
+    return (full or shown or [None])[0]
+  except tk.TclError:
+    return None
+
+def ownDialog(dialog:tk.Toplevel, parent:tk.Misc|None) -> None:
+  """
+  Make *dialog* transient for the window it belongs over (see
+  *dialogOwner()*): it's then shown over that window, at its own size. Call
+  it before *dialog* is first shown: on macOS, a window that isn't transient
+  for another opens full screen -- in a space of its own -- when the app's
+  in full screen, and making it transient once it's been shown doesn't
+  undo that. (Never transient for a window that isn't on screen: on
+  macOS/Aqua that can leave the dialog blank, or never shown: see
+  *showExceptionDialog()*.)
+
+  :param dialog: A dialog: a new window, not shown yet.
+  :type dialog: tk.Toplevel
+  :param parent: What it's opened from, if anything.
+  :type parent: tk.Misc | None
+  """
+  owner = dialogOwner(parent)
+  if owner is not None and owner is not dialog:
+    try:
+      dialog.transient(owner) #type: ignore[call-overload]
+    except tk.TclError:
+      pass
+
 def showExceptionDialog(parent: tk.Toplevel|tk.Tk|None = None, title: str = "Error", text:str|None=None) -> None:
   """Display the currently-handled exception's traceback (as returned by
   traceback.format_exc()) in a scrollable, resizable dialog. Call this
@@ -1772,8 +1824,7 @@ def showExceptionDialog(parent: tk.Toplevel|tk.Tk|None = None, title: str = "Err
   # hidden." That's exactly the case when this is called to report an
   # exception raised while constructing a new window: there's no finished
   # window yet to be transient to, only the (permanently withdrawn) root.
-  if parent is not None and parent.winfo_viewable():
-    dialog.transient(parent)
+  ownDialog(dialog, parent) # (over a window on screen: see ownDialog())
 
   body = scrolledtext.ScrolledText(dialog, width=100, height=25, font=("Courier", 10), wrap="none")
   body.insert("1.0", text)

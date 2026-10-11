@@ -36,6 +36,7 @@ from matplotlib.scale import LogScale
 from util.tooltip import CreateToolTip
 import tkinter as tk
 from tkinter import ttk, N, S, E, W
+from util.utils import ownDialog
 
 @dataclass
 class Param[T]:
@@ -92,6 +93,7 @@ class RTValueDialog(tk.Toplevel):
     :type disabled: bool
     '''
     super().__init__(parent)
+    ownDialog(self, parent) # (over its parent's window, not full screen: see ownDialog())
     self.title(title)
     self.parent = parent
     
@@ -135,7 +137,6 @@ class RTValueDialog(tk.Toplevel):
 
   def show(self):
     #self.grab_set()  # Make the dialog modal
-    self.transient(self.parent) # Set parent window
     #self.wm_attributes("-topmost", True) 
     #self.geometry(f'500x{self.winfo_height()}')
     self.wait_window(self) # Wait until the dialog is closed
