@@ -728,6 +728,10 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
     :param note:
     :type note: str | None
     '''
+    if note is None: # (its own value, if it has one, at once: see __getitem__())
+      local = dict.get(self, key)
+      if isinstance(local, Attribute) and local.value is not NOVALUE:
+        return local.value
     attr = self.getAttr(key)
     if attr != None:
       if note is not None and attr.note != note and not getattr(attr, "userNote", False): # (the program's note, unless the user wrote their own)
@@ -864,8 +868,15 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
     :rtype: SerializableType
     :raises KeyError: if the key doesn't exist.
     
-    Calls *self.getAttr()* and returns the value it finds (if any)
+    Calls *self.getAttr()* and returns the value it finds (if any) -- or,
+    if this object has a value of its own, that, at once: *getAttr()* would
+    give that value too (whatever it inherits, and whatever its restriction),
+    but first looks up what it inherits (eg: for the note), which is slow for
+    something with many ancestors, asked often (eg: a name, for a label).
     '''
+    local = dict.get(self, key)
+    if isinstance(local, Attribute) and local.value is not NOVALUE:
+      return local.value
     attr = self.getAttr(key)
     if attr is None:
       raise KeyError(key)
