@@ -1745,10 +1745,10 @@ import traceback
 import tkinter as tk
 from tkinter import scrolledtext
 
-def dialogOwner(parent:tk.Misc|None) -> tk.Misc|None:
+def dialogOwner(parent:Any) -> tk.Misc|None:
   """
   :param parent: What a dialog is opened from (any widget), if anything.
-  :type parent: tk.Misc | None
+  :type parent: tk.Misc | tk.Wm | None
   :returns: The window the dialog belongs over: *parent*'s own window, if
     it's on screen; else the app's window that has the focus, or failing that
     one that's full screen, or any that's on screen -- eg: when *parent* is
@@ -1770,11 +1770,11 @@ def dialogOwner(parent:tk.Misc|None) -> tk.Misc|None:
     root = parent._root() #type: ignore[attr-defined]
     shown = [w for w in [root, *root.winfo_children()] if isinstance(w, (tk.Tk, tk.Toplevel)) and w.winfo_viewable()]
     full = [w for w in shown if str(w.attributes("-fullscreen")) in ("1", "True", "true")]
-    return (full or shown or [None])[0]
+    return full[0] if full else shown[0] if shown else None
   except tk.TclError:
     return None
 
-def ownDialog(dialog:tk.Toplevel, parent:tk.Misc|None) -> None:
+def ownDialog(dialog:tk.Toplevel, parent:Any) -> None:
   """
   Make *dialog* transient for the window it belongs over (see
   *dialogOwner()*): it's then shown over that window, at its own size. Call
@@ -1788,7 +1788,7 @@ def ownDialog(dialog:tk.Toplevel, parent:tk.Misc|None) -> None:
   :param dialog: A dialog: a new window, not shown yet.
   :type dialog: tk.Toplevel
   :param parent: What it's opened from, if anything.
-  :type parent: tk.Misc | None
+  :type parent: tk.Misc | tk.Wm | None
   """
   owner = dialogOwner(parent)
   if owner is not None and owner is not dialog:
