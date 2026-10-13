@@ -715,6 +715,9 @@ def getClass(className:str) -> Optional[type]:
     break
   return cls
     
+_classesByPath:dict[str, type] = {}
+"The classes *getFullyQualifiedClass()* has found, by their paths."
+
 def getFullyQualifiedClass(classPath:str) -> Optional[type]:
   """
   :param classPath: A string representing the name of a class
@@ -722,7 +725,20 @@ def getFullyQualifiedClass(classPath:str) -> Optional[type]:
   
   Follows the class path down the modules in the system to return the matching class object.
   User *getClass()* if you only have a simple class name and want to search for it. 
+  A class found is remembered (a class not found isn't: its module may be
+  loaded later): reading a file asks for the same few classes thousands of
+  times, and each search looks through every module loaded.
   """
+  found = _classesByPath.get(classPath)
+  if found is not None:
+    return found
+  cls = _findFullyQualifiedClass(classPath)
+  if cls is not None:
+    _classesByPath[classPath] = cls
+  return cls
+
+def _findFullyQualifiedClass(classPath:str) -> Optional[type]:
+  "*getFullyQualifiedClass()*'s search."
   DEBUG = False
   pathList = classPath.split(".")
   className = pathList[-1]
