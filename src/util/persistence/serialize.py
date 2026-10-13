@@ -150,6 +150,7 @@ from __future__ import annotations
 import os
 import sys
 import urllib.request
+import urllib.error
 from urllib.parse import ParseResult, urlparse, unquote
 from abc import abstractmethod, ABC
 from typing import Any, Callable, Optional, Union, override, cast, Iterable,\
@@ -1074,6 +1075,8 @@ class SerializationStrategy[T](ABC):
     :returns: The raw text found at *url*.
     :rtype: str
     :raises ValueError: If the URL's scheme isn't "file", "http", or "https".
+    :raises FileNotFoundError: If there's nothing there (eg: an HTTP 404):
+      no strategy would do better (see *_tryInOrder()*).
 
     Shared by *read()* and *peekType()*: fetches the raw text a URL points
     to, with no interpretation of its content at all -- not even far enough
@@ -1087,8 +1090,14 @@ class SerializationStrategy[T](ABC):
       with open(localPath, "r", encoding="utf-8") as f:
         return f.read()
     elif scheme in ("http", "https"):
-      with urllib.request.urlopen(url) as response:
-        rawBytes: bytes = response.read()
+      try:
+        with urllib.request.urlopen(url) as response:
+          rawBytes: bytes = response.read()
+      except urllib.error.HTTPError as e:
+        e.close()
+        if e.code in (404, 410):
+          raise FileNotFoundError(f'There\'s nothing at "{url}" (HTTP {e.code}).') from e
+        raise
       return rawBytes.decode(encoding="utf-8")
     else:
       raise ValueError(f"Unsupported URL scheme: '{scheme}'. Use 'file', 'http', or 'https'.")

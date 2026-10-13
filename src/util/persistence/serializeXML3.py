@@ -176,7 +176,14 @@ class XML3SerializationStrategy(XML2SerializationStrategy):
       stream = open(unquote(parsedUrl.path), "rb")
     else:
       from urllib.request import urlopen
-      stream = urlopen(url, timeout=30)
+      from urllib.error import HTTPError
+      try:
+        stream = urlopen(url, timeout=30)
+      except HTTPError as e:
+        e.close()
+        if e.code in (404, 410):
+          raise FileNotFoundError(f'There\'s nothing at "{url}" (HTTP {e.code}).') from e
+        raise
     with stream:
       events = ET.iterparse(stream, events=("start", "end"))
       try:
