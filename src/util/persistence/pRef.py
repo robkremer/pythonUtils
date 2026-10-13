@@ -302,6 +302,15 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
   
   AllDBs:ClassVar[dict[str, PRDb]] = dict()
 
+  readProgress:ClassVar[Callable[[PRDb, int], None]|None] = None
+  '''If set, called as a file's objects are read -- every *READ_PROGRESS_STEP*
+  of them -- with the DB being read and how many of its objects have been
+  read so far (eg: to show a progress bar: its *nextID* is about how many
+  there'll be).'''
+
+  READ_PROGRESS_STEP:ClassVar[int] = 250
+  "How many objects are read between calls of *readProgress*."
+
   _readingURLs:ClassVar[set[str]] = set()
   '''URLs for which a *PRDb._read()* call is currently in progress (see
   *__new__()* below). A URL is added just before its *_read()* starts and
@@ -900,6 +909,10 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
       self._db[_id] = value
       ret = _id
     self.setDirty()
+    if PRDb.readProgress is not None and getattr(self, "reading", False):
+      count = self.__dict__["_readCount"] = self.__dict__.get("_readCount", 0) + 1
+      if count % PRDb.READ_PROGRESS_STEP == 0:
+        PRDb.readProgress(self, count)
     #self.notify(("new", (ret, value)))
     with Subject.ChangeMgr(self, later=True) as cm:
       cm.registerTopics(("new", (ret, value)))
