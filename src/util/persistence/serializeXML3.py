@@ -176,14 +176,20 @@ class XML3SerializationStrategy(XML2SerializationStrategy):
       stream = open(unquote(parsedUrl.path), "rb")
     else:
       from urllib.request import urlopen
-      from urllib.error import HTTPError
+      from urllib.error import HTTPError, URLError
+      from util.utils import cachedCopy, REMOTE_TIMEOUT
       try:
-        stream = urlopen(url, timeout=30)
+        stream = urlopen(url, timeout=REMOTE_TIMEOUT) # (just its head: not kept -- see fetchURL())
       except HTTPError as e:
         e.close()
         if e.code in (404, 410):
           raise FileNotFoundError(f'There\'s nothing at "{url}" (HTTP {e.code}).') from e
         raise
+      except (URLError, TimeoutError, ConnectionError):
+        copy = cachedCopy(url) # (the server can't be reached: the copy kept when it was last read)
+        if copy is None:
+          raise
+        stream = open(copy, "rb")
     with stream:
       events = ET.iterparse(stream, events=("start", "end"))
       try:

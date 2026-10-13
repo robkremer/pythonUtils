@@ -304,8 +304,10 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
   AllDBs:ClassVar[dict[str, PRDb]] = dict()
 
   aliases:ClassVar[dict[str, str]] = dict()
-  '''Other URLs for DBs -- eg: their old names -- and the URLs they stand for
-  (see *resolveURL()*): eg, "sn:/sn.xml" -> "sn:/sn".'''
+  '''Other URLs for DBs -- eg: their old names, or where they were before they
+  were moved -- and the URLs they stand for (see *resolveURL()*): eg,
+  "sn:/sn.xml" -> "sn:/sn". One ending in "/" stands for everything under it
+  (see *_alias()*).'''
 
   namedURLs:ClassVar[dict[str, Callable[[], str]]] = dict()
   '''Names -- pseudo-URLs, eg: "sn:/baseRules" -- of DBs whose actual URLs are
@@ -630,7 +632,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
       pseudo-URL (see *FILE_SCHEMES*) is as it is (but for aliases and names).
     :rtype: str
     '''
-    url = cls.aliases.get(url, url)
+    url = cls._alias(url)
     if url in cls.namedURLs:
       actual = cls.namedURLs[url]()
       cls._namesOf[actual] = url
@@ -638,7 +640,22 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     if urlparse(url).scheme.lower() not in cls.FILE_SCHEMES:
       return url
     url = cls._relocate(fixURL(cls._relocate(cls.absoluteURL(url)), extension=".xml", replaceExt=None, mode=mode)[0])
-    return cls.aliases.get(url, url)
+    return cls._alias(url)
+
+  @classmethod
+  def _alias(cls, url:str) -> str:
+    '''
+    :returns: What *url* is an alias for (see *aliases*), if it is; else
+      *url*. An alias ending in "/" stands for everything under it: eg, with
+      "http://old.org/onto/" -> "https://new.org/ontologies/",
+      "http://old.org/onto/family.snm" is "https://new.org/ontologies/family.snm".
+    '''
+    if url in cls.aliases:
+      return cls.aliases[url]
+    for old, new in cls.aliases.items():
+      if old.endswith("/") and url.startswith(old):
+        return new + url[len(old):]
+    return url
 
   @classmethod
   def _relocate(cls, url:str) -> str:

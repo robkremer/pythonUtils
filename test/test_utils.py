@@ -82,3 +82,51 @@ class TestURLProblem(unittest.TestCase):
     self.assertIn("no host", urlProblem("https:///animals.snm") or "")
     self.assertIn("file:///", urlProblem("file:animals.snm") or "")
     self.assertIsNotNone(urlProblem("ftp://example.org/x", schemes=("http", "https")))
+
+
+class TestWebCache(unittest.TestCase):
+  '''util.utils.fetchURL(): copies of what's read from the web, used when the server can't be reached.'''
+
+  def test0100cache(self):
+    import os, tempfile, threading, functools, logging
+    from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+    import util.utils as U
+    with tempfile.TemporaryDirectory() as folder:
+      os.makedirs(os.path.join(folder, "site", "onto"))
+      with open(os.path.join(folder, "site", "onto", "a.xml"), "w") as f:
+        f.write("<a/>")
+      class Quiet(SimpleHTTPRequestHandler):
+        def log_message(self, *args): pass
+      server = ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=os.path.join(folder, "site")))
+      threading.Thread(target=server.serve_forever, daemon=True).start()
+      url = f"http://127.0.0.1:{server.server_address[1]}/onto/a.xml"
+      saved = U.webCacheFolder
+      U.webCacheFolder = os.path.join(folder, "cache")
+      try:
+        self.assertIsNone(U.cachedCopy(url))
+        self.assertEqual(U.fetchURL(url), b"<a/>")
+        self.assertIsNotNone(U.cachedCopy(url))
+        with self.assertRaises(FileNotFoundError):
+          U.fetchURL(url.replace("a.xml", "missing.xml"))
+        server.shutdown(); server.server_close()
+        with self.assertLogs("util.utils", level=logging.WARNING):
+          self.assertEqual(U.fetchURL(url), b"<a/>")           # (from the copy, with a warning)
+        self.assertTrue(U.urlExists(url))                       # (there's a copy)
+        self.assertFalse(U.urlExists(url.replace("a.xml", "b.xml")))
+      finally:
+        U.webCacheFolder = saved
+
+
+class TestAliases(unittest.TestCase):
+  '''PRDb.aliases: exact, and for everything under a URL ending in "/".'''
+
+  def test0100aliases(self):
+    from util.persistence.pRef import PRDb
+    saved = dict(PRDb.aliases)
+    try:
+      PRDb.aliases.update({"http://old.org/onto/": "https://new.org/ontologies/", "x:/a": "x:/b"})
+      self.assertEqual(PRDb.resolveURL("http://old.org/onto/family.snm"), "https://new.org/ontologies/family.snm")
+      self.assertEqual(PRDb.resolveURL("http://old.org/other.snm"), "http://old.org/other.snm")
+      self.assertEqual(PRDb.resolveURL("x:/a"), "x:/b")
+    finally:
+      PRDb.aliases.clear(); PRDb.aliases.update(saved)

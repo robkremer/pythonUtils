@@ -387,10 +387,88 @@ def isValidURL(url:str) -> bool:
   except AttributeError:
     return False      
 
+REMOTE_TIMEOUT = 30
+"How long (seconds) to wait for a web server (see *fetchURL()*, *urlExists()*)."
+
+webCacheFolder:str|None = None
+'''Where copies of the files read from the web are kept, if anywhere (see
+*fetchURL()*): set by an application (eg: Semantic Nets: *~/.sn/cache*).'''
+
+def cachePath(url:str) -> str|None:
+  '''
+  :param url: A web URL ("http:" or "https:").
+  :type url: str
+  :returns: Where its copy is (or would be) in *webCacheFolder* -- by its
+    host, then its path (a query string, if it has one, is part of the file's
+    name) -- or None if there's no cache, or it isn't a web URL.
+  :rtype: str | None
+  '''
+  u = urlparse(url)
+  if webCacheFolder is None or u.scheme not in ("http", "https") or not u.netloc:
+    return None
+  parts = [p for p in unquote(u.path).split("/") if p not in ("", ".", "..")] or ["index"]
+  if u.query:
+    parts[-1] += "?" + u.query
+  host = u.netloc.replace(":", "_")
+  return os.path.join(webCacheFolder, u.scheme, host, *[p.replace(os.sep, "_") for p in parts])
+
+def cachedCopy(url:str) -> str|None:
+  ''':returns: The path of *url*'s copy in *webCacheFolder* (see *cachePath()*), if there is one.'''
+  path = cachePath(url)
+  return path if path is not None and os.path.isfile(path) else None
+
+class OfflineWarning:
+  '''*fetchURL()*'s warnings that it's using a cached copy: at most once per URL.'''
+  warned:set[str] = set()
+
+def fetchURL(url:str) -> bytes:
+  '''
+  :param url: A web URL ("http:" or "https:").
+  :type url: str
+  :returns: What's there. It's copied into *webCacheFolder* (if there is
+    one); and if the server can't be reached (eg: offline), that copy is used
+    instead (with a warning).
+  :rtype: bytes
+  :raises FileNotFoundError: If there's nothing there (HTTP 404 or 410).
+  :raises urllib.error.URLError: If the server can't be reached, and there's
+    no copy.
+  '''
+  import urllib.request, urllib.error, datetime
+  try:
+    with urllib.request.urlopen(url, timeout=REMOTE_TIMEOUT) as response:
+      data:bytes = response.read()
+  except urllib.error.HTTPError as e:
+    e.close()
+    if e.code in (404, 410):
+      raise FileNotFoundError(f'There\'s nothing at "{url}" (HTTP {e.code}).') from e
+    raise
+  except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+    copy = cachedCopy(url)
+    if copy is None:
+      raise
+    if url not in OfflineWarning.warned:
+      OfflineWarning.warned.add(url)
+      when = datetime.datetime.fromtimestamp(os.path.getmtime(copy)).strftime("%Y-%m-%d %H:%M")
+      logging.getLogger(__name__).warning(f'"{url}" can\'t be reached ({getattr(e, "reason", e)}): using the copy kept on {when}.')
+    with open(copy, "rb") as f:
+      return f.read()
+  path = cachePath(url)
+  if path is not None:
+    try:
+      os.makedirs(os.path.dirname(path), exist_ok=True)
+      with open(path + ".part", "wb") as f:
+        f.write(data)
+      os.replace(path + ".part", path)
+    except OSError:
+      logging.getLogger(__name__).warning(f'Couldn\'t keep a copy of "{url}" (in "{path}").', exc_info=True)
+  return data
+
 def urlExists(url:str) -> bool:
   '''
   :param url: A string to determine if it's an existant URL
-  :return: *True* iff the str is a URL that references an existant place
+  :return: *True* iff the str is a URL that references an existant place --
+    for a web URL whose server can't be reached, if there's a copy of it (see
+    *fetchURL()*).
   '''
   result = urlparse(unquote(url))
   if result.scheme == "file":
@@ -398,12 +476,10 @@ def urlExists(url:str) -> bool:
 
   else:
     try:
-      response = requests.get(url)
-      if response.status_code == 200:
-        return True
-    except:
-      return False
-  return False
+      response = requests.get(url, timeout=REMOTE_TIMEOUT)
+      return response.status_code == 200
+    except Exception:
+      return cachedCopy(url) is not None
 
 import os
 import requests

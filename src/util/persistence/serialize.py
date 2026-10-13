@@ -161,6 +161,7 @@ from dataclasses import dataclass, field
 import weakref
 
 import util
+from util.utils import fetchURL
 from util.utils import getFullClassName, getClassFromFullyQualifiedName,\
   fixURL, getFullyQualifiedClass, findConcreteSubclasses, \
   importSubmodules
@@ -1090,15 +1091,7 @@ class SerializationStrategy[T](ABC):
       with open(localPath, "r", encoding="utf-8") as f:
         return f.read()
     elif scheme in ("http", "https"):
-      try:
-        with urllib.request.urlopen(url) as response:
-          rawBytes: bytes = response.read()
-      except urllib.error.HTTPError as e:
-        e.close()
-        if e.code in (404, 410):
-          raise FileNotFoundError(f'There\'s nothing at "{url}" (HTTP {e.code}).') from e
-        raise
-      return rawBytes.decode(encoding="utf-8")
+      return fetchURL(url).decode(encoding="utf-8") # (kept, for when the server can't be reached: see webCacheFolder)
     else:
       raise ValueError(f"Unsupported URL scheme: '{scheme}'. Use 'file', 'http', or 'https'.")
 
