@@ -42,6 +42,7 @@ from util.persistence.serialize import Serializable, InstantiationInfo,\
   ParamInfo, PropertyInfo, SerializationStrategy, strdict, SerializableType
 from util.persistence.serialize import DEFAULT_STRATEGY
 from pathlib import Path
+import os
 import re
 import logging
 from urllib3.util.url import parse_url
@@ -302,6 +303,20 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
   
   AllDBs:ClassVar[dict[str, PRDb]] = dict()
 
+  aliases:ClassVar[dict[str, str]] = dict()
+  '''Other URLs for DBs -- eg: their old names -- and the URLs they stand for
+  (see *resolveURL()*): eg, "sn:/sn.xml" -> "sn:/sn".'''
+
+  namedURLs:ClassVar[dict[str, Callable[[], str]]] = dict()
+  '''Names -- pseudo-URLs, eg: "sn:/baseRules" -- of DBs whose actual URLs are
+  only known when the program runs (eg: a temporary copy of a file that comes
+  with it), and how to get each one's URL -- reading the DB, if need be (see
+  *resolveURL()*). A reference to one is written as its name (see
+  *relativeURL()*).'''
+
+  _namesOf:ClassVar[dict[str, str]] = dict()
+  "The names of the *namedURLs* that have been resolved, by their actual URLs."
+
   readProgress:ClassVar[Callable[[PRDb, int], None]|None] = None
   '''If set, called as a file's objects are read -- every *READ_PROGRESS_STEP*
   of them -- with the DB being read and how many of its objects have been
@@ -363,13 +378,12 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     if url.startswith("$") and len(url) > 1:
       path = url[1:] # strip the $
       for k in PRDb.AllDBs:
-        p = urlparse(k).path # path part of the url
-        p = p[p.rfind("/")+1:p.rfind(".")] # find just the "file name"
+        p = os.path.splitext(urlparse(k).path.rsplit("/", 1)[-1])[0] # just the "file name", without an extension
         if p == path:
           url = k # found a match, so carry on with the matched full path
           break
            
-    url = cls._relocate(fixURL(cls.absoluteURL(url), extension=".xml", replaceExt=None, mode="")[0]) # get it without checking access
+    url = cls.resolveURL(url) # (without checking access)
     if not isValidURL(url):
       raise ValueError(f'Malformed URL: "{url}"')
     if url in PRDb.AllDBs:
@@ -573,6 +587,8 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     :returns:
     :rtype: str
     '''
+    if url in cls._namesOf: # (a named DB: by its name -- see namedURLs)
+      return cls._namesOf[url]
     base = base if base is not None else (cls._bases[-1] if cls._bases else None)
     if base is None or not url:
       return url
@@ -593,6 +609,36 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
   "(stored URL, actual URL) for each copied or moved file being read just now (see _read())."
   _relocated:set[tuple[str, str]] = set()
   "(from, to) relocations already reported."
+
+  FILE_SCHEMES:ClassVar[tuple[str, ...]] = ("", "file", "http", "https")
+  '''The schemes of URLs of files (on this computer or elsewhere). Others --
+  eg: "sn:" -- are pseudo-URLs: names of DBs in memory (see *namedURLs*),
+  taken as they are.'''
+
+  @classmethod
+  def resolveURL(cls, url:str, mode:str="") -> str:
+    '''
+    :param url: A DB's URL, as given: perhaps relative (see *absoluteURL()*),
+      an alias (see *aliases*), or a name (see *namedURLs*).
+    :type url: str
+    :param mode: As for *fixURL()*: what to check it's there for ("w":
+      writing; "": nothing).
+    :type mode: str
+    :returns: The URL it stands for: made absolute, given the default
+      extension if it's a file's without one (see *fixURL()*), and relocated
+      if it's in a file that's been copied or moved (see *_relocate()*). A
+      pseudo-URL (see *FILE_SCHEMES*) is as it is (but for aliases and names).
+    :rtype: str
+    '''
+    url = cls.aliases.get(url, url)
+    if url in cls.namedURLs:
+      actual = cls.namedURLs[url]()
+      cls._namesOf[actual] = url
+      return actual
+    if urlparse(url).scheme.lower() not in cls.FILE_SCHEMES:
+      return url
+    url = cls._relocate(fixURL(cls._relocate(cls.absoluteURL(url)), extension=".xml", replaceExt=None, mode=mode)[0])
+    return cls.aliases.get(url, url)
 
   @classmethod
   def _relocate(cls, url:str) -> str:
@@ -653,7 +699,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     assert issubclass(cls, PRDb)
     # (relocated before fixURL() too: a copied or moved file's old URL may not exist any more -- eg: a
     # placeholder it's stored as being in -- and after it, for a URL that only matches once it's fixed)
-    url = cls._relocate(fixURL(cls._relocate(cls.absoluteURL(url)), extension=".xml", replaceExt=None, mode=mode)[0])
+    url = cls.resolveURL(url, mode)
     if not isValidURL(url):
       raise ValueError(f'PRDb.__init__(): Malformed URL: "{url}"')
     if memoryResident and url in PRDb.AllDBs:
@@ -716,7 +762,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     '''The (saved) URLs of super-DBs that couldn't be read when this was: kept,
     and saved again, so that they're used once they're there again.'''
     
-    url = self._relocate(fixURL(self._relocate(self.absoluteURL(url)), extension=".xml", replaceExt=None, mode=mode)[0]) # (as in __new__())
+    url = self.resolveURL(url, mode) # (as in __new__())
     if not isValidURL(url):
       raise ValueError(f'PRDb.__init__(): Malformed URL: "{url}"')
     if url in PRDb.AllDBs:
@@ -1440,7 +1486,7 @@ class PReference[T:PRObject]:
       id_ = text[1:]
       url = None
     else: # exactly two parts: an absolute path
-      url = PRDb._relocate(fixURL(PRDb.absoluteURL(parts[0]), extension=".xml", replaceExt=None, mode="")[0])
+      url = PRDb.resolveURL(parts[0])
       if not isValidURL(url):
         raise ValueError(f'Malformed URL: "{url}"')
       if url not in PRDb.AllDBs and not urlExists(url):
@@ -1624,15 +1670,14 @@ class PReference[T:PRObject]:
     if path.startswith("$") and len(path) > 1:
       path = path[1:] # strip the $
       for k in PRDb.AllDBs:
-        p = urlparse(k).path # path part of the url
-        p = p[p.rfind("/")+1:p.rfind(".")] # find just the "file name"
+        p = os.path.splitext(urlparse(k).path.rsplit("/", 1)[-1])[0] # just the "file name", without an extension
         if p == path:
           path = k # found a match, so carry on with the matched full path 
           
     if path == "":
       path = None
     if path is not None:
-      path = PRDb._relocate(fixURL(PRDb.absoluteURL(path), extension=".xml", replaceExt=None, mode="")[0])
+      path = PRDb.resolveURL(path)
       if not isValidURL(path):
         raise ValueError(f'Malformed url: "{path}"')
       # This no longer applies as db's can be non-memory resident
