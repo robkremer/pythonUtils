@@ -468,7 +468,18 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
         del PRDb.AllDBs[ret.url]
       ret.url = url
     ret.previousURL = stored if moved else previous
+    ret._wasRead(url)
     return ret
+
+  def _wasRead(self, url:str) -> None:
+    '''
+    Called once this DB has been read from *url* (see *readFile()*): for
+    subclasses to do whatever's needed then. (Here, nothing.)
+
+    :param url: Where it was read from.
+    :type url: str
+    '''
+    pass
 
   _bases:list[str] = []
   '''

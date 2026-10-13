@@ -69,3 +69,16 @@ class Test(unittest.TestCase):
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
+
+class TestURLProblem(unittest.TestCase):
+  '''util.urlDialog.urlProblem(): what's wrong with a typed URL.'''
+
+  def test0100urlProblem(self):
+    from util.urlDialog import urlProblem
+    self.assertIsNone(urlProblem("https://example.org/onto/animals.snm"))
+    self.assertIsNone(urlProblem("file:///Users/me/animals.snm"))
+    self.assertIsNotNone(urlProblem(""))
+    self.assertIn("starts with", urlProblem("example.org/animals.snm") or "")
+    self.assertIn("no host", urlProblem("https:///animals.snm") or "")
+    self.assertIn("file:///", urlProblem("file:animals.snm") or "")
+    self.assertIsNotNone(urlProblem("ftp://example.org/x", schemes=("http", "https")))

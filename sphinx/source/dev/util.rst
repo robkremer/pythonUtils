@@ -34,5 +34,6 @@ Submodules
    util.rtValuesDialog
    util.terminal
    util.tooltip
+   util.urlDialog
    util.utils
    util.validatedList
