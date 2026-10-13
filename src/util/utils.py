@@ -441,7 +441,9 @@ def fixURL(url:str, extension:Optional[str]=None, replaceExt:Optional[bool]=None
     extension.
   :type replaceExt: Optional[bool] (default: None)
   :param mode: 'r' will check if the file or URL exists; 'w' will try to determine
-    if the fine or URL is writable; anything else will make no checks.
+    if the file is writable (not a URL other than a file's, eg: "https:" -- that
+    can't be told without writing it: it may be only for reading, so writing
+    it fails then); anything else will make no checks.
   :type mode: str
   :param extension: The file extension to use for a replacement or appendment; 
     if missing or *None* it defaults ".txt".  Ignored if *replaceExt* is *None*.
@@ -493,7 +495,7 @@ def fixURL(url:str, extension:Optional[str]=None, replaceExt:Optional[bool]=None
   # check if we can access the url (don't bother if mode is something else)
   if mode.lower() == 'r' and not urlExists(url):
     raise FileNotFoundError(f'URL "{url}" not found.')
-  elif mode.lower() == 'w' and not canWriteUrl(url):
+  elif mode.lower() == 'w' and parsedUrl.scheme == "file" and not canWriteUrl(url):
     raise PermissionError(f'Path does not exist or permission denied on url "{url}".')
   
   return url, parsedUrl
