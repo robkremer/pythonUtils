@@ -69,6 +69,12 @@ class PlistSerializationStrategy(JSONSerializationStrategy):
 
   @override
   @classmethod
+  def sniff(cls, start:bytes) -> int:
+    ":returns: 2 for a property list (XML or binary)."
+    return 2 if b"<!DOCTYPE plist" in start[:300] or start.startswith(b"bplist") else 0
+
+  @override
+  @classmethod
   def protocolName(self)->str:
     '''
     :returns:

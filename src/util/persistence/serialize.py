@@ -153,7 +153,8 @@ import urllib.request
 from urllib.parse import ParseResult, urlparse, unquote
 from abc import abstractmethod, ABC
 from typing import Any, Callable, Optional, Union, override, cast, Iterable,\
-  final, NamedTuple
+  final, NamedTuple, ClassVar
+import datetime
 from types import NoneType
 from dataclasses import dataclass, field
 import weakref
@@ -165,7 +166,53 @@ from util.utils import getFullClassName, getClassFromFullyQualifiedName,\
 
 logger:util.Logger = util.getLogger(__name__)
 
-VERSION = "1.0"
+VERSION = "2.0"
+'''The version of this framework (*SerializationStrategy*): of what's common to
+all strategies -- eg: a document being a head and one object (see
+*SerializationStrategy.tostring()*: since 2.0). (Each strategy has its own
+version too: see *SerializationStrategy.protocolVersion()*.)'''
+
+HEAD = "head"
+"A document's head (see *SerializationStrategy.tostring()*)."
+BODY = "object"
+"A document's object -- its body (see *SerializationStrategy.tostring()*)."
+OLD_HEADER, OLD_ROOT = "header", "root"
+"The head and object of a document written before *VERSION* 2.0."
+
+HEAD_FORMAT = "format"
+"In a head: the strategy that wrote it (see *SerializationStrategy.protocolName()*)."
+HEAD_FORMAT_VERSION = "formatVersion"
+"In a head: its version (see *SerializationStrategy.protocolVersion()*)."
+HEAD_SERIALIZATION_VERSION = "serializationVersion"
+"In a head: the framework's version (*VERSION*)."
+HEAD_APPLICATION = "application"
+"In a head: the application that wrote it (see *SerializationStrategy.appName*)."
+HEAD_APPLICATION_VERSION = "applicationVersion"
+"In a head: its version (see *SerializationStrategy.appVersion*)."
+HEAD_TYPE = "type"
+"In a head: the class of the document's object (its fully qualified name)."
+HEAD_SAVED = "saved"
+"In a head: when it was written (ISO 8601, with the time zone)."
+
+HeadValue = Union[str, int, float, bool, list, dict]
+'''What a head holds: strings, numbers, booleans; lists of those; and tables
+(dicts with str keys) of those. Nothing else -- no None, no objects, no
+references -- so any format can hold it, and anything can read it.'''
+
+def isHeadValue(value:Any, depth:int=0) -> bool:
+  '''
+  :param value:
+  :type value: Any
+  :returns: Whether *value* can be in a head (see *HeadValue*).
+  :rtype: bool
+  '''
+  if type(value) in (str, int, float, bool):
+    return True
+  if depth == 0 and type(value) in (list, tuple):
+    return all(isHeadValue(v, 1) for v in value)
+  if depth == 0 and isinstance(value, dict):
+    return all(isinstance(k, str) and isHeadValue(v, 1) for k, v in value.items())
+  return False
 APP = (lambda: [spec := sys.modules['__main__'].__spec__,
                 spec.name if spec is not None else sys.argv[0]][1])()
 TAG_FILETYPE = "filetype"
@@ -301,7 +348,7 @@ class ParamInfo:
   def __init__(self, name:str, typ:Optional[type], 
                getter:Optional[Callable[[Serializable], SerializableType]]=None,
                setter:Optional[Callable[[SerializableType], Any]]=None,
-               unique:bool=False, optional:bool=False):
+               unique:bool=False, optional:bool=False, inHead:bool=False):
     '''
     :param name: The name of the parameter in the classes constructor (*__init__()*).
     :type name: str
@@ -341,6 +388,10 @@ class ParamInfo:
     self.unique:bool = unique
     self.optional:bool = optional
     'Iff True, a file without this parameter still loads: it is left out of the constructor call (so its default applies). For parameters added after files were saved.'
+    self.inHead:bool = inHead
+    '''Iff True, when the object is a document's object (see *SerializationStrategy.tostring()*),
+    this is written in the document's head, not with the object -- eg: a reference to another
+    document. Its value must be a *HeadValue*.'''
     
 
 class PropertyInfo():
@@ -350,7 +401,7 @@ class PropertyInfo():
   def __init__(self, name:str, typ:type, 
                getter:Optional[Callable[[Serializable], SerializableType]]=None,
                setter:Optional[Callable[[Serializable, SerializableType], None]]=None,
-               unique:bool=False, optional:bool=False, omitIfNone:bool=False):
+               unique:bool=False, optional:bool=False, omitIfNone:bool=False, inHead:bool=False):
     '''
     :param name: The name of the property in the class's definition. You may
       also use the value "_" in order the just execute the *setter* function
@@ -404,11 +455,13 @@ class PropertyInfo():
     self.optional:bool = optional or omitIfNone
     self.omitIfNone:bool = omitIfNone
     "Whether it's left out of the file when its value is None (see *__init__()*)."
+    self.inHead:bool = inHead
+    "Whether it's written in the document's head (see *ParamInfo.inHead*)."
     'Iff True, a file without this property still loads: it just isn\'t set. For properties added after files were saved.'
 
 
 
-DEFAULT_STRATEGY = "XML2"
+DEFAULT_STRATEGY = "XML3"
 "The name of the strategy things are saved with unless told otherwise (see util.persistence.serializeXML2)."
 
 class SerializationStrategy[T](ABC):
@@ -568,8 +621,8 @@ class SerializationStrategy[T](ABC):
   appName = APP
   'The name of the Application -- should be reassigned by the application at startup.'
   
-  appVerion = 'Unknown'
-  'The name of the Application -- should be reassigned by the application at startup.'
+  appVersion = 'Unknown'
+  'The version of the Application -- should be reassigned by the application at startup.'
   
   @property
   @final
@@ -590,7 +643,7 @@ class SerializationStrategy[T](ABC):
     :returns:
     :rtype:
     '''
-    return f'{self.appVerion}:{self.serializationStrategyVersion}:{self.protocolVersion()}'
+    return f'{self.appVersion}:{self.serializationStrategyVersion}:{self.protocolVersion()}'
   
   @classmethod
   def _byPreference(cls) -> list[SerializationStrategy.Strategy]:
@@ -827,6 +880,9 @@ class SerializationStrategy[T](ABC):
     ext = "." + filename.rsplit(".", 1)[-1] if "." in filename else ""
     strats = cls._byPreference()
     order = [s for s in strats if s.extension == ext] + [s for s in strats if s.extension != ext]
+    start = cls._start(url)
+    if start:
+      order.sort(key=lambda s: -cast(type[SerializationStrategy], s.cls).sniff(start)) # (stable: those surest they wrote it first, otherwise as they were)
     tried:str = ""
     for s in order:
       try:
@@ -842,6 +898,21 @@ class SerializationStrategy[T](ABC):
         logger.info(f'SerializationStrategy.{caller}({url}): read with {s.name} (after:{tried})')
       return ret
     raise LookupError(f'SerializationStrategy.{caller}({url}): No strategy succeeded. Tried:{tried}')
+
+  @classmethod
+  def _start(cls, url:str) -> bytes:
+    '''
+    :returns: The start of the file at *url* (see *SNIFF_SIZE*), if it's on
+      this computer; else b"" (it isn't fetched just for this).
+    '''
+    parsed = urlparse(url)
+    if parsed.scheme not in ("", "file"):
+      return b""
+    try:
+      with open(unquote(parsed.path), "rb") as f:
+        return f.read(cls.SNIFF_SIZE)
+    except OSError:
+      return b""
 
   @classmethod
   def peekTypex(cls, url:str, strategy:Optional[str]=None, mode:str="w", **kwargs) -> type:
@@ -1072,13 +1143,9 @@ class SerializationStrategy[T](ABC):
       silently make *peekType()* just as expensive, and just as
       side-effecting, as a full *read()* -- defeating its purpose.
     '''
-    url, parsedUrl = fixURL(url, replaceExt=None, mode=mode, extension=self.defaultExtension())
-    contents:str = self._fetchContents(url, parsedUrl)
-    root:T = self._fromstring(contents, kwargs)
-    rootObj:Optional[T] = self._getKVPair(root, "root")
-    if rootObj is None:
-      rootObj = root # not a "header"/"root"-wrapped document (e.g. hand-written) -- the top-level element IS the object.
-    className:str = self._getAttr(rootObj, ATTR_TYPE)
+    className = self.readHead(url, mode=mode, **kwargs).get(HEAD_TYPE)
+    if not isinstance(className, str):
+      raise TypeError(f'SerializationStrategy.peekType({url}): it doesn\'t say what\'s in it.')
     cls:Optional[type] = getClassFromFullyQualifiedName(className)
     if cls is None:
       raise TypeError(f'SerializationStrategy.peekType({url}): Could not find type "{className}".')
@@ -1101,6 +1168,11 @@ class SerializationStrategy[T](ABC):
     :param kwargs:
     :type kwargs:
     '''
+    headValue = self.readHead(url, mode=mode, **kwargs).get(key) # (since VERSION 2.0, what's of interest is in the head)
+    if isinstance(headValue, str):
+      return headValue
+    if section in (HEAD, OLD_HEADER):
+      return None
     url, parsedUrl = fixURL(url, replaceExt=None, mode=mode, extension=self.defaultExtension())
     contents:str = self._fetchContents(url, parsedUrl)
     top:T = self._fromstring(contents, kwargs)
@@ -1140,15 +1212,19 @@ class SerializationStrategy[T](ABC):
   def tostring(self, obj:SerializableType, *, wrap:Union[bool,dict]=False, assume:list[Any]=[], **kwargs) -> str:
     """
     Return the data as a strategy-specific formatted string.
-  
+
     :param obj: The object to serialise and returned.
     :type obj: SerializableType
-    :param wrap: If *wrap* is False there is not wrapping, if True or a *dict* a
-      dictionary is created containing keys "header" (which is mapped to *wrap* if
-      it's a *dict* or a default header if it's *True*) and "root" (which maps
-      to (*obj).  The *fromstring()* method will automatically unwrap and save
-      the header info (if it's there) as the property *self.header:dict*.
-    :type wrap: Union[bool,dict[
+    :param wrap: If False, just *obj* is written. Otherwise it's written as a
+      **document**: a head, then *obj* (the document's object). The head is a
+      table of plain values (see *HeadValue*) -- the format, the versions, the
+      application, *obj*'s class, when it was written (see *makeHead()*); what
+      *obj* adds (its *serializationHeader()*, if it has one); its parameters
+      and properties marked *inHead* (see *ParamInfo.inHead*), which aren't
+      written with it; and *wrap*'s, if it's a *dict*. It's written first, so
+      it can be read without reading the rest (see *readHead()*). The
+      strategy decides how (see *_tostringDocument()*).
+    :type wrap: Union[bool,dict]
     :returns: The serialized object as a string.
     :rtype: str
     :param assume:
@@ -1159,38 +1235,111 @@ class SerializationStrategy[T](ABC):
     self.writeDB:dict[int, Optional[T]] = dict()
     for o in assume:
       self.writeDB[id(o)] = None
-
-    if wrap:
+    try:
+      if not wrap:
+        return self._tostring(self._encode_(obj), kwargs)
+      head = self.makeHead(obj)
       if isinstance(wrap, dict):
-        header = wrap
-      else:
-        header = strdict({
-                  "application": self.appName,
-                  "applicaitonVersion": self.appVerion,
-                  "serializationStrategyVersion": self.serializationStrategyVersion,
-                  "protocol": self.protocolName(),
-                  "protocolVersion": self.protocolVersion(),
-                  "protocolClass": getFullClassName(self.__class__),
-                  "version": self.version,
-                  TAG_FILETYPE: self.defaultExtension(),
-                  })
-        extra = getattr(obj, "serializationHeader", None) # (the object's own header fields, eg: PRDb's url)
-        if callable(extra):
-          header.update(extra())
-      obj = strdict({"header": header, 
-                     "root": obj})
+        head.update(wrap)
+      own:dict[str, HeadValue] = {}
+      self._writingHead:Optional[tuple[Any, dict[str, HeadValue]]] = (obj, own) # (see _encode_(): its inHead properties go in it)
+      body = self._encode_(obj)
+      self._writingHead = None
+      first = [HEAD_FORMAT, HEAD_FORMAT_VERSION, HEAD_SERIALIZATION_VERSION, HEAD_APPLICATION, HEAD_APPLICATION_VERSION, HEAD_TYPE]
+      head = {**{k: head[k] for k in first if k in head}, **own, **{k: v for k, v in head.items() if k not in first}}
+      for k, v in head.items():
+        if not isHeadValue(v):
+          raise TypeError(f'"{k}" can\'t be in a head: {v!r} isn\'t a plain value (see HeadValue).')
+      return self._tostringDocument(head, body, kwargs)
+    finally:
+      self._writingHead = None
+      self.writeDB = dict()
 
-    ret = self._tostring(self._encode_(obj), kwargs)
-  
-    self.writeDB = dict()
-    
-    return ret
+  def makeHead(self, obj:SerializableType) -> dict[str, HeadValue]:
+    '''
+    :param obj: A document's object (see *tostring()*).
+    :type obj: SerializableType
+    :returns: Its document's head: the format and the versions, the
+      application, *obj*'s class, the time; and what *obj* adds (its
+      *serializationHeader()*, if it has one).
+    :rtype: dict[str, HeadValue]
+    '''
+    head:dict[str, HeadValue] = {
+      HEAD_FORMAT: self.protocolName(),
+      HEAD_FORMAT_VERSION: self.protocolVersion(),
+      HEAD_SERIALIZATION_VERSION: VERSION,
+      HEAD_APPLICATION: str(self.appName),
+      HEAD_APPLICATION_VERSION: str(self.appVersion),
+      HEAD_TYPE: getFullClassName(type(obj)),
+      HEAD_SAVED: datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
+      }
+    extra = getattr(obj, "serializationHeader", None) # (the object's own head fields, eg: PRDb's url)
+    if callable(extra):
+      head.update({k: v for k, v in extra().items() if v is not None})
+    return head
 
-    
+  def _tostringDocument(self, head:dict[str, HeadValue], body:T, kwargs:dict[str, Any]) -> str:
+    '''
+    Write a document (see *tostring()*). By default, as a table of two
+    entries, head first: *HEAD* (a table of the head's values) and *BODY*.
+    A strategy may write it its own way (eg: two values one after another;
+    see *XML3SerializationStrategy*), so long as *_fromstringDocument()*
+    reads it, and the head comes first.
+
+    :param head:
+    :type head: dict[str, HeadValue]
+    :param body: The document's object, encoded.
+    :type body: T
+    :param kwargs:
+    :type kwargs: dict[str, Any]
+    :returns:
+    :rtype: str
+    '''
+    doc = self._encodeStrdict()
+    self._setKVPair(doc, HEAD, self._encode_(strdict(head)))
+    self._setKVPair(doc, BODY, body)
+    return self._tostring(doc, kwargs)
+
+  def _fromstringDocument(self, string:str, kwargs:dict[str, Any]) -> tuple[dict[str, HeadValue], T]:
+    '''
+    Read a document (see *tostring()*, *_tostringDocument()*) -- or an old one
+    (*OLD_HEADER*, *OLD_ROOT*), or just an object (an empty head, then).
+
+    :param string:
+    :type string: str
+    :param kwargs:
+    :type kwargs: dict[str, Any]
+    :returns: Its head, and its object (still encoded).
+    :rtype: tuple[dict[str, HeadValue], T]
+    '''
+    top = self._fromstring(string, kwargs)
+    return self._documentParts(top)
+
+  def _documentParts(self, top:T) -> tuple[dict[str, HeadValue], T]:
+    '''
+    :param top: The top of a document read with *_fromstring()*.
+    :type top: T
+    :returns: Its head, and its object (still encoded): see *_fromstringDocument()*.
+    :rtype: tuple[dict[str, HeadValue], T]
+    '''
+    try:
+      isTable = self._getAttr(top, ATTR_TYPE, None) == strdict_className
+    except Exception:
+      isTable = False
+    if isTable:
+      for headKey, bodyKey in ((HEAD, BODY), (OLD_HEADER, OLD_ROOT)):
+        headElem, bodyElem = self._getKVPair(top, headKey), self._getKVPair(top, bodyKey)
+        if headElem is not None and bodyElem is not None:
+          decoded = self._decode_(headElem)
+          return (dict(decoded) if isinstance(decoded, dict) else {}), bodyElem
+    return {}, top
+
   def fromstring(self, string:str, **kwargs) -> SerializableType:
     """
-    Return an object made from a strategy-specific formatted string.
-  
+    Return an object made from a strategy-specific formatted string: a
+    document's object, if it's a document (see *tostring()*) -- its head is
+    then *header*.
+
     :param string: The string to interpret.
     :type string: str
     :param kwargs: A set of keyword arguments to be passed to concrete subclass.
@@ -1201,25 +1350,72 @@ class SerializationStrategy[T](ABC):
     # (re-entrant: reading one document can read another -- eg: a PRDb's
     # super-DBs -- with this same strategy object, so the outer read's state
     # is kept aside, and put back afterwards)
-    outer = (getattr(self, "readDB", dict()), self._finalMethodsList)
-    self.readDB:dict[int, SerializableType] = dict() 
+    outer = (getattr(self, "readDB", dict()), self._finalMethodsList, getattr(self, "_readingHead", None))
+    self.readDB:dict[int, SerializableType] = dict()
     self._finalMethodsList = []
     try:
-      obj = self._decode_(self._fromstring(string, kwargs))
-      if isinstance(obj, dict) and "header" in obj and "root" in obj:
-        self.header = obj["header"]
-        obj = obj["root"]
-      else:
-        self.header = dict() 
-
+      head, body = self._fromstringDocument(string, kwargs)
+      self.header = head
+      self._readingHead:Optional[tuple[Any, dict[str, HeadValue]]] = (body, head) # (see _decode_(): inHead properties are read from it)
+      obj = self._decode_(body)
       for finalMethod in self._finalMethodsList:
         finalMethod()
     finally:
-      self.readDB, self._finalMethodsList = outer
-    
+      self.readDB, self._finalMethodsList, self._readingHead = outer
     return obj
-  
-    
+
+  def readHead(self, url:str, mode:str="", **kwargs) -> dict[str, HeadValue]:
+    '''
+    :param url: Where a document is.
+    :type url: str
+    :param mode: As for *fixURL()*.
+    :type mode: str
+    :returns: Its head (see *tostring()*) -- for an old document, its header,
+      and its object's class (*HEAD_TYPE*). By default, the whole document is
+      read (but no object in it is made); a strategy that can read just the
+      start of it does (see *XML3SerializationStrategy*).
+    :rtype: dict[str, HeadValue]
+    '''
+    url, parsedUrl = fixURL(url, replaceExt=None, mode=mode, extension=self.defaultExtension())
+    head, body = self._fromstringDocument(self._fetchContents(url, parsedUrl), kwargs)
+    head = dict(head)
+    if HEAD_TYPE not in head:
+      try:
+        head[HEAD_TYPE] = self._getAttr(body, ATTR_TYPE)
+      except Exception:
+        pass
+    return head
+
+  @classmethod
+  def readHeadx(cls, url:str, mode:str="", **kwargs) -> dict[str, HeadValue]:
+    '''
+    Like *readHead()*, choosing the strategy as *readx()* does.
+
+    :param url:
+    :type url: str
+    :param mode:
+    :type mode: str
+    :returns:
+    :rtype: dict[str, HeadValue]
+    '''
+    return cls._tryInOrder(url, "readHeadx", lambda strat: strat.readHead(url, mode=mode, **kwargs))
+
+  SNIFF_SIZE:ClassVar[int] = 2048
+  "How much of the start of a file is looked at to tell its format (see *sniff()*)."
+
+  @classmethod
+  def sniff(cls, start:bytes) -> int:
+    '''
+    :param start: The start of a file (see *SNIFF_SIZE*).
+    :type start: bytes
+    :returns: How sure this strategy is that it wrote it: 0 (not at all, or
+      can't tell) up -- eg: 1 for the right kind of file (XML), 2 for one in
+      its own format. Strategies that are surer are tried first (see
+      *_tryInOrder()*).
+    :rtype: int
+    '''
+    return 0
+
   ### PRIVATE METHODS _MUST_ BE IMPLEMENTED BY CONCRETE SUBCLASSES #####################
   
   @abstractmethod
@@ -1630,19 +1826,24 @@ class SerializationStrategy[T](ABC):
       self._setAttr(elem, ATTR_TYPE, getFullClassName(type(obj)))
       
       info:InstantiationInfo = obj.getInstantiationInfo()
+      writing = getattr(self, "_writingHead", None)
+      head = writing[1] if writing is not None and writing[0] is obj else None # (the document's object: its inHead ones go in the head)
       for lists in (info.conArgs, info.conKWArgs):
         for pinfo in lists:
           sub = pinfo.getter(obj)
-          try:
-            e = self._encode_(sub, pinfo.unique)
-          except Exception as ex:
-            print(ex)
+          if head is not None and pinfo.inHead:
+            head[pinfo.name] = list(sub) if isinstance(sub, tuple) else sub
+            continue
+          e = self._encode_(sub, pinfo.unique)
           self._setKVPair(elem, pinfo.name, e)
 
       for props in (info.postconSetters, info.finalSetters):
         for pinfo2 in props:
           sub = pinfo2.getter(obj)
           if sub is None and getattr(pinfo2, "omitIfNone", False):
+            continue
+          if head is not None and pinfo2.inHead:
+            head[pinfo2.name] = list(sub) if isinstance(sub, tuple) else sub
             continue
           e = self._encode_(sub, pinfo2.unique)
           self._setKVPair(elem, pinfo2.name, e)
@@ -1723,11 +1924,16 @@ class SerializationStrategy[T](ABC):
     :rtype: SerializableType
     '''
     def decodeClass(elem:T):
+      reading = getattr(self, "_readingHead", None)
+      head = reading[1] if reading is not None and reading[0] is elem else None # (the document's object: see tostring())
 
       def getParams(desc:list[ParamInfo]) -> list[tuple[str, SerializableType]]: 
         ret:list[tuple[str, SerializableType]] = []
         pinfo:ParamInfo
         for pinfo in desc:
+          if head is not None and pinfo.inHead and pinfo.name in head: # (an old document has it with the object)
+            ret.append((pinfo.name, pinfo.setter(head[pinfo.name])))
+            continue
           sub:Optional[T] = self._getKVPair(elem, pinfo.name)
           if sub is None:
             if getattr(pinfo, "optional", False):
@@ -1746,6 +1952,9 @@ class SerializationStrategy[T](ABC):
         ret:list[tuple[str, Callable[[Serializable], None]]] = []
         pinfo:PropertyInfo
         for pinfo in desc:
+          if head is not None and pinfo.inHead and pinfo.name in head: # (an old document has it with the object)
+            ret.append((pinfo.name, lambda slf, method=pinfo.setter, value=head[pinfo.name]: method(slf, value))) # type: ignore[misc]
+            continue
           if pinfo.name == '_':
             sub:Optional[T] = None
           else:

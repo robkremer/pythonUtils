@@ -58,6 +58,12 @@ class JSONSerializationStrategy(SerializationStrategy):
 
   @override
   @classmethod
+  def sniff(cls, start:bytes) -> int:
+    ":returns: 1 if *start* looks like JSON (a table or a list)."
+    return 1 if start.lstrip()[:1] in (b"{", b"[") else 0
+
+  @override
+  @classmethod
   def protocolName(self)->str:
     '''
     :returns:

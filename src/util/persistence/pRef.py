@@ -39,7 +39,7 @@ from urllib.parse import unquote, quote, urlparse, urljoin
 from contextlib import contextmanager
 #import xml.etree.ElementTree as ET
 from util.persistence.serialize import Serializable, InstantiationInfo,\
-  ParamInfo, PropertyInfo, SerializationStrategy, strdict, SerializableType
+  ParamInfo, PropertyInfo, SerializationStrategy, strdict, SerializableType, HeadValue
 from util.persistence.serialize import DEFAULT_STRATEGY
 from pathlib import Path
 import os
@@ -667,19 +667,28 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
           return candidate + hash_ + frag
     return url
 
-  # TODO: this is in the wrong place...
-  def serializationHeader(self) -> dict[str, str]:
+  def serializationHeader(self) -> dict[str, HeadValue]:
     '''
-    Header fields for when this is written (see *SerializationStrategy.tostring()*):
-    its URL, and the URL it was copied or moved from, if it was.
+    What to put in the head of its document when this is written (see
+    *SerializationStrategy.tostring()*), besides its URL and super-DBs (see
+    *getInstantiationInfo()*): the URL it was copied or moved from, if it
+    was; and how many objects are in it (see *objectCount()*).
 
     :returns:
-    :rtype: dict[str, str]
+    :rtype: dict[str, HeadValue]
     '''
-    ret = {"url": self.url}
+    ret:dict[str, HeadValue] = {"objects": self.objectCount()}
     if getattr(self, "previousURL", None):
-      ret["previousURL"] = self.previousURL
+      ret["previousURL"] = str(self.previousURL)
     return ret
+
+  def objectCount(self) -> int:
+    '''
+    :returns: How many objects are written when this is (see
+      *serializationHeader()*): by default, all of them (not its container).
+    :rtype: int
+    '''
+    return sum(1 for k in self._db if k != 0)
   
   #- ---- Initialization -------------------------------------------------------
   
@@ -826,11 +835,11 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
           logger.error(f'"{slf.url}": not using "{u}" as a super-DB: {ex}')
     return InstantiationInfo(
             cls, 
-            conArgs=[ParamInfo("url", str)],
+            conArgs=[ParamInfo("url", str, inHead=True)],
             conKWArgs=[ParamInfo("_reading", bool, lambda _slf: True)],
             postconSetters=[PropertyInfo("nextID", int),
                             # (before the objects: they may refer to the super-DBs' objects)
-                            PropertyInfo("superDBs", list, superDBURLs, readSuperDBs, optional=True), # optional: older files don't have it
+                            PropertyInfo("superDBs", list, superDBURLs, readSuperDBs, optional=True, inHead=True), # optional: older files don't have it
                             PropertyInfo("_db", strdict, 
                                          lambda slf: convertDictToStrdict(cast(PRDb, slf)._db),
                                          fixDBElems)],

@@ -19,3 +19,4 @@ Submodules
    util.persistence.serializePlist
    util.persistence.serializeXML
    util.persistence.serializeXML2
+   util.persistence.serializeXML3

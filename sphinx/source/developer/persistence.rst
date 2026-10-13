@@ -21,12 +21,13 @@ Serialization
 -------------
 
 A :py:class:`~util.persistence.serialize.SerializationStrategy` writes and
-reads one format. There are four, each in a module of its own:
+reads one format. There are five, each in a module of its own:
 
 =======  ============================================================  =========
 name     module                                                        extension
 =======  ============================================================  =========
-XML2     :py:mod:`~util.persistence.serializeXML2` (the default)       .xml
+XML3     :py:mod:`~util.persistence.serializeXML3` (the default)       .xml
+XML2     :py:mod:`~util.persistence.serializeXML2`                     .xml
 XML      :py:mod:`~util.persistence.serializeXML` (the original)       .xml
 JSON     :py:mod:`~util.persistence.serializeJSON`                     .json
 plist    :py:mod:`~util.persistence.serializePlist`                    .plist
@@ -37,12 +38,51 @@ The class methods are the usual way in::
   SerializationStrategy.writex(url, obj)          # in DEFAULT_STRATEGY's format
   obj = SerializationStrategy.readx(url)          # whichever format it's in
 
-Reading tries the strategies in turn -- the ones for the file's extension
-first, then the preferred ones -- so files in any of the formats can be read;
-:py:meth:`~util.persistence.serialize.SerializationStrategy.peekTypex` finds
-out what's in a file without reading it all. *XML2* writes simple values and
-references as XML attributes, rather than elements of their own, which makes
-its files around 40% smaller than *XML*'s.
+Reading tries the strategies in turn: those surest, from the first few
+bytes of the file, that they wrote it (see ``sniff()``), then the ones for
+its extension, then the preferred ones -- so files in any of the formats can
+be read. *XML2* and *XML3* write simple values and references as XML
+attributes, rather than elements of their own, which makes their files
+around 40% smaller than *XML*'s.
+
+Documents
+~~~~~~~~~
+
+Written to a file (``writex()``, ``write()``), an object is a **document**: a
+**head**, then the object (since version 2.0 of the framework,
+``serialize.VERSION``). The head is a table of plain values -- strings,
+numbers, booleans, and lists or tables of those; no nulls, objects or
+references -- so any format can hold it and anything can read it. It holds:
+
+- ``format``, ``formatVersion``: the strategy that wrote it, and its version;
+- ``serializationVersion``: the framework's version;
+- ``application``, ``applicationVersion``: the program that wrote it
+  (``SerializationStrategy.appName``, ``appVersion``: set them at start-up);
+- ``type``: the object's class; ``saved``: when (ISO 8601);
+- the object's parameters and properties marked ``inHead`` (see
+  ``ParamInfo``, ``PropertyInfo``) -- eg: a ``PRDb``'s ``url`` and
+  ``superDBs`` -- which aren't written with it, and are read from the head;
+- what the object adds (its ``serializationHeader()``): eg, a ``PRDb``'s
+  ``objects`` (how many) and ``previousURL``; an application's ``schema`` and
+  ``schemaVersion`` (the version of its own structures, for migrations).
+
+The head comes first, so it can be read without the rest
+(``readHeadx()``): *XML3* stops reading at the end of it::
+
+  <document>
+    <head>
+      <property key="format" value="XML3" />
+      <property key="type" value="sn.model.model.Model" />
+      <property key="objects" type="int" value="122" />
+      <property key="superDBs" type="list"> <item value="sn:/sn" /> ... </property>
+      ...
+    </head>
+    <object type="sn.model.model.Model" id="1"> ... </object>
+  </document>
+
+Other strategies write the two as a table of two entries (``head``, then
+``object``) unless they do better (``_tostringDocument()``). Documents
+written before 2.0 (a ``header`` and a ``root``) are still read.
 
 An object referred to more than once is written once; later references to it
 are written by its id, so that after reading, ``a is b`` is still true if it
@@ -114,7 +154,7 @@ when the target is close by -- in the same folder, below it, or at most
 ``PRDb.MAX_UP`` (2) folders up -- so a folder of files can be moved or copied
 as a block. Further afield, they're absolute.
 
-Each file's header records the URL it was saved to (and the one before
+Each file's head records the URL it was saved to (and the one before
 that). :py:meth:`PRDb.readFile() <util.persistence.pRef.PRDb.readFile>`
 notices when a file is read from somewhere else (it's been copied or moved),
 takes it to be where it now is -- never confusing it with the original, which

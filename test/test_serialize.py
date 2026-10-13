@@ -262,7 +262,8 @@ class Test(unittest.TestCase):
     self.assertIs(x, y, f'(strategy="{stratName}")')
     
     # test the header
-    self.assertEqual(strategy.header["protocolVersion"], strategy.protocolVersion(), f'(strategy="{stratName}")')
+    self.assertEqual(strategy.header["formatVersion"], strategy.protocolVersion(), f'(strategy="{stratName}")')
+    self.assertEqual(strategy.header["format"], strategy.protocolName(), f'(strategy="{stratName}")')
     
     # # test the indentation (visually)
     # print(f'{stratName}:')
@@ -286,3 +287,95 @@ class Test(unittest.TestCase):
 if __name__ == "__main__":
   #import sys;sys.argv = ['', 'Test.testName']
   unittest.main()
+
+class Linked(Serializable):
+  '''A document object with things in the head: a name (a constructor parameter), and links to other documents (a property).'''
+  def __init__(self, name:str, size:int=0):
+    self.name, self.size, self.links = name, size, []
+
+  def serializationHeader(self) -> dict:
+    return {"schema": "test", "schemaVersion": "7"}
+
+  @classmethod
+  def getInstantiationInfo(cls) -> InstantiationInfo:
+    return InstantiationInfo(cls,
+      conArgs=[ParamInfo("name", str, inHead=True)],
+      conKWArgs=[ParamInfo("size", int)],
+      postconSetters=[PropertyInfo("links", list, inHead=True)])
+
+
+class TestDocuments(unittest.TestCase):
+  '''Documents: a head, then one object (serialization VERSION 2.0).'''
+
+  def setUp(self):
+    import tempfile
+    self.tmp = tempfile.TemporaryDirectory()
+    self.dir = os.path.realpath(self.tmp.name)
+
+  def tearDown(self):
+    self.tmp.cleanup()
+
+  def strategies(self) -> list:
+    return [SerializationStrategy.findStrategy(s.name) for s in strategies]
+
+  def test0100head(self):
+    'The head has the versions, the type, what the object adds, and its inHead ones -- which aren\'t with the object.'
+    from util.persistence.serialize import VERSION
+    for strat in self.strategies():
+      obj = Linked("alpha", 3); obj.links = ["a.xml", "https://example.org/b.xml"]
+      text = strat.tostring(obj, wrap=True)
+      back = strat.fromstring(text)
+      head = strat.header
+      name = strat.protocolName()
+      self.assertEqual((head["format"], head["formatVersion"], head["serializationVersion"]),
+                       (name, strat.protocolVersion(), VERSION), name)
+      self.assertEqual(head["type"], "test_serialize.Linked", name)
+      self.assertEqual((head["name"], head["links"], head["schema"], head["schemaVersion"]),
+                       ("alpha", ["a.xml", "https://example.org/b.xml"], "test", "7"), name)
+      self.assertIn("saved", head)
+      self.assertEqual((back.name, back.size, back.links), ("alpha", 3, ["a.xml", "https://example.org/b.xml"]), name)
+      self.assertLess(text.index("https://example.org/b.xml"), text.index("size"), f"{name}: the head comes first")
+      self.assertEqual(text.count("https://example.org/b.xml"), 1, f"{name}: not in the object as well")
+
+  def test0200readHeadOnly(self):
+    'An XML3 document\'s head is read without reading the rest of it.'
+    from util.persistence.serializeXML3 import XML3SerializationStrategy
+    path = os.path.join(self.dir, "doc.xml")
+    strat = SerializationStrategy.findStrategy("XML3")
+    self.assertIsInstance(strat, XML3SerializationStrategy)
+    strat.write("file://" + path, Linked("beta"), replaceExt=None)
+    with open(path) as f:
+      text = f.read()
+    with open(path, "w") as f:
+      f.write(text[:text.index("</head>") + len("</head>")] + "\n  <object type=\"broken")
+    head = SerializationStrategy.readHeadx("file://" + path)
+    self.assertEqual((head["name"], head["type"]), ("beta", "test_serialize.Linked"))
+
+  def test0300oldDocuments(self):
+    'Documents written before 2.0 (a "header" and a "root") are still read -- with their inHead ones where they were.'
+    from util.persistence.serialize import strdict
+    for name in ("XML", "XML2", "JSON"):
+      strat = SerializationStrategy.findStrategy(name)
+      old = strat.tostring(strdict({"header": strdict({"protocol": name, "url": "file:///x"}),
+                                    "root": Linked("gamma", 5)}), wrap=False)
+      path = os.path.join(self.dir, f"old{name}.xml")
+      with open(path, "w") as f:
+        f.write(old)
+      obj = SerializationStrategy.readx("file://" + path, replaceExt=None)
+      self.assertEqual((obj.name, obj.size), ("gamma", 5), name)
+      self.assertEqual(SerializationStrategy.peekStringx("file://" + path, "header", "url"), "file:///x", name)
+
+  def test0400sniff(self):
+    'A file is tried with the strategies surest they wrote it first: a JSON document in a ".xml" file is read.'
+    path = os.path.join(self.dir, "really.xml")
+    SerializationStrategy.findStrategy("JSON").write("file://" + path, Linked("delta"), replaceExt=None)
+    self.assertEqual(SerializationStrategy.readx("file://" + path, replaceExt=None).name, "delta")
+
+  def test0500plainHead(self):
+    'Only plain values can be in a head.'
+    from util.persistence.serialize import isHeadValue
+    self.assertTrue(all(isHeadValue(v) for v in ("s", 1, 2.5, True, ["a", 1], {"k": "v"})))
+    self.assertFalse(any(isHeadValue(v) for v in (None, [["nested"]], {"k": {"deep": 1}}, Linked("x"), {1: "x"})))
+    obj = Linked("epsilon"); obj.links = [Linked("not plain")]
+    with self.assertRaises(TypeError):
+      SerializationStrategy.findStrategy("XML3").tostring(obj, wrap=True)

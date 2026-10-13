@@ -59,8 +59,8 @@ class XML2SerializationStrategy(XMLSerializationStrategy):
   The compact XML strategy (see the module doc): the default strategy.
   '''
 
-  preferred = True
-  "Chosen over *XMLSerializationStrategy* for the \".xml\" extension (it reads both forms)."
+  preferred = False
+  "Not chosen for the \".xml\" extension: *XML3SerializationStrategy* is (it reads what this writes)."
 
   PACKED_TYPES = ("bool", "int", "float", "str")
   "The (type attribute values of the) simple types written packed into their property tag."

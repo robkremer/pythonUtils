@@ -11,7 +11,7 @@ another:
      rankdir=BT;
      node [shape=box, style=rounded, fontname="Helvetica", fontsize=11];
      edge [color="gray40"];
-     serialize [label="persistence.serialize\nSerializable, SerializationStrategy\n(XML, XML2, JSON, plist)"];
+     serialize [label="persistence.serialize\nSerializable, SerializationStrategy\n(XML, XML2, XML3, JSON, plist)"];
      pRef [label="persistence.pRef\nPRDb, PRObject, PReference"];
      observer [label="observer\nSubject, Observer"];
      dirtyable [label="dirtyable\nDirtyable"];
