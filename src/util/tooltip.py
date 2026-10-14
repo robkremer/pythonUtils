@@ -73,14 +73,17 @@ class CreateToolTip:
     :param text:    Either a string to display or a no-argument function returning a *str*
     :param canvasID:  A required item ID if *widget* is a tk.Canvas, otherwise ignored.
     :param waitTime:  The time to wait in msec. [default=500]
-    :param wrapLength:  The width to wrap at in pixels. [default=180]
+    :param wrapLength:  The width to wrap at in pixels (0: no wrapping) -- or a
+              no-argument function giving it, asked each time it's shown. [default=240]
     :param shouldDisplay: A function taking this object as an argument returning a bool
-              indicating that this text tool is to be displayed. If not 
-              specified or None, the tooltip will display only if the text
-              (text or a function) is not a zero-length string.
+              indicating that this text tool is to be displayed (asked when
+              the pointer comes in). Either way, the tooltip isn't displayed
+              if its text is empty (asked once, when it's about to be shown:
+              so a function giving it isn't called just for passing over).
     :type shouldDisplay: Optional[Callable[[Self],bool]]
     :param font: The font for the text (eg: "TkFixedFont", so text laid out with
-      spaces stays aligned); by default, Tk's default.
+      spaces stays aligned); by default, Tk's default -- or a no-argument
+      function giving it (None for the default), asked each time it's shown.
     :throws TypeError:
     :throws ValueError:
     :param background:
@@ -96,7 +99,7 @@ class CreateToolTip:
       self.text = lambda text=text: text
     else:
       raise TypeError(f'CreateToolTip: Expected parameter "text" to be a function, f()->str, or a str; but got {type(text).__name__}.')
-    self.shouldDisplay = shouldDisplay if shouldDisplay is not None else lambda o: o.text() is not None and len(o.text()) > 0
+    self.shouldDisplay = shouldDisplay if shouldDisplay is not None else lambda o: True
     self.widget = widget
     self.canvasID = canvasID
     self.isCanvas = isinstance(widget, tk.Canvas)
@@ -159,6 +162,11 @@ class CreateToolTip:
     :param event:
     :type event:
     '''
+    text = self.text()
+    if not text:
+      return
+    font = self.font() if callable(self.font) else self.font
+    wraplength = self.wraplength() if callable(self.wraplength) else self.wraplength
     x = y = 0
     if self.isCanvas:
       x, y, cx, cy = self.widget.bbox(self.canvasID)
@@ -173,9 +181,9 @@ class CreateToolTip:
     # Leaves only the label and removes the app window
     self.tw.wm_overrideredirect(True)
     self.tw.wm_geometry("+%d+%d" % (screenX, screenY))
-    label = tk.Label(self.tw, text=self.text(), justify='left',
+    label = tk.Label(self.tw, text=text, justify='left',
              background=self.background, relief='solid', borderwidth=1,
-             wraplength = self.wraplength, **({} if self.font is None else {"font": self.font}))
+             wraplength = wraplength, **({} if font is None else {"font": font}))
     label.pack(ipadx=1)
     # An overrideredirect window is NOT managed by the window manager, so
     # nothing protects its stacking position once created -- if anything
