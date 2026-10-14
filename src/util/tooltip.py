@@ -114,6 +114,7 @@ class CreateToolTip:
       self.widget.bind("<ButtonPress>", self.leave)
     self.id = None
     self.tw = None
+    self.watchID = None
     
   def delete(self):
     self.unschedule()
@@ -162,6 +163,9 @@ class CreateToolTip:
     :param event:
     :type event:
     '''
+    self.id = None
+    if not self.stillWanted():
+      return
     text = self.text()
     if not text:
       return
@@ -222,8 +226,72 @@ class CreateToolTip:
     self.tw.attributes('-topmost', True)
     self.tw.update_idletasks()
     self.tw.lift()
+    self.watchID = self.widget.after(self.WATCH_INTERVAL, self.watch)
+
+  WATCH_INTERVAL = 250
+  "How often (msec) a tooltip that's shown checks it's still wanted (see *watch()*)."
+
+  def appActive(self) -> bool:
+    '''
+    :returns: Whether this program is the one in front (the user's working in
+      it): one of its windows has the keyboard focus.
+    '''
+    try:
+      return self.widget.focus_displayof() is not None
+    except (tk.TclError, KeyError): # (KeyError: the focus is in a window Tkinter didn't make -- eg: a native dialog)
+      return True
+
+  def pointerOver(self) -> bool:
+    '''
+    :returns: Whether the pointer's over what this is the tooltip of: the
+      widget -- or, on a canvas, its item -- within a few pixels.
+    '''
+    w = self.widget
+    try:
+      px, py = w.winfo_pointerxy()
+      if self.isCanvas:
+        box = w.bbox(self.canvasID)
+        if not box:
+          return False
+        x0 = w.winfo_rootx() + box[0] - w.canvasx(0)
+        y0 = w.winfo_rooty() + box[1] - w.canvasy(0)
+        x1, y1 = x0 + box[2] - box[0], y0 + box[3] - box[1]
+      else:
+        x0, y0 = w.winfo_rootx(), w.winfo_rooty()
+        x1, y1 = x0 + w.winfo_width(), y0 + w.winfo_height()
+    except tk.TclError:
+      return False
+    m = 3
+    return x0 - m <= px <= x1 + m and y0 - m <= py <= y1 + m
+
+  def stillWanted(self) -> bool:
+    '''
+    :returns: Whether a tooltip should be shown (or stay shown): this program's
+      in front, and the pointer's over what it's the tooltip of. (It's
+      -topmost: shown when the program isn't in front -- eg: a double-click
+      opened another program, or the pointer left while it was busy -- it'd
+      float over the other programs' windows; and a <Leave> can be missed: eg:
+      when the item's redrawn, moved or deleted under the pointer.)
+    '''
+    return self.widget is not None and self.appActive() and self.pointerOver()
+
+  def watch(self) -> None:
+    '''While the tooltip's shown: hide it as soon as it's no longer wanted (see *stillWanted()*).'''
+    self.watchID = None
+    if self.tw is None or self.widget is None:
+      return
+    if not self.stillWanted():
+      self.hidetip()
+      return
+    self.watchID = self.widget.after(self.WATCH_INTERVAL, self.watch)
 
   def hidetip(self):
+    watchID, self.watchID = self.watchID, None
+    if watchID and self.widget is not None:
+      try:
+        self.widget.after_cancel(watchID)
+      except tk.TclError:
+        pass
     tw = self.tw
     self.tw= None
     if tw:
