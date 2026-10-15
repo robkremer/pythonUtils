@@ -1655,7 +1655,7 @@ def isGuiAvailable() -> bool:
   return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
 
 
-def askViaTk(prompt: str, title: str = "Input required") -> Optional[str]:
+def askViaTk(prompt: str, title: str = "Input required", check:Callable[[str],bool]=lambda s: True) -> Optional[str]:
   """Prompt the user for input using a Tkinter dialog: in the running Tk
   application, if there is one (over its focused window); otherwise in a Tk
   interpreter of its own, made for it and destroyed afterwards.
@@ -1684,11 +1684,23 @@ def askViaTk(prompt: str, title: str = "Input required") -> Optional[str]:
       except KeyError: # (eg: a menu's popdown, which isn't a Python widget)
         focused = None
       parent = focused.winfo_toplevel() if focused is not None else existing
-      return simpledialog.askstring(title, prompt, parent=parent)
+      while True:
+        ret = simpledialog.askstring(title, prompt, parent=parent)
+        if ret is None or len(ret) == 0:
+          return None
+        if check(ret):
+          return ret
     root = tk.Tk()
     root.withdraw()
     root.attributes("-topmost", True)
-    result = simpledialog.askstring(title, prompt, parent=root)
+    
+    while True:
+      result = simpledialog.askstring(title, prompt, parent=root)
+      if result is None or len(result) == 0:
+        result = None
+        break
+      if check(result):
+        break
     root.destroy()
     return result
   except tk.TclError:
@@ -1696,7 +1708,7 @@ def askViaTk(prompt: str, title: str = "Input required") -> Optional[str]:
     return None
 
 
-def askViaTerminal(prompt: str) -> Optional[str]:
+def askViaTerminal(prompt: str, check:Callable[[str],bool]=lambda s: True) -> Optional[str]:
   """Prompt the user for input via stdin/stdout.
 
   :param prompt: The message to display to the user.
@@ -1707,23 +1719,58 @@ def askViaTerminal(prompt: str) -> Optional[str]:
   if not sys.stdin.isatty():
     return None
   try:
-    return input(f"{prompt}: ")
+    while True:
+      ret = input(f"{prompt}: ")
+      if ret is None or len(ret)==0:
+        return None
+      if check(ret):
+        return ret
   except (EOFError, KeyboardInterrupt):
     return None
 
 
-def askUser(prompt: str, title: str = "Input required") -> Optional[str]:
+def askYesNo(question:str, title:str) -> bool:
+  '''
+  Ask the user a yes-or-no question: in a Yes/No dialog over the focused
+  window, if the GUI is running; otherwise (eg: the terminal interface, or
+  once the windows are gone at exit) as text (see *util.utils.askUser()*).
+
+  :param question:
+  :type question: str
+  :param title: The dialog's title.
+  :type title: str
+  :returns: True iff the answer is yes.
+  :rtype: bool
+  '''
+  import tkinter as tk
+  root = tk._default_root # type: ignore[attr-defined]
+  if root is not None:
+    from tkinter import messagebox
+    try:
+      focused = root.focus_get()
+    except KeyError: # (eg: a menu's popdown, which isn't a Python widget)
+      focused = None
+    while True:
+      return bool(messagebox.askyesno(title, question, parent=focused.winfo_toplevel() if focused is not None else root))
+  def check(ans:str):
+    return ans.strip().upper() in ("Y", "YES", "T", "TRUE", "N", "NO", "F", "FALSE")
+  ans = askUser(f'{question}\n(Y/N):', title, check)
+  return ans is not None and ans.strip().upper() in ("Y", "YES", "T", "TRUE")
+
+def askUser(prompt: str, title: str = "Input required", check:Callable[[str],bool]=lambda s: True) -> Optional[str]:
   """Ask the user a question, using a GUI dialog if available and falling back to the terminal.
 
   :param prompt: The message to display to the user.
   :type prompt: str
   :param title: The dialog window title, used only in GUI mode.
   :type title: str
+  :param check: A function to validate user input.
+  :type check: check:Callable[[str],bool]
   :returns: The user's input, or None if no input method succeeded.
   :rtype: Optional[str]
   """
   if isGuiAvailable():
-    result = askViaTk(prompt, title)
+    result = askViaTk(prompt, title, check)
     if result is not None:
       return result
   return askViaTerminal(prompt)
