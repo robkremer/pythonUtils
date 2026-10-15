@@ -1172,8 +1172,6 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
       ret = [self[key]]
     elif isinstance(key, str):
       ret = [v for v in self._db.values() if v.name == key]
-      if len(ret) > 1:
-        print([f'{id}: {obj.name}' for id,obj in self._db.items()])
     else:
       raise TypeError(f"PRDb._resolve(): Key must be int or str, got {type(key).__name__}")
     ret = [o for o in ret if filtr(o)] #type: ignore[arg-type]
