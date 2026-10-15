@@ -917,10 +917,14 @@ class TopCommandParser(SubParsable):
                ignore:Callable[[str], bool]=lambda name: name.startswith("_"), 
                defaults:Optional[dict[str,Any]]=None,
                decoders:Optional[DecodersType]=None,
+               description:str="",
                 **args):
     '''
     :param commandName: The commandName of the command.
     :type commandName: str
+    :param description: What *help* (with no arguments) says before the list
+      of commands: eg: the syntax of the language's arguments.
+    :type description: str
     :param doList: An undo list to use. By default, a new one will be created.
     :type doList: DoList
     :param kwarg: Keyword arguments to be passed along the *ArgumentParser* constructor.
@@ -941,6 +945,9 @@ class TopCommandParser(SubParsable):
     :param args:
     :type args:
     '''
+    self.description:str = description
+    'What *help* says before the list of commands.'
+    
     # The *immediageSuper* is self...
     SubParsable.__init__(self, commandName, self, self, help='List of commands', description="Top level commands")
     
@@ -1050,67 +1057,7 @@ class TopCommandParser(SubParsable):
     '''
     if "help" in kwargs:
       del kwargs["help"]
-    descr = """
-sn command line language includes the following list of commands. In general,
-<spec>, <obj>, <type>, <relation-type> refer to tygra nodes and relations
-given by the syntax:
-    
-    [<commandName>][@<url>][#<id>] | <id>
-    
-where 
-    <url>  defaults to the URL of the default model (if it exists), 
-    <commandName> may be any commandName (including spaces, but if present, the whole 
-           expression must be quoted with " or '), and 
-    <id>   is a unique integer within the model. If you include <id>, the commandName
-           is ignored.
-           
-If only <id> is absent and <commandName> is present, then a the search will continue
-recursively through the model's included models.
-
-The ! (declare) and ? (query) commands take expressions in the following format,
-sorting out the intended semantics by the type and number of the arguments:
-
-    ! <src-obj> <rel-type> <dst-obj>  : Create a relation <rel-type> from 
-                            [--type]    <src-obj> to <dst-obj>. 
-    ! <type> <obj> [--type]           : Create <obj> of type <type>. 
-    ? <obj1>|? <relationType>|? <obj2>|?  : Returns *True* iff <obj1> is related
-                                        to <obj2> by <relationType> related to 
-                                        <obj1> by <relationType>. If any of the
-                                        arguments are "?" a list of objects or 
-                                        pairs of objects that make the expression
-                                        true are returned. 
-    ? <type>|? <obj>|?                : Returns *True* iff <obj> is of type 
-                                        <type> (that is, it has an <isa> relation
-                                        chain to <type>). If any of the
-                                        arguments are "?" a list of objects that 
-                                        make the expression true are returned.  
-    ? <obj>                           : returns <obj> itself.
-
-There are node objects and relation objects that join them.  The node objects
-simply have attributes, and the relations have attributes and roles (where a 
-role has some properities and zero or more references to other objects). All
-there objects are further devided into types and individuals, the main difference
-being you can't inherit from an individual.  Relations can be hard difficult
-to work as roles and their properties can be difficult.  For working with
-binary relations, every model contains the following system objects, which is
-all most applications need; just inherit from the appropriate object: 
-
-  top                                       : everything inherits from top
-    node                                    : an empty node object having only a 
-                                              "commandName" property
-    relation                                : an empty relation having no roles
-      "binary relation"                     : gives you roles "src" and "dst"
-        "reflexive relation"                : makes a reflexive relation
-        "symmetric relation"                : makes a symmetric relation
-        "transitive relation"               : makes a transitive relation
-          "equality relation"               : inherits from the above 3
-        "first order binary relation"       : first order versions (take only 
-                                              nodes as fillers)
-          "first order reflexive relation"
-          "first order symmetric relation"
-          "first order transitive relation"
-            "first order equality relation"   
-"""
+    descr = self.description
     epilog = """
 Type "<cmd...> -h" or "help <cmd...>" for more detail on each command."""
     parser =  ArgumentParser(prog=self.commandName, add_help=True,
@@ -1720,6 +1667,11 @@ def fixKwargs(fun:Callable, args:list[Any], kwargs:dict[str,Any],
       values.
     - decode any str param values for types in the *fun* signature that have
       str values in *kwargs*.
+    - decode each element of a list-of-str param value (eg: from an argparse
+      ``nargs``) with the decoder for the element type of a ``list[...]`` in the
+      annotation (or failing that, for the annotation itself) -- unless that
+      allows str (eg: ``list[str|GraphObject]``: the function looks them up).
+      An element that won't decode is left as a str for the function to report.
     - if a decoder has a param named "params", they call it with a *kwargs* named
       "params" containing a *dict* of the OTHER params to the function.
 
@@ -1785,14 +1737,42 @@ def fixKwargs(fun:Callable, args:list[Any], kwargs:dict[str,Any],
     flatten(tree.body)
     return parts
 
+  def elementTypes(annotation:str) -> list[str]:
+    """Return the union members of the element type of any ``list[...]``
+    member of *annotation* (eg: ``GraphObject|list[GraphObject]`` gives
+    ``["GraphObject"]``)."""
+    ret:list[str] = []
+    for t in splitTopLevelUnion(annotation):
+      node = ast.parse(t, mode="eval").body
+      if isinstance(node, ast.Subscript) and ast.unparse(node.value) in ("list", "List"):
+        ret.extend(splitTopLevelUnion(ast.unparse(node.slice)))
+    return ret
+
+  def decode(typ:str, val:str) -> Any:
+    """Decode *val* with the decoder for *typ*, passing the other params if the decoder wants them."""
+    dsig = inspect.signature(decoders[typ])
+    dparams = dsig.parameters
+    dkwargs:dict[str,Any] = dict()
+    if "kwargs" in dparams:
+      #dkwargs["params"] = retKwargs
+      dkwargs = retKwargs
+    return decoders[typ](val, **dkwargs)
+
   def fix():
     for paramName, param in sig.parameters.items():
       val = kwargs.get(paramName, None)
-      if type(val) is not str: # if the type has already been dealt with by argparse ignore it
+      isStrList = isinstance(val, list) and len(val) > 0 and all(type(v) is str for v in val)
+      if type(val) is not str and not isStrList: # if the type has already been dealt with by argparse ignore it
         continue
       if param.annotation is inspect._empty: # nothing we can do without type info
         continue
-      types:list[str] = splitTopLevelUnion(param.annotation) #.split(" | ")
+      # a list from argparse (nargs) is decoded element-wise, preferably by a list[...] member's element type
+      if isStrList:
+        types:list[str] = elementTypes(param.annotation) or splitTopLevelUnion(param.annotation)
+        if "str" in types: # (the function takes names, and looks them up itself)
+          continue
+      else:
+        types = splitTopLevelUnion(param.annotation)
       typ:Optional[str] = None
       t:str
       for t in types:
@@ -1800,14 +1780,17 @@ def fixKwargs(fun:Callable, args:list[Any], kwargs:dict[str,Any],
           typ = t
           break
       if typ is not None:
-        dsig = inspect.signature(decoders[typ])
-        dparams = dsig.parameters
-        dkwargs:dict[str,Any] = dict()
-        if "kwargs" in dparams:
-          #dkwargs["params"] = retKwargs
-          dkwargs = retKwargs
+        if isStrList:
+          decoded:list[Any] = []
+          for v in val:
+            try:
+              decoded.append(decode(typ, v))
+            except:
+              decoded.append(v) # leave it for the function to report
+          retKwargs[paramName] = decoded
+          continue
         try: # assuming this might fail on the first pass, but succeed on the 2nd when the other params are instantiated...
-          retKwargs[paramName] = decoders[typ](val, **dkwargs) # replace a str value with the decoded version
+          retKwargs[paramName] = decode(typ, val) # replace a str value with the decoded version
         except:
           pass
       # if typ is not None: # repeat to make sure any argument wanting params get decoded ones.
