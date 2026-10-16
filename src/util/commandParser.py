@@ -1674,8 +1674,8 @@ def fixKwargs(fun:Callable, args:list[Any], kwargs:dict[str,Any],
     - decoders that don't take ``**kwargs`` run first; those that do are then
       called with the (already decoded) other params as *kwargs*.
     - a value that won't decode stays a str if the annotation (or the list's
-      element type) allows str; otherwise a ValueError naming the param is
-      raised, chained from the decoder's exception.
+      element type) allows str; otherwise a ValueError naming the param (as
+      ``--name`` if it's an option) is raised, chained from the decoder's exception.
 
   :param fun:
   :type fun: Callable
@@ -1768,6 +1768,13 @@ def fixKwargs(fun:Callable, args:list[Any], kwargs:dict[str,Any],
     """The message of *ex* (a KeyError's str() would show it quoted)."""
     return str(ex.args[0]) if isinstance(ex, KeyError) and len(ex.args) == 1 else str(ex)
 
+  def label(paramName:str) -> str:
+    """*paramName* as the command line shows it: as makeParserFromFunc() makes
+    it, a param with a default (that isn't positional-only) is an option."""
+    param = sig.parameters[paramName]
+    isOption = param.default is not inspect.Parameter.empty and param.kind != param.POSITIONAL_ONLY
+    return f"--{paramName}" if isOption else paramName
+
   # work out which decoder (if any) applies to each str (or list-of-str) param
   todo:list[tuple[str,str,Any,bool,bool]] = [] # (paramName, typ, val, isStrList, allowsStr)
   for paramName, param in sig.parameters.items():
@@ -1800,7 +1807,7 @@ def fixKwargs(fun:Callable, args:list[Any], kwargs:dict[str,Any],
     except Exception as ex:
       if allowsStr: # leave the str for the function to deal with
         continue
-      raise ValueError(f"--{paramName}: {message(ex)}") from ex
+      raise ValueError(f"{label(paramName)}: {message(ex)}") from ex
    
   for paramName, param in sig.parameters.items(): # look to fill in defaults
     # move any positional only elements to args

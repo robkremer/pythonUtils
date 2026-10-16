@@ -64,7 +64,7 @@ class TestFixKwargs(unittest.TestCase):
   def test_badNameRaises(self):
     with self.assertRaises(ValueError) as cm:
       fix(connect, destination="nobody", model="m")
-    self.assertEqual(str(cm.exception), '--destination: There\'s no object named "nobody"')
+    self.assertEqual(str(cm.exception), 'destination: There\'s no object named "nobody"') # (positional: no default)
     self.assertIsInstance(cm.exception.__cause__, KeyError)
 
   def test_badListElementRaises(self):
@@ -72,8 +72,16 @@ class TestFixKwargs(unittest.TestCase):
       fix(connect, destination="alice", model="m", others=["bob", "nobody"])
 
   def test_badModelRaises(self):
-    with self.assertRaisesRegex(ValueError, "^--model: x$"):
+    with self.assertRaisesRegex(ValueError, "^model: x$"):
       fix(connect, destination="alice", model="x")
+
+  def test_optionLabelled(self):
+    def option(label:Model|None=None): pass
+    def positional(label:Model|None=None, /): pass # (positional-only, even with a default)
+    with self.assertRaisesRegex(ValueError, '^--label: '):
+      fix(option, label="x")
+    with self.assertRaisesRegex(ValueError, '^label: '):
+      fix(positional, label="x")
 
   def test_strAllowedKeepsStr(self):
     kw = fix(connect, destination="alice", model="m", label="nobody")
