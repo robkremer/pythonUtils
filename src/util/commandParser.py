@@ -1671,9 +1671,11 @@ def fixKwargs(fun:Callable, args:list[Any], kwargs:dict[str,Any],
       ``nargs``) with the decoder for the element type of a ``list[...]`` in the
       annotation (or failing that, for the annotation itself) -- unless that
       allows str (eg: ``list[str|GraphObject]``: the function looks them up).
-      An element that won't decode is left as a str for the function to report.
-    - if a decoder has a param named "params", they call it with a *kwargs* named
-      "params" containing a *dict* of the OTHER params to the function.
+    - decoders that don't take ``**kwargs`` run first; those that do are then
+      called with the (already decoded) other params as *kwargs*.
+    - a value that won't decode stays a str if the annotation (or the list's
+      element type) allows str; otherwise a ValueError naming the param is
+      raised, chained from the decoder's exception.
 
   :param fun:
   :type fun: Callable
@@ -1758,52 +1760,47 @@ def fixKwargs(fun:Callable, args:list[Any], kwargs:dict[str,Any],
       dkwargs = retKwargs
     return decoders[typ](val, **dkwargs)
 
-  def fix():
-    for paramName, param in sig.parameters.items():
-      val = kwargs.get(paramName, None)
-      isStrList = isinstance(val, list) and len(val) > 0 and all(type(v) is str for v in val)
-      if type(val) is not str and not isStrList: # if the type has already been dealt with by argparse ignore it
-        continue
-      if param.annotation is inspect._empty: # nothing we can do without type info
-        continue
-      # a list from argparse (nargs) is decoded element-wise, preferably by a list[...] member's element type
-      if isStrList:
-        types:list[str] = elementTypes(param.annotation) or splitTopLevelUnion(param.annotation)
-        if "str" in types: # (the function takes names, and looks them up itself)
-          continue
-      else:
-        types = splitTopLevelUnion(param.annotation)
-      typ:Optional[str] = None
-      t:str
-      for t in types:
-        if t in decoders:
-          typ = t
-          break
-      if typ is not None:
-        if isStrList:
-          decoded:list[Any] = []
-          for v in val:
-            try:
-              decoded.append(decode(typ, v))
-            except:
-              decoded.append(v) # leave it for the function to report
-          retKwargs[paramName] = decoded
-          continue
-        try: # assuming this might fail on the first pass, but succeed on the 2nd when the other params are instantiated...
-          retKwargs[paramName] = decode(typ, val) # replace a str value with the decoded version
-        except:
-          pass
-      # if typ is not None: # repeat to make sure any argument wanting params get decoded ones.
-      #   dsig = inspect.signature(decoders[typ])
-      #   dparams = dsig.parameters
-      #   dkwargs = dict()
-      #   if "kwargs" in dparams:
-      #     dkwargs["params"] = retKwargs
-      #   retKwargs[paramName] = decoders[typ](val, **dkwargs) # replace a str value with the decoded version
-  # for decoder-known types decode the str param to the actual object
+  def wantsKwargs(typ:str) -> bool:
+    """True if the decoder for *typ* takes the other (decoded) params as **kwargs."""
+    return "kwargs" in inspect.signature(decoders[typ]).parameters
 
-  fix()
-  fix()
+  def message(ex:Exception) -> str:
+    """The message of *ex* (a KeyError's str() would show it quoted)."""
+    return str(ex.args[0]) if isinstance(ex, KeyError) and len(ex.args) == 1 else str(ex)
+
+  # work out which decoder (if any) applies to each str (or list-of-str) param
+  todo:list[tuple[str,str,Any,bool,bool]] = [] # (paramName, typ, val, isStrList, allowsStr)
+  for paramName, param in sig.parameters.items():
+    val = kwargs.get(paramName, None)
+    isStrList = isinstance(val, list) and len(val) > 0 and all(type(v) is str for v in val)
+    if type(val) is not str and not isStrList: # if the type has already been dealt with by argparse ignore it
+      continue
+    if param.annotation is inspect._empty: # nothing we can do without type info
+      continue
+    # a list from argparse (nargs) is decoded element-wise, preferably by a list[...] member's element type
+    if isStrList:
+      types:list[str] = elementTypes(param.annotation) or splitTopLevelUnion(param.annotation)
+      if "str" in types: # (the function takes names, and looks them up itself)
+        continue
+    else:
+      types = splitTopLevelUnion(param.annotation)
+    typ = next((t for t in types if t in decoders), None)
+    if typ is not None:
+      todo.append((paramName, typ, val, isStrList, "str" in types))
+
+  # decode in dependency order: decoders that don't need the other params (eg:
+  # Model) first, then those that do (eg: GraphObject), so they see decoded values.
+  todo.sort(key=lambda item: wantsKwargs(item[1]))
+  for paramName, typ, val, isStrList, allowsStr in todo:
+    try:
+      if isStrList:
+        retKwargs[paramName] = [decode(typ, v) for v in val]
+      else:
+        retKwargs[paramName] = decode(typ, val) # replace a str value with the decoded version
+    except Exception as ex:
+      if allowsStr: # leave the str for the function to deal with
+        continue
+      raise ValueError(f"--{paramName}: {message(ex)}") from ex
    
   for paramName, param in sig.parameters.items(): # look to fill in defaults
     # move any positional only elements to args
