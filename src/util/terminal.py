@@ -41,6 +41,7 @@ import builtins
 import sys
 import io
 import itertools
+import time
 import traceback
 import util
 import logging
@@ -902,6 +903,15 @@ class TerminalWidget(AbstractTerminal, tk.Text):
   :type queryFlashCount: int
   :param queryFlashIntervalMs: Milliseconds between flash transitions.
   :type queryFlashIntervalMs: int
+  :param errorFlashCount: Number of on/off flashes (in queryFlashColor) to run
+    when a warning, error or exception -- anything printed in the "stderr"
+    style -- arrives. A burst of such lines (a traceback, several log lines in
+    a row) gets one flash: another starts only once the widget has stopped
+    flashing and no "stderr" line has arrived for *errorBurstGapMs*. 0 turns
+    it off.
+  :type errorFlashCount: int
+  :param errorBurstGapMs: Milliseconds without a "stderr" line that end a burst.
+  :type errorBurstGapMs: int
   :param kwargs: Forwarded to tk.Text (e.g. bg, fg, font, width, height).
   :type kwargs: object
   """
@@ -922,6 +932,8 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     queryFlashColor: Optional[str] = "yellow",
     queryFlashCount: int = 6,
     queryFlashIntervalMs: int = 150,
+    errorFlashCount: int = 0,
+    errorBurstGapMs: int = 500,
     **kwargs: object,
   ) -> None:
     '''
@@ -953,6 +965,10 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     :type queryFlashCount: int
     :param queryFlashIntervalMs:
     :type queryFlashIntervalMs: int
+    :param errorFlashCount:
+    :type errorFlashCount: int
+    :param errorBurstGapMs:
+    :type errorBurstGapMs: int
     :param kwargs:
     :type kwargs: object
     '''
@@ -1016,6 +1032,11 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     self.queryFlashIntervalMs = queryFlashIntervalMs
     self._flashJob: Optional[str] = None
     self._normalBg = self.cget("bg")
+
+    # error-flash state -- see _noteErrorLine().
+    self.errorFlashCount = errorFlashCount
+    self.errorBurstGapMs = errorBurstGapMs
+    self._lastErrorTime: Optional[float] = None
 
     self._writePrompt()
 
@@ -1272,6 +1293,22 @@ class TerminalWidget(AbstractTerminal, tk.Text):
       self.after_cancel(self._flashJob)
     self._flashTick(self.queryFlashCount * 2, untilReply=False)
 
+  def _noteErrorLine(self) -> None:
+    """A line in the "stderr" style (a warning, an error, part of a traceback)
+    has just been printed: flash (*errorFlashCount* times) if it starts a new
+    burst. It doesn't if the widget is already flashing, or if the previous
+    "stderr" line came less than *errorBurstGapMs* ago -- so a traceback, or
+    several log lines in a row, gets one flash, not one per line.
+
+    :rtype: None
+    """
+    now = time.monotonic()
+    newBurst = self._lastErrorTime is None or (now - self._lastErrorTime) * 1000 >= self.errorBurstGapMs
+    self._lastErrorTime = now
+    if not newBurst or self._flashJob is not None or self.errorFlashCount <= 0:
+      return
+    self._flashTick(self.errorFlashCount * 2, untilReply=False)
+
   def _flashTick(self, ticksRemaining: int, untilReply: bool = True) -> None:
     """One step of the attention-flash. Alternates the widget's background
     between queryFlashColor and its normal color; reschedules itself via
@@ -1285,12 +1322,17 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     :type untilReply: bool
     :rtype: None
     """
-    if (untilReply and not self._awaitingReply) or ticksRemaining <= 0:
-      self.configure(bg=self._normalBg)
+    self._flashJob = None
+    try:
+      if not self.winfo_exists(): # (the window closed mid-flash)
+        return
+      if (untilReply and not self._awaitingReply) or ticksRemaining <= 0:
+        self.configure(bg=self._normalBg)
+        return
+      self.configure(bg=self.queryFlashColor if ticksRemaining % 2 == 0 else self._normalBg)
+      self._flashJob = self.after(self.queryFlashIntervalMs, self._flashTick, ticksRemaining - 1, untilReply)
+    except tk.TclError: # (the whole app is going away)
       self._flashJob = None
-      return
-    self.configure(bg=self.queryFlashColor if ticksRemaining % 2 == 0 else self._normalBg)
-    self._flashJob = self.after(self.queryFlashIntervalMs, self._flashTick, ticksRemaining - 1, untilReply)
 
   def _stopQueryFlash(self) -> None:
     """Cancel any in-progress input() attention-flash and restore the normal
@@ -1302,6 +1344,20 @@ class TerminalWidget(AbstractTerminal, tk.Text):
       self.after_cancel(self._flashJob)
       self._flashJob = None
     self.configure(bg=self._normalBg)
+
+  @override
+  def destroy(self) -> None:
+    """Cancel any flash in progress, so it doesn't outlive the widget.
+
+    :rtype: None
+    """
+    if getattr(self, "_flashJob", None) is not None:
+      try:
+        self.after_cancel(self._flashJob)
+      except tk.TclError:
+        pass
+      self._flashJob = None
+    super().destroy()
 
   def _handleCtrlD(self, event: tk.Event) -> str:
     """Signal EOF to a pending input() call, mimicking terminal Ctrl+D semantics.
@@ -1512,6 +1568,8 @@ class TerminalWidget(AbstractTerminal, tk.Text):
 
     self.insert("end", text + "\n", tagName if tagName else ())
     self.mark_set("inputStart", "end")
+    if style == "stderr":
+      self._noteErrorLine()
 
     # If a command is running, leave the line blank — _finishCommand writes
     # the real prompt when it completes. If nothing is running and no input()
