@@ -312,13 +312,15 @@ def quoteIfNecessary(s:str) -> str:
 ################################################################################
 
 # State bits in events
+_MAC = sys.platform == "darwin"
+"(Tk on macOS sets Mod1 for Command and Mod2 for Option: the other masks would take one for the other.)"
 def s_CMD(s:int) -> bool:
   """
   :return: *True* iff *s* has the Command key bit set.
   :param s:
   :type s: int
   """
-  return (s&0x18) != 0
+  return (s&(0x8 if _MAC else 0x18)) != 0
 def s_SHIFT(s:int) -> bool: 
   """
   :return: *True* iff *s* has the Shift key bit set.
@@ -339,7 +341,7 @@ def s_ALT(s:int) -> bool:
   :param s:
   :type s: int
   """
-  return (s&0x88) != 0
+  return (s&(0x10 if _MAC else 0x88)) != 0
 s_OPT = s_ALT
 
 # Graphical representations for control keys
