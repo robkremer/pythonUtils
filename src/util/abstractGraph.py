@@ -213,31 +213,17 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
       self.connect(source=src, destination=dst)
 
   @property
-  def dst(self, localOnly:bool=False) -> T|None: #AGObject|None:
+  def dst(self) -> T|None:
     '''
-    :return: The *calculated* destination of this relation; ie: if this relation
-      does not have a specific destination, look it up in the ISA hierarchy.
-    :param localOnly:
-    :type localOnly: bool
+    :return: The destination of this relation, or None. (A subclass may calculate
+      one it doesn't have itself: eg: *sn.model.model.Relation* inherits its
+      type's.)
+    :rtype: T | None
     '''
-#    if localOnly or self._dst is not None:
     return self._dst
-#    else:
-#      obj:AGObject
-#      supers = self.getSupers()
-#      for obj in supers:
-#        assert isinstance(obj, AGRelation)
-#        if obj._dst is not None:
-#          return obj._dst
-#    return None
   
   @dst.setter
   def dst(self, obj:T|None):
-#    # if self._legalDst(obj):
-#    #   self._dst = obj
-#    self.connect(destination=obj)
-#    assert self._dst is obj
-#    self.setDirty()
     '''
     :param obj:
     :type obj: T | None
@@ -253,31 +239,17 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
     self.setDirty()
     
   @property
-  def src(self, localOnly:bool=False) -> T|None: #AGObject|None:
+  def src(self) -> T|None:
     '''
-    :return: The *calculated* source of this relation; ie: if this relation
-      does not have a specific source, look it up in the ISA hierarchy.
-    :param localOnly:
-    :type localOnly: bool
+    :return: The source of this relation, or None. (A subclass may calculate
+      one it doesn't have itself: eg: *sn.model.model.Relation* inherits its
+      type's.)
+    :rtype: T | None
     '''
-#    if localOnly or self._src is not None:
     return self._src
-#    else:
-#      obj:AGObject
-#      supers = self.getSupers()
-#      for obj in supers:
-#        assert isinstance(obj, Relation)
-#        if obj._src is not None:
-#          return obj._src
-#    return None
   
   @src.setter
   def src(self, obj:T|None):
-#    # if self._legalSrc(obj):
-#    #   self._src = obj
-#    self.connect(source=obj)
-#    assert self._src is obj
-#    self.setDirty()
     '''
     :param obj:
     :type obj: T | None
@@ -315,15 +287,9 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
     if source is not None:
       if self._src is not source: # don't do anything if it's already done.
         self.src = source
-        # if self in source._outgoing:
-        #   raise RuntimeError(f'Reinserting self ({self}) into {source}.')
-        # source._outgoing.append(self)
     if destination is not None:
       if self._dst is not destination: # don't do anything if it's already done.
         self.dst = destination
-        # if self in destination._incoming:
-        #   raise RuntimeError(f'Reinserting self ({self}) into {destination}.')
-        # destination._incoming.append(self)
     
   @override
   def _reconnect(self, kept:T|None=None, **kwargs):
