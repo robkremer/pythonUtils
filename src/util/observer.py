@@ -317,12 +317,8 @@ class Subject:
       obsTopics:set[str] = tup[1]
       if len(tup[1]) == 0:
         updates = list(topics)
-      else:
-        s:str
-        for s in obsTopics: #tup[1]:
-          for tup2 in topics:
-            if s == tup2[1]:
-              updates.append(tup2)
+      else: # (the ones it's attached for, by topic name, in the order they came)
+        updates = [t for t in topics if t[0] in obsTopics]
       if len(tup[1]) == 0 or len(updates) > 0:
         # send the batch updates to the Observer
         try:
@@ -330,7 +326,7 @@ class Subject:
         except NameError:
           # the Observer is no longer responding, so mark it for removal from our list
           logger.exception(f'{self}: Observer at "{tup[0]}" appears to have been destroyed, removing it from observers list.')
-          deleteList.append(id(Observer))
+          deleteList.append(id(tup))
         except Exception as ex:
           logger.exception(f'Supject.notify(): {ex}') # subject raised an exception, ignore it
       #i += 1
@@ -349,11 +345,8 @@ class Subject:
       updates = []
       if len(tup3[1]) == 0:
         updates = list(topics)
-      else:
-        for s in tup3[1]:
-          for tup4 in topics:
-            if s == tup4[1]:
-              updates.append(tup4)
+      else: # (as for the observers)
+        updates = [t for t in topics if t[0] in tup3[1]]
       if len(tup3[1]) == 0 or len(updates) > 0:
         try:
           for u in updates: 
@@ -361,8 +354,6 @@ class Subject:
         except Exception as ex:
           logger.exception(f'{self}: Callback "{tup3[2]}" raised an exception and has been removed: {ex}')
           deleteList.append(id(tup3))
-        except Exception as ex:
-          pass # subject raised an exception, ignore it
       #i += 1
     for d in deleteList:
       try: # this could fail because the lists may no longer be the same. Fail silently.

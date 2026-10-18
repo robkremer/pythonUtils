@@ -25,6 +25,7 @@ Created on Oct 15, 2024
 @author: kremer
 '''
 import unittest
+from util import observer
 from util.observer import Subject, Observer
 from typing import Any, Optional
 
@@ -84,6 +85,16 @@ class ConcreteObserverB(Observer):
 
 
 
+class RecordingObserver(Observer):
+  "Keeps every topic it's sent, in order."
+  def __init__(self):
+    self.updateCount = 0
+    self.received:list[tuple[str, Any]] = []
+  def update(self, subject: Subject, *topics) -> None:
+    self.updateCount += 1
+    self.received += topics
+
+
 class TestObserver(unittest.TestCase):
 
     def setUp(self):
@@ -129,6 +140,35 @@ class TestObserver(unittest.TestCase):
       with self.assertRaises(KeyError):
         _ = self.observer_a._states["topicB"]
       self.assertEqual(self.observer_b._states["topicB"], 33)
+
+    def test0410TopicsAttachedForArrive(self):
+      watcher = RecordingObserver()
+      self.subject.attach(watcher, "topicA", "topicC")
+      self.subject.changetopics(("topicC", 3), ("topicB", 2), ("topicA", 1))
+      self.assertEqual(watcher.received, [("topicC", 3), ("topicA", 1)]) # (in the order they came)
+      self.subject.changetopics(("topicB", 4))
+      self.assertEqual(watcher.updateCount, 1)
+
+    def test0420NameErrorRemovesTheObserver(self):
+      class Gone(Observer):
+        def update(self, subject, *topics): raise NameError("gone")
+      gone = Gone()
+      self.subject.attach(gone)
+      with self.assertLogs(observer.logger, level="ERROR"):
+        self.subject.changeGeneric(7)
+      self.assertFalse(any(o is gone for o, _ in self.subject._observers))
+      self.assertTrue(any(o is self.observer_a for o, _ in self.subject._observers))
+      self.assertEqual(self.observer_a._state, 7)
+
+    def test0430OtherExceptionsKeepTheObserver(self):
+      class Broken(Observer):
+        def update(self, subject, *topics): raise ValueError("broken")
+      broken = Broken()
+      self.subject.attach(broken)
+      with self.assertLogs(observer.logger, level="ERROR"):
+        self.subject.changeGeneric(8)
+      self.assertTrue(any(o is broken for o, _ in self.subject._observers))
+      self.assertEqual(self.observer_b._state, 8)
       
     def test0500Callback(self):
       testList:list[Any] = []
@@ -136,6 +176,19 @@ class TestObserver(unittest.TestCase):
       self.subject.changetopics(("topicC", 12))
       print(f'testList={testList}')
       self.assertEqual(len(testList), 2)
+
+    def test0510CallbackTopics(self):
+      got:list[tuple[str, Any]] = []
+      self.subject.attachCallback(lambda topic, args: got.append((topic, args)), "topicA", "topicC")
+      self.subject.changetopics(("topicC", 3), ("topicB", 2), ("topicA", 1))
+      self.assertEqual(got, [("topicC", 3), ("topicA", 1)])
+
+    def test0520RaisingCallbackRemoved(self):
+      def bad(topic, args): raise ValueError("bad")
+      code = self.subject.attachCallback(bad)
+      with self.assertLogs(observer.logger, level="ERROR"):
+        self.subject.changetopics(("topicC", 1))
+      self.assertFalse(any(c[2] == code for c in self.subject._callbacks))
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
