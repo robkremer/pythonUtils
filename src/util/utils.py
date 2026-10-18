@@ -917,6 +917,7 @@ def findConcreteSubclasses[T](abstractClass: Type[T]) -> list[Type[T]]:
       result.append(sub)
     # a concrete class may have concrete subclasses of its own (eg: a strategy
     # that reuses another's encoding), so always keep walking down
+    s:Type[T]
     for s in findConcreteSubclasses(sub):
       if s not in result: # (a class reachable by more than one path)
         result.append(s)
@@ -1679,7 +1680,7 @@ def askViaTk(prompt: str, title: str = "Input required", check:Callable[[str],bo
     # In an app that's already running Tk, ask in it: a second Tk interpreter
     # shares the app's menu bar (on macOS), and destroying it can leave the
     # system's default menu bar in place of the app's.
-    existing = tk._default_root # type: ignore[attr-defined]
+    existing = tk._default_root # type: ignore[attr-defined] # @undefinedVariable
     if existing is not None:
       try:
         focused = existing.focus_get()
@@ -1745,7 +1746,7 @@ def askYesNo(question:str, title:str) -> bool:
   :rtype: bool
   '''
   import tkinter as tk
-  root = tk._default_root # type: ignore[attr-defined]
+  root = tk._default_root # type: ignore[attr-defined] # @undefinedVariable
   if root is not None:
     from tkinter import messagebox
     try:

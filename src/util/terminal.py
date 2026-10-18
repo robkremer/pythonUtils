@@ -1353,6 +1353,7 @@ class TerminalWidget(AbstractTerminal, tk.Text):
     """
     if getattr(self, "_flashJob", None) is not None:
       try:
+        assert self._flashJob is not None
         self.after_cancel(self._flashJob)
       except tk.TclError:
         pass

@@ -31,7 +31,7 @@
 from __future__ import annotations
 
 from typing import Iterator, ItemsView, KeysView, ValuesView, Optional, Union,\
-  override, cast, Callable, Self, ClassVar
+  override, cast, Callable, Self, ClassVar, Any
 from abc import abstractmethod
 from weakref import ref, ReferenceType
 from util.utils import openUrl, urlExists, isValidURL, fixURL
@@ -473,6 +473,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
       stored = previous = None
     moved = stored is not None and stored != url
     if moved:
+      assert stored is not None
       logger.warning(f'"{url}" was copied or moved from "{stored}": it\'s now taken to be "{url}" (and will be saved there).')
       PRDb._readFrames.append((stored, url))
     try:
@@ -832,7 +833,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     def fixDBElems(slf:Serializable, d:SerializableType):
       assert isinstance(d, dict), f'Expected strdict for param 2, got {type(d)}.'
       assert isinstance(slf, PRDb), f'Expected PRDb for param 1, got {type(slf)}.'
-      slf._db = convertStrdictToDict(cast(strdict,d))
+      slf._db = convertStrdictToDict(cast(strdict,d)) # type: ignore[assignment]
       for k,v in slf._db.items():
         if v is not None:
           v._id = k
@@ -847,7 +848,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
       assert isinstance(slf, PRDb)
       for u in cast(list, urls) or []:
         try:
-          db = PRDb.getDB(str(u)) # (from memory, or read: relative to this one's file -- see basedOn())
+          db:PRDb[T] = PRDb.getDB(str(u)) # (from memory, or read: relative to this one's file -- see basedOn())
         except Exception as ex:
           logger.error(f'"{slf.url}": its super-DB "{u}" couldn\'t be read ({type(ex).__name__}: {ex}); '
                        f'carrying on without it (it\'s kept, for when it\'s there again).')
