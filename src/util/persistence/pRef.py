@@ -245,10 +245,17 @@ class PRObject[DBT:"PRDb"](Serializable, Dirtyable):
   @override
   def __hash__(self):
     '''
-    :returns:
-    :rtype:
+    :returns: The hash of *id* alone: objects equal by *__eq__()* (the same
+      *id* in DBs with the same URL) hash the same. Not of the URL too, which
+      would cost much more (it was *str(getPRef())*: about 500 times *id()*)
+      and would change if the DB's URL does (eg: saved under another name).
+      Objects of different DBs with the same *id* just share a hash.
+      (*id* changes only while a DB is read -- see *fixDBElems* in
+      *PRDb.getInstantiationInfo()* -- before the objects are in any set or
+      dict.)
+    :rtype: int
     '''
-    return hash(str(self.getPRef()))
+    return hash(self._id)
 
 
 class PRContainer[DBT:"PRDb"](PRObject[DBT]):

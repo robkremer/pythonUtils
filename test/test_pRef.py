@@ -158,7 +158,24 @@ class Test(unittest.TestCase):
     self.assertEqual(db2[1].name, "tarzan")
     self.assertEqual(db[1].name, "tarzan")
     self.assertNotEqual(db[1], db2[1])
-    
+
+  def test_hash(self):
+    '''Equal objects hash the same; a set finds an object after its DB's URL changes.'''
+    db = PRDb("tempHash1.xml") # (not saved)
+    other = PRDb("tempHash2.xml")
+    a, b = TestObject(db), TestObject(db)
+    c = TestObject(other) # (the same id as *a*, in another DB)
+    self.assertEqual(a.id, c.id)
+    self.assertNotEqual(a, c)
+    self.assertEqual(hash(a), hash(c)) # (allowed: they just share a hash)
+    self.assertNotEqual(a, b)
+    s = {a, b, c}
+    self.assertEqual(len(s), 3)
+    db.url = db.url.replace("tempHash1", "tempHash3") # (eg: saved under another name)
+    self.assertIn(a, s)
+    self.assertIn(b, s)
+    self.assertEqual(s - {a}, {b, c})
+
     
     
 
