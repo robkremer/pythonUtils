@@ -282,8 +282,6 @@ class AGRelation[TDB:AbstractGraph, T:AGObject](AGObject[TDB, "AGRelation"]):
     :param destination: The :py:class:`AGObject` for the *dst* link.
     :type destination: AGObject
     '''
-    if self.view.reading or self.modelObject is None:
-      return
     if source is not None:
       if self._src is not source: # don't do anything if it's already done.
         self.src = source
