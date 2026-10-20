@@ -1,0 +1,1866 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="util.persistence.serialize module" href="util.persistence.serialize.html"><link rel="prev" title="util.persistence package" href="util.persistence.html">
+        <link rel="prefetch" href="../_static/pu-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/pu-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>util.persistence.pRef module - pythonUtils 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">pythonUtils 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/pu-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">pythonUtils 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/persistence.html">Persistence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/attributes.html">Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/commands.html">Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/observer.html">Observers and Changes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/widgets.html">Tk Widgets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/utilities.html">Preferences, Graphs and Utilities</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="util.html">util package</a><input aria-label="Toggle navigation of util package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="util.persistence.html">util.persistence package</a><input aria-label="Toggle navigation of util.persistence package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">util.persistence.pRef module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serialize.html">util.persistence.serialize module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeJSON.html">util.persistence.serializeJSON module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializePlist.html">util.persistence.serializePlist module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeXML.html">util.persistence.serializeXML module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeXML2.html">util.persistence.serializeXML2 module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeXML3.html">util.persistence.serializeXML3 module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="util.abstractGraph.html">util.abstractGraph module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.actionDialog.html">util.actionDialog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.attribute.html">util.attribute module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.attributeEditor.html">util.attributeEditor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.command.html">util.command module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.commandParser.html">util.commandParser module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.dirtyable.html">util.dirtyable module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.errorReportingObject.html">util.errorReportingObject module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.observer.html">util.observer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.prefs.html">util.prefs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.rtValuesDialog.html">util.rtValuesDialog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.terminal.html">util.terminal module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.tooltip.html">util.tooltip module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.urlDialog.html">util.urlDialog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html">util.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.validatedList.html">util.validatedList module</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-util.persistence.pRef">
+<span id="util-persistence-pref-module"></span><h1>util.persistence.pRef module<a class="headerlink" href="#module-util.persistence.pRef" title="Link to this heading">¶</a></h1>
+<div class="graphviz"><object data="../_images/inheritance-bcc7ad57bdd6cf8d84ab2cf1c14aa5df43176a33.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of PReference, PRObject, PRDb</p></object></div>
+<dl class="py exception">
+<dt class="sig sig-object py" id="util.persistence.pRef.DuplicateNameError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.persistence.pRef.</span></span><span class="sig-name descname"><span class="pre">DuplicateNameError</span></span><a class="headerlink" href="#util.persistence.pRef.DuplicateNameError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Raised when a name lookup matches more than one PRObject.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="util.persistence.pRef.MalformedIDError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.persistence.pRef.</span></span><span class="sig-name descname"><span class="pre">MalformedIDError</span></span><a class="headerlink" href="#util.persistence.pRef.MalformedIDError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Raised a PReference is syntactically incorrect.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="util.persistence.pRef.CircularReferenceError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.persistence.pRef.</span></span><span class="sig-name descname"><span class="pre">CircularReferenceError</span></span><a class="headerlink" href="#util.persistence.pRef.CircularReferenceError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Raised when a PRDb document (directly or via a chain of other documents
+currently being read) ends up referencing its own URL while that URL’s
+<em>PRDb._read()</em> is still in progress. Without this check, such a document
+would otherwise send <em>PRDb.__new__()</em> into unbounded recursion – each
+nested attempt to load the same not-yet-finished URL passing every earlier
+guard (it’s not yet in <em>AllDBs</em>; the file exists; it’s not the top-level
+<em>_reading</em> call) – until the interpreter’s call stack is exhausted.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRObject">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.persistence.pRef.</span></span><span class="sig-name descname"><span class="pre">PRObject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DBT</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.persistence.pRef.PRObject" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Serializable</span></code></a>, <a class="reference internal" href="util.dirtyable.html#util.dirtyable.Dirtyable" title="util.dirtyable.Dirtyable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dirtyable</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code></p>
+<p>An object with an immutable integer ID and a mutable name.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRObject.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DBT</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRObject.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>db</strong> (<a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><em>PRDb</em></a>) – The db to which this object will belong.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Passed on to <em>super().__init__()</em>. <em>PRObject</em> is often one
+link in a longer chain of cooperative <em>__init__</em> calls – eg: a class
+combining <em>AbstractGraph</em>’s <em>AGRelation</em> with a sibling class via
+multiple inheritance (see <em>sn.model.model.Relation</em>) reaches <em>PRObject</em>
+through more than one base. Calling <em>super().__init__(**kwargs)</em> here
+(instead of simply returning) ensures whatever comes after <em>PRObject</em> in
+that particular class’s MRO – eg: <em>AttributedObject</em>, for a <em>Relation</em>
+or plain <em>GraphObject</em> – still gets initialized, exactly once, with the
+constructor arguments meant for it, even though <em>PRObject</em> itself has no
+use for them.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>PermissionError</strong> – If the DB is write locked.</p></li>
+<li><p><strong>TypeError</strong> – If the <em>value</em> is not of type <em>PRObject</em>.</p></li>
+<li><p><strong>MemoryError</strong> – if the DB has been deleted.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Note<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This used to call <code class="docutils literal notranslate"><span class="pre">Serializable.__init__(self)</span></code> and
+<code class="docutils literal notranslate"><span class="pre">Dirtyable.__init__(self)</span></code> directly, up here, before the
+<em>super().__init__(**kwargs)</em> call below. <em>Serializable</em> has no
+<em>__init__</em> of its own so that call was a no-op, but the explicit
+<em>Dirtyable</em> call meant <em>Dirtyable</em> got initialized via a hardcoded
+direct call rather than via this class’s cooperative <em>super()</em> chain
+– and, since a class combining <em>PRObject</em> with something listed
+<em>after</em> <em>Dirtyable</em> in its own MRO (eg:
+<em>sn.view.graphics.vobjects.VObject</em>, which also mixes in
+<em>ErrorReportingObject</em>) relies on that same chain to reach the classes
+<em>after</em> <em>Dirtyable</em> too, this dead end silently meant
+<em>ErrorReportingObject.__init__()</em> – and anything else listed after
+<em>Dirtyable</em> – never ran at all for any such object. Removing the
+explicit calls and letting <em>Dirtyable</em> (now itself cooperative – see
+its own <em>__init__</em>) be reached exactly once via <em>super()</em> below fixes
+that for every current and future user of this class, not just this
+one case.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRObject._db">
+<span class="sig-name descname"><span class="pre">_db</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ReferenceType</span></span><a class="headerlink" href="#util.persistence.pRef.PRObject._db" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRObject._id">
+<span class="sig-name descname"><span class="pre">_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#util.persistence.pRef.PRObject._id" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRObject.getInstantiationInfo">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">getInstantiationInfo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><span class="pre">InstantiationInfo</span></a></span></span><a class="headerlink" href="#util.persistence.pRef.PRObject.getInstantiationInfo" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstantiationInfo</span></code></a> 
+structure describing the constructor parameters and how to fill them
+(conArgs, conKWArgs), and a further description of any additional data to
+be filled after immediately after the constructor (postconSetters) and 
+more after any contained objects have been fully constructed (finalSetters),
+both how to write them and read them.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">util.persistence.serialize.InstantiationInfo</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRObject.id">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#util.persistence.pRef.PRObject.id" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>this object’s ID in its DB.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRObject.db">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">db</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DBT</span></span><a class="headerlink" href="#util.persistence.pRef.PRObject.db" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>this object’s ID.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>:py:class:’<cite>PRDb</cite></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>MemoryError</strong> – if the DB has been deleted.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRObject.name">
+<span class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#util.persistence.pRef.PRObject.name" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>this object’s (usually mutable) name.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is an abstract method (property) used to resolve persistent references
+of the for &lt;url&gt;#&lt;string-name&gt;.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRObject.getPRef">
+<span class="sig-name descname"><span class="pre">getPRef</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#util.persistence.pRef.PReference" title="util.persistence.pRef.PReference"><span class="pre">PReference</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Self</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PRObject.getPRef" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a new <a class="reference internal" href="#util.persistence.pRef.PReference" title="util.persistence.pRef.PReference"><code class="xref py py-class docutils literal notranslate"><span class="pre">PReference</span></code></a> object referencing this object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#util.persistence.pRef.PReference" title="util.persistence.pRef.PReference">PReference</a>[Self]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRObject.torepr">
+<span class="sig-name descname"><span class="pre">torepr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relativeTo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DBT</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRObject.torepr" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>relativeTo</strong> (<em>DBT</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRObject.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRObject.__str__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRObject.tostring">
+<span class="sig-name descname"><span class="pre">tostring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relativeTo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DBT</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRObject.tostring" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>relativeTo</strong> (<em>DBT</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRObject._dbUrl">
+<span class="sig-name descname"><span class="pre">_dbUrl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRObject._dbUrl" title="Link to this definition">¶</a></dt>
+<dd><p>The URL of our DB, or the one it had when we were created if it has gone.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRContainer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.persistence.pRef.</span></span><span class="sig-name descname"><span class="pre">PRContainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DBT</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.persistence.pRef.PRContainer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#util.persistence.pRef.PRObject" title="util.persistence.pRef.PRObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">PRObject</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code></p>
+<p>A <em>PRObject</em> that contains other objects (see <em>getMembers()</em>).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRContainer.getMembers">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">getMembers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#util.persistence.pRef.PRObject" title="util.persistence.pRef.PRObject"><span class="pre">PRObject</span></a><span class="p"><span class="pre">[</span></span><span class="pre">DBT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PRContainer.getMembers" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Iterator[<a class="reference internal" href="#util.persistence.pRef.PRObject" title="util.persistence.pRef.PRObject">PRObject</a>[DBT]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDbContainer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.persistence.pRef.</span></span><span class="sig-name descname"><span class="pre">PRDbContainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DBT</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.persistence.pRef.PRDbContainer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#util.persistence.pRef.PRContainer" title="util.persistence.pRef.PRContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">PRContainer</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code></p>
+<p>The object standing for its whole database (as object 0): its members are all the database’s objects.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDbContainer.getMembers">
+<span class="sig-name descname"><span class="pre">getMembers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#util.persistence.pRef.PRObject" title="util.persistence.pRef.PRObject"><span class="pre">PRObject</span></a><span class="p"><span class="pre">[</span></span><span class="pre">DBT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDbContainer.getMembers" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Iterator[<a class="reference internal" href="#util.persistence.pRef.PRObject" title="util.persistence.pRef.PRObject">PRObject</a>[DBT]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDbContainer.name">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#util.persistence.pRef.PRDbContainer.name" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.persistence.pRef.</span></span><span class="sig-name descname"><span class="pre">PRDb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'w'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memoryResident</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_reading</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.persistence.pRef.PRDb" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Serializable</span></code></a>, <a class="reference internal" href="util.observer.html#util.observer.Subject" title="util.observer.Subject"><code class="xref py py-class docutils literal notranslate"><span class="pre">Subject</span></code></a>, <a class="reference internal" href="util.dirtyable.html#util.dirtyable.Dirtyable" title="util.dirtyable.Dirtyable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dirtyable</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code></p>
+<p>A dict-like object whose keys are restricted to int and values to PRObject.</p>
+<dl class="simple">
+<dt>__getitem__() and related lookup methods accept either:</dt><dd><ul class="simple">
+<li><p>an int  -&gt; direct key lookup by ID</p></li>
+<li><p>a str   -&gt; lookup by PRObject.name (raises DuplicateNameError if ambiguous)</p></li>
+</ul>
+</dd>
+</dl>
+<p>METHODS PURPOSELY NOT IMPLEMENTED:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt>__setitem__() (index assignment) is NOT implemented.  Instead, the constructor</dt><dd><p>of PRObject calls <em>PRDb._register()</em> to obtain an id and insert itself into
+the <em>PRDb</em>.</p>
+</dd>
+</dl>
+</li>
+<li><p>update()</p></li>
+</ul>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.AllDBs">
+<span class="sig-name descname"><span class="pre">AllDBs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><span class="pre">PRDb</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.AllDBs" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.aliases">
+<span class="sig-name descname"><span class="pre">aliases</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.aliases" title="Link to this definition">¶</a></dt>
+<dd><p>Other URLs for DBs – eg: their old names, or where they were before they
+were moved – and the URLs they stand for (see <em>resolveURL()</em>): eg,
+“sn:/sn.xml” -&gt; “sn:/sn”. One ending in “/” stands for everything under it
+(see <em>_alias()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.namedURLs">
+<span class="sig-name descname"><span class="pre">namedURLs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.namedURLs" title="Link to this definition">¶</a></dt>
+<dd><p>Names – pseudo-URLs, eg: “sn:/baseRules” – of DBs whose actual URLs are
+only known when the program runs (eg: a temporary copy of a file that comes
+with it), and how to get each one’s URL – reading the DB, if need be (see
+<em>resolveURL()</em>). A reference to one is written as its name (see
+<em>relativeURL()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._namesOf">
+<span class="sig-name descname"><span class="pre">_namesOf</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._namesOf" title="Link to this definition">¶</a></dt>
+<dd><p>The names of the <em>namedURLs</em> that have been resolved, by their actual URLs.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.readProgress">
+<span class="sig-name descname"><span class="pre">readProgress</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><span class="pre">PRDb</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.readProgress" title="Link to this definition">¶</a></dt>
+<dd><p>If set, called as a file’s objects are read – every <em>READ_PROGRESS_STEP</em>
+of them – with the DB being read and how many of its objects have been
+read so far (eg: to show a progress bar: its <em>nextID</em> is about how many
+there’ll be).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.READ_PROGRESS_STEP">
+<span class="sig-name descname"><span class="pre">READ_PROGRESS_STEP</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">250</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.READ_PROGRESS_STEP" title="Link to this definition">¶</a></dt>
+<dd><p>How many objects are read between calls of <em>readProgress</em>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._readingURLs">
+<span class="sig-name descname"><span class="pre">_readingURLs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._readingURLs" title="Link to this definition">¶</a></dt>
+<dd><p>URLs for which a <em>PRDb._read()</em> call is currently in progress (see
+<em>__new__()</em> below). A URL is added just before its <em>_read()</em> starts and
+removed as soon as that call returns or raises. <em>__new__()</em> checks this
+set before starting a new read so that a document which (directly, or
+through a chain of other documents it references) ends up loading its own
+URL again fails fast with a <em>CircularReferenceError</em> instead of recursing
+until the stack overflows: <em>AllDBs</em> alone can’t catch this, since a URL is
+only added there <em>after</em> its read completes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._initCache">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_initCache</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#util.persistence.pRef.PRDb._initCache" title="Link to this definition">¶</a></dt>
+<dd><p>Re-initializes the cache.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This should only be used for testing purposes (eg: unit testing) as it wipes
+the DB cache and could cause bad pointers in any interface applications.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Subclasses should override to do whatever needs to be done for “blank” cache.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.getDB">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">getDB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'w'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Self</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.getDB" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>) – The name of the db as a file name or a URL.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The DB read from disk or from the web.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><code class="xref py py-class docutils literal notranslate"><span class="pre">PRDb</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If a <code class="docutils literal notranslate"><span class="pre">file:</span></code> URL points to a path that does not
+exist.</p></li>
+<li><p><strong>ValueError</strong> – if the <em>url</em> is malformed.</p></li>
+<li><p><strong>urllib.error.URLError</strong> – If a remote URL cannot be reached.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Either return the DB from memory or attempt to read it from disk or 
+from the web.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mode</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._read">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'w'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Self</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._read" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>) – The URL to fetch. May use any scheme supported by
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">urllib.request</span></code>, plus the <code class="docutils literal notranslate"><span class="pre">file:</span></code> protocol for local filesystem
+paths.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Raw byte content of the resource, suitable for passing directly to
+an XML parser (e.g. <code class="xref py py-func docutils literal notranslate"><span class="pre">xml.etree.ElementTree._fromstring()</span></code> or
+<code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.etree.XMLParser</span></code>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bytes</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If <em>url</em> is an empty string.</p></li>
+<li><p><strong>FileNotFoundError</strong> – If a <code class="docutils literal notranslate"><span class="pre">file:</span></code> URL points to a path that does not
+exist.</p></li>
+<li><p><strong>urllib.error.URLError</strong> – If a remote URL cannot be reached.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Read the DB from disk or from the web and instantiate it.
+Subclasses should implement this method to actually do the read; this 
+version merely raises the exception.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mode</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.readFile">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">readFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'w'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.readFile" title="Link to this definition">¶</a></dt>
+<dd><p>Read the object in the file (or at the URL) <em>url</em> – usually a PRDb, but not
+necessarily – and return it. Use this rather than
+<em>SerializationStrategy.readx()</em> to read a PRDb, as it takes care of files
+that have been copied or moved:</p>
+<p>A copied or moved file still has its old URL in it. That’s found out first
+(without reading the file), so that while it’s read it’s taken as being the
+file it was actually read from – never confused with the original (which
+may be open) – and so are its references to files that were next to it, if
+they’ve been copied along with it (see <em>_relocate()</em>). Its <em>previousURL</em> is
+the URL it was copied from (written in the header the next time it’s saved).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<em>str</em>)</p></li>
+<li><p><strong>mode</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._wasRead">
+<span class="sig-name descname"><span class="pre">_wasRead</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._wasRead" title="Link to this definition">¶</a></dt>
+<dd><p>Called once this DB has been read from <em>url</em> (see <em>readFile()</em>): for
+subclasses to do whatever’s needed then. (Here, nothing.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>) – Where it was read from.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._bases">
+<span class="sig-name descname"><span class="pre">_bases</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._bases" title="Link to this definition">¶</a></dt>
+<dd><p>The URLs of the files being read or written just now, innermost last: relative
+URLs in a file are relative to the file (see <em>relativeURL()</em>, <em>absoluteURL()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.basedOn">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">basedOn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.persistence.pRef.PRDb.basedOn" title="Link to this definition">¶</a></dt>
+<dd><p>Within this context, relative URLs are relative to <em>url</em> (eg: the file being
+read or written) – unless <em>url</em> is None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.isRelativeURL">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">isRelativeURL</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.isRelativeURL" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <em>url</em> is a relative URL, eg: “pets.snm” or “shared/animals.snm” (not “file:…”, “sn:…”, “/…”, “$name”, “#12”).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.absoluteURL">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">absoluteURL</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.absoluteURL" title="Link to this definition">¶</a></dt>
+<dd><p><em>url</em>, if it’s relative, made absolute against <em>base</em> – by default the file
+being read or written (see <em>basedOn()</em>); otherwise <em>url</em> as is (eg: a path
+typed by the user, relative to the current directory).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<em>str</em>)</p></li>
+<li><p><strong>base</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.MAX_UP">
+<span class="sig-name descname"><span class="pre">MAX_UP</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.MAX_UP" title="Link to this definition">¶</a></dt>
+<dd><p>The most folders up (“../”) a relative URL goes (see <em>relativeURL()</em>): further than that, URLs stay absolute.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.relativeURL">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">relativeURL</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.relativeURL" title="Link to this definition">¶</a></dt>
+<dd><p><em>url</em> relative to <em>base</em> – by default the file being read or written (see
+<em>basedOn()</em>) – if it’s a file in the same folder, below it, or at most
+<em>MAX_UP</em> folders up from it, eg: “pets.snm”, “shared/animals.snm” or
+“../animals.snm”; otherwise <em>url</em> as is (eg: a file in an unrelated folder,
+or anything not a file). So a block of files copied together keeps referring
+to one another. (A file copied on its own still finds what it referred to:
+see <em>absoluteURL()</em>.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<em>str</em>)</p></li>
+<li><p><strong>base</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._readFrames">
+<span class="sig-name descname"><span class="pre">_readFrames</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._readFrames" title="Link to this definition">¶</a></dt>
+<dd><p>(stored URL, actual URL) for each copied or moved file being read just now (see _read()).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._relocated">
+<span class="sig-name descname"><span class="pre">_relocated</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._relocated" title="Link to this definition">¶</a></dt>
+<dd><p>(from, to) relocations already reported.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.FILE_SCHEMES">
+<span class="sig-name descname"><span class="pre">FILE_SCHEMES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('',</span> <span class="pre">'file',</span> <span class="pre">'http',</span> <span class="pre">'https')</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.FILE_SCHEMES" title="Link to this definition">¶</a></dt>
+<dd><p>The schemes of URLs of files (on this computer or elsewhere). Others –
+eg: “sn:” – are pseudo-URLs: names of DBs in memory (see <em>namedURLs</em>),
+taken as they are.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.resolveURL">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">resolveURL</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.resolveURL" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<em>str</em>) – A DB’s URL, as given: perhaps relative (see <em>absoluteURL()</em>),
+an alias (see <em>aliases</em>), or a name (see <em>namedURLs</em>).</p></li>
+<li><p><strong>mode</strong> (<em>str</em>) – As for <em>fixURL()</em>: what to check it’s there for (“w”:
+writing; “”: nothing).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The URL it stands for: made absolute, given the default
+extension if it’s a file’s without one (see <em>fixURL()</em>), and relocated
+if it’s in a file that’s been copied or moved (see <em>_relocate()</em>). A
+pseudo-URL (see <em>FILE_SCHEMES</em>) is as it is (but for aliases and names).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._alias">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_alias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._alias" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>What <em>url</em> is an alias for (see <em>aliases</em>), if it is; else
+<em>url</em>. An alias ending in “/” stands for everything under it: eg, with
+“<a class="reference external" href="http://old.org/onto/">http://old.org/onto/</a>” -&gt; “<a class="reference external" href="https://new.org/ontologies/">https://new.org/ontologies/</a>”,
+“<a class="reference external" href="http://old.org/onto/family.snm">http://old.org/onto/family.snm</a>” is “<a class="reference external" href="https://new.org/ontologies/family.snm">https://new.org/ontologies/family.snm</a>”.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._relocate">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_relocate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._relocate" title="Link to this definition">¶</a></dt>
+<dd><p>While a copied or moved file is being read (see <em>_read()</em>): its old URL is
+taken to be the one it was read from; and a URL of a file that was next to
+it (eg: the model of a copied view) is taken to be the same file next to
+it now – if that file is there. Otherwise, <em>url</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.serializationHeader">
+<span class="sig-name descname"><span class="pre">serializationHeader</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.serializationHeader" title="Link to this definition">¶</a></dt>
+<dd><p>What to put in the head of its document when this is written (see
+<em>SerializationStrategy.tostring()</em>), besides its URL and super-DBs (see
+<em>getInstantiationInfo()</em>): the URL it was copied or moved from, if it
+was; and how many objects are in it (see <em>objectCount()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, <a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.HeadValue" title="util.persistence.serialize.HeadValue">HeadValue</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.objectCount">
+<span class="sig-name descname"><span class="pre">objectCount</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.objectCount" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>How many objects are written when this is (see
+<em>serializationHeader()</em>): by default, all of them (not its container).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'w'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memoryResident</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_reading</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.persistence.pRef.PRDb.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<em>str</em>) – The URL to associate with this object. Can be a filename, interpreted
+in the context of the current directory.</p></li>
+<li><p><strong>_reading</strong> (<em>bool</em>) – (default False) Should not be used. Used by the persistence system to get around
+the existence of the URL during construction.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the URL is malformed.</p></li>
+<li><p><a class="reference internal" href="#util.persistence.pRef.DuplicateNameError" title="util.persistence.pRef.DuplicateNameError"><strong>DuplicateNameError</strong></a> – If the DB already exists in memory.</p></li>
+<li><p><strong>FileExistsError</strong> – If the URL already exists.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Creates a <strong>new</strong> PRDb. If the url exists already, you should be using
+PRDb.getDB() to retrieve it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> (<em>str</em>)</p></li>
+<li><p><strong>memoryResident</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.reading">
+<span class="sig-name descname"><span class="pre">reading</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.reading" title="Link to this definition">¶</a></dt>
+<dd><p>Can be used by contained objects to determine if a read operation is taking place.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.superDBs">
+<span class="sig-name descname"><span class="pre">superDBs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Self</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.superDBs" title="Link to this definition">¶</a></dt>
+<dd><p>List of other DBs that will be searched for indicies ([]) and get(): what
+this one builds on, as though their contents were its own (but not
+changed through it). Saved with it (see <em>getInstantiationInfo()</em>); change
+it with <em>addSuperDB()</em> and <em>removeSuperDB()</em>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._missingSuperDBs">
+<span class="sig-name descname"><span class="pre">_missingSuperDBs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._missingSuperDBs" title="Link to this definition">¶</a></dt>
+<dd><p>The (saved) URLs of super-DBs that couldn’t be read when this was: kept,
+and saved again, so that they’re used once they’re there again.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.url">
+<span class="sig-name descname"><span class="pre">url</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.url" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._db">
+<span class="sig-name descname"><span class="pre">_db</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">NoNoneDict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._db" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.nextID">
+<span class="sig-name descname"><span class="pre">nextID</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.nextID" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.previousURL">
+<span class="sig-name descname"><span class="pre">previousURL</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.previousURL" title="Link to this definition">¶</a></dt>
+<dd><p>The URL this was copied or moved from, if it was (see _read()); written in the header.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.getInstantiationInfo">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">getInstantiationInfo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><span class="pre">InstantiationInfo</span></a></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.getInstantiationInfo" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstantiationInfo</span></code></a> 
+structure describing the constructor parameters and how to fill them
+(conArgs, conKWArgs), and a further description of any additional data to
+be filled after immediately after the constructor (postconSetters) and 
+more after any contained objects have been fully constructed (finalSetters),
+both how to write them and read them.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">util.persistence.serialize.InstantiationInfo</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.allSuperDBs">
+<span class="sig-name descname"><span class="pre">allSuperDBs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><span class="pre">PRDb</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.allSuperDBs" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This one’s super-DBs, theirs, and so on (each once), nearest first.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb">PRDb</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.addSuperDB">
+<span class="sig-name descname"><span class="pre">addSuperDB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><span class="pre">PRDb</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.addSuperDB" title="Link to this definition">¶</a></dt>
+<dd><p>Make <em>db</em> a super-DB of this one (see <em>superDBs</em>), if it isn’t already.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>db</strong> (<a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><em>PRDb</em></a>) – The DB.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if <em>db</em> is this one, or builds on it (directly or not):
+a cycle.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.removeSuperDB">
+<span class="sig-name descname"><span class="pre">removeSuperDB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><span class="pre">PRDb</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.removeSuperDB" title="Link to this definition">¶</a></dt>
+<dd><p>Stop <em>db</em> being a super-DB of this one (see <em>superDBs</em>), if it is.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>db</strong> (<a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><em>PRDb</em></a>) – The DB.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.name">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.name" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">saveas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'XML3'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.save" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>saveas</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>)</p></li>
+<li><p><strong>format</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.writeLocked">
+<span class="sig-name descname"><span class="pre">writeLocked</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.writeLocked" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True iff and the DB is write-locked.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._register">
+<span class="sig-name descname"><span class="pre">_register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._register" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> (<a class="reference internal" href="#util.persistence.pRef.PRObject" title="util.persistence.pRef.PRObject"><em>PRObject</em></a>) – The PRObject to be added to this DB.</p></li>
+<li><p><strong>_id</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Normally (and defaulted to) <em>None</em>. But if <em>value</em> is an
+object that has previously been unregistered, this value is the the
+original ID (that had been returned from this method) and will be 
+restored to this ID.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new (locally) unique id for this object.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>PermissionError</strong> – If the DB is write locked.</p></li>
+<li><p><strong>TypeError</strong> – If the <em>value</em> is not of type <em>PRObject</em>.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Generate a (locally) unique id for this object and add it the this DB.</p>
+<p>The method is private, but is used in the constructor of <em>PRObject</em>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._unregister">
+<span class="sig-name descname"><span class="pre">_unregister</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._unregister" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> (<a class="reference internal" href="#util.persistence.pRef.PRObject" title="util.persistence.pRef.PRObject"><em>PRObject</em></a>) – The PRObject to be added to this DB.</p></li>
+<li><p><strong>_id</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Normally (and defaulted to) <em>None</em>. But if <em>value</em> is an
+object that has previously been unregistered, this value is the the
+original ID (that had been returned from this method) and will be 
+restored to this ID.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new (locally) unique id for this object.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – if <em>_id</em> does not exist.</p>
+</dd>
+</dl>
+<p>Generate a (locally) unique id for this object and add it the this DB.</p>
+<p>The method is private, but is used in the constructor of <em>PRObject</em>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.setDirty">
+<span class="sig-name descname"><span class="pre">setDirty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dirty</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.setDirty" title="Link to this definition">¶</a></dt>
+<dd><p>An object is dirty if it has been modified and should probably be
+saved on exit.  This should be called from all methods that modify
+the state of this object.</p>
+<p>If <em>dirty</em> is False, resets all the contained <em>Attributes</em> to False.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dirty</strong> (<em>bool</em>) – (default True) The dirty to set <em>dirty</em> to.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.isDirty">
+<span class="sig-name descname"><span class="pre">isDirty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.isDirty" title="Link to this definition">¶</a></dt>
+<dd><p>Returns True iff the object (or an of it’s contained <em>Attributes</em>) have
+been modified and should probably be saved on exit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.findByName">
+<span class="sig-name descname"><span class="pre">findByName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.findByName" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[T]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._resolve">
+<span class="sig-name descname"><span class="pre">_resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._resolve" title="Link to this definition">¶</a></dt>
+<dd><p>Return the integer key for <em>key</em>, without necessarily checking for it’s existence.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>int  -&gt; returned as-is (existence check deferred to caller)</p></li>
+<li><p>str  -&gt; scanned for a matching .name; DuplicateNameError if &gt;1 match</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> (<em>int</em><em>|</em><em>str</em>) – The index or name of the object.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the int index of the object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="#util.persistence.pRef.DuplicateNameError" title="util.persistence.pRef.DuplicateNameError"><strong>DuplicateNameError</strong></a> – if a str index is not unique.</p></li>
+<li><p><strong>KeyError</strong> – if the str index is not found.</p></li>
+<li><p><strong>TypeError</strong> – if the key is not either an int of a str.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">T</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.__getitem__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> (<em>int</em><em> | </em><em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>T</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb._makeDBContainer">
+<span class="sig-name descname"><span class="pre">_makeDBContainer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#util.persistence.pRef.PRDbContainer" title="util.persistence.pRef.PRDbContainer"><span class="pre">PRDbContainer</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Self</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb._makeDBContainer" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#util.persistence.pRef.PRDbContainer" title="util.persistence.pRef.PRDbContainer">PRDbContainer</a>[Self]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.getall">
+<span class="sig-name descname"><span class="pre">getall</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">key:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">str,</span> <span class="pre">filtr:</span> <span class="pre">Callable[[T],</span> <span class="pre">bool]</span> <span class="pre">=</span> <span class="pre">&lt;function</span> <span class="pre">PRDb.&lt;lambda&gt;&gt;,</span> <span class="pre">throw:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.getall" title="Link to this definition">¶</a></dt>
+<dd><p>Return the integer key for <em>key</em>.</p>
+<ul class="simple">
+<li><p>int  -&gt; returned as-is (existence check deferred to caller)</p></li>
+<li><p>str  -&gt; scanned for a matching .name; DuplicateNameError if &gt;1 match</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>int</em><em> | </em><em>str</em>)</p></li>
+<li><p><strong>filtr</strong> (<em>Callable</em><em>[</em><em>[</em><em>T</em><em>]</em><em>, </em><em>bool</em><em>]</em>)</p></li>
+<li><p><strong>throw</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[T]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">T</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">T</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.get" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>int</em><em> | </em><em>str</em>)</p></li>
+<li><p><strong>default</strong> (<em>T</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>T | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.keys">
+<span class="sig-name descname"><span class="pre">keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">KeysView</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.keys" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>KeysView[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.values">
+<span class="sig-name descname"><span class="pre">values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ValuesView</span><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.values" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>ValuesView[T]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.items">
+<span class="sig-name descname"><span class="pre">items</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ItemsView</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.items" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>ItemsView[int, T]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.torepr">
+<span class="sig-name descname"><span class="pre">torepr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relativeTo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Self</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.torepr" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>relativeTo</strong> (<em>Self</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.__str__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PRDb.tostring">
+<span class="sig-name descname"><span class="pre">tostring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relativeTo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Self</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PRDb.tostring" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>relativeTo</strong> (<em>Self</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.persistence.pRef.</span></span><span class="sig-name descname"><span class="pre">PReference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.persistence.pRef.PReference" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code></p>
+<p>A reference to a persistent object implementing the __call__() method for 
+resolving the referernce into a pointer.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.persistence.pRef.PReference.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – A string in the form of &lt;URL&gt;#&lt;id&gt;, where &lt;id&gt; can be an int,
+a string with no spaces or a quoted string.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="#util.persistence.pRef.MalformedIDError" title="util.persistence.pRef.MalformedIDError"><strong>MalformedIDError</strong></a> – if the form of the ID is not valid.</p></li>
+<li><p><strong>ValueError</strong> – If it isn’t a valid URL.</p></li>
+<li><p><strong>FileNotFoundError</strong> – If the file or URL does not exist.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Creates a reference to a PRObject without actually trying to instantiate the
+PRObject or checking on it’s existence. To instantiate the object, use
+a call on this object.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference.url">
+<span class="sig-name descname"><span class="pre">url</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.persistence.pRef.PReference.url" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference.name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.persistence.pRef.PReference.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference.id">
+<span class="sig-name descname"><span class="pre">id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#util.persistence.pRef.PReference.id" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference.obj">
+<span class="sig-name descname"><span class="pre">obj</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">T</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><span class="pre">PRDb</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.persistence.pRef.PReference.obj" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relativeTo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><span class="pre">PRDb</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">T</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><span class="pre">PRDb</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PReference.__call__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>the resolved <em>PRObject</em>.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>LookupError</strong> – if the reference cannot be resolved.</p>
+</dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>relativeTo</strong> (<a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><em>PRDb</em></a><em>[</em><em>T</em><em>] </em><em>| </em><em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference.tostring">
+<span class="sig-name descname"><span class="pre">tostring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relativeTo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><span class="pre">PRDb</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PReference.tostring" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>relativeTo</strong> (<a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><em>PRDb</em></a><em>[</em><em>T</em><em>] </em><em>| </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PReference.__str__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference.torepr">
+<span class="sig-name descname"><span class="pre">torepr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relativeTo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><span class="pre">PRDb</span></a><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PReference.torepr" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>relativeTo</strong> (<a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><em>PRDb</em></a><em>[</em><em>T</em><em>] </em><em>| </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference.formatForURL">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">formatForURL</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Self</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">T1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contextDB</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><span class="pre">PRDb</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">includeName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.persistence.pRef.PReference.formatForURL" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref</strong> (<em>str</em><em>|</em><a class="reference internal" href="#util.persistence.pRef.PReference" title="util.persistence.pRef.PReference"><em>PReference</em></a><em>|</em><a class="reference internal" href="#util.persistence.pRef.PRObject" title="util.persistence.pRef.PRObject"><em>PRObject</em></a>) – A string or <em>PReference</em> or <em>PRObject</em>.</p></li>
+<li><p><strong>contextDB</strong> (<a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><em>PRDb</em></a>) – A db to generate a relative reference string to. To shorten
+the string. This with a “x?id=10: will be “<a class="reference external" href="http:///x?id=10">http:///x?id=10</a>” with a context and
+merely “?id=10” with context=x</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The canonical for an ID. Since URL-fragment parts are not transmitted
+to the server in requests, they cannot be used to request fragment parts
+of an object, so where “#&lt;id&gt;” might be expected to be used, “?id=&lt;id&gt;” is
+used instead.</p>
+</dd>
+</dl>
+<p>Format:</p>
+<blockquote>
+<div><p>&lt;url&gt;?{id=&lt;id_int&gt;}{{&amp;}name=&lt;name&gt;}</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>includeName</strong> (<em>bool</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference.eval">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">text:</span> <span class="pre">str,</span> <span class="pre">contextDB:</span> <span class="pre">~util.persistence.pRef.PRDb</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">filtr:</span> <span class="pre">~typing.Callable[[T1],</span> <span class="pre">bool]</span> <span class="pre">=</span> <span class="pre">&lt;function</span> <span class="pre">PReference.&lt;lambda&gt;&gt;</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">T1</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><span class="pre">PRDb</span></a></span></span><a class="headerlink" href="#util.persistence.pRef.PReference.eval" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluate the text expression as a PReference to an object.  But be friendly 
+in interpreting the expression by assuming a # prefix is missing if we can’t
+find the db in memory, file system, or web.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> (<em>str</em>) – A valid string representing a <em>PReference</em>.</p></li>
+<li><p><strong>contextDB</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><em>PRDb</em></a><em>]</em>) – A <em>PRDb</em> in which to evaluate <em>text</em>.</p></li>
+<li><p><strong>filtr</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="#util.persistence.pRef.PRObject" title="util.persistence.pRef.PRObject"><em>PRObject</em></a><em>]</em><em>,</em><em>bool</em><em>]</em><em>|</em><em>None</em>) – An optional PRObject-&gt;bool function to use to disambiguate between
+multiple possible return values if necessary. It should return True for a
+possible candidate.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <em>PRObject</em> represented by <em>text</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#util.persistence.pRef.PRObject" title="util.persistence.pRef.PRObject">PRObject</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference._isValidID_old">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_isValidID_old</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PReference._isValidID_old" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – The text of a PReference in the form &lt;URL&gt;#[&lt;int&gt;|&lt;str&gt;].</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A 2-tuble [url, id] where url is a valid URL or <em>None</em>, and id
+is either an int or a string</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference internal" href="#util.persistence.pRef.MalformedIDError" title="util.persistence.pRef.MalformedIDError"><strong>MalformedIDError</strong></a> – if the form of the ID is not valid.</p></li>
+<li><p><strong>ValueError</strong> – If it isn’t a valid URL.</p></li>
+<li><p><strong>FileNotFoundError</strong> – If the file or URL does not exist.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Splits the id into a URL part and an ID part. Validates the existence of
+the URL but makes no attempt to validate the ID. The ID may be either an int
+or a string name.</p>
+<blockquote>
+<div><p>&lt;validID&gt; := &lt;absoluteURL&gt; | &lt;relativeURL&gt;</p>
+<p>&lt;absoluteURL&gt; := &lt;existing-URL&gt;#&lt;id&gt;</p>
+<p>&lt;relativeURL&gt; := {#}&lt;id&gt;</p>
+<p>&lt;id&gt; := int | &lt;str-without-whatespace&gt; | &lt;quoted-str&gt;</p>
+<p>&lt;validID&gt; := &lt;absoluteURL&gt; | &lt;relativeURL&gt;</p>
+<p>&lt;absoluteURL&gt; := &lt;existing-URL&gt;{?&lt;parameters&gt;}#&lt;id&gt;</p>
+<p>&lt;parameters&gt; := name=&lt;name&gt; | id=&lt;int&gt;</p>
+<p>&lt;relativeURL&gt; := {#}&lt;id&gt;</p>
+<p>&lt;id&gt; := &lt;int&gt; | &lt;str-without-whatespace&gt; | &lt;quoted-str&gt;</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.persistence.pRef.PReference._isValidID">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_isValidID</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.persistence.pRef.PReference._isValidID" title="Link to this definition">¶</a></dt>
+<dd><p>Split a string into path, id, and name components.</p>
+<p>Respects single and double quoted substrings and backslash escapes.
+The ‘#’ and ‘?’ delimiters may appear in any order, but are expected
+to appear at most once each outside of quoted regions.</p>
+<p>Query string must be of the form ‘name=&lt;str&gt;’ or ‘id=&lt;int&gt;’, where
+&lt;str&gt; may be a quoted string or an HTML percent-encoded string.</p>
+<p>Fragment is a convenience for gracious interpretation of user input only. It
+must be an integer, a quoted string, or an HTML percent-encoded string.
+And if it’s a an integer, will be interpreted as an id; if it’s an string,
+will be interpreted as name.  If it disagrees with the query field, a ValueError
+exception is thrown.</p>
+<p>Locations are specified by standard http: https: or file: URLs, however
+the special notation “$&lt;name&gt;” looks up a DB in memory by it’s name alone
+as a user interface convenience.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>s</strong> (<em>str</em>) – The string to split, e.g. a URL or path with query/fragment.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A 3-tuple of (path, name, id). <cite>name</cite> is a str or None,
+<cite>id</cite> is an int or None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[str, str | None, int | None]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <p>If the query or fragment cannot be parsed or one of the
+query fields doesn’t match the fragment field.</p>
+<p>&lt;validID&gt; := &lt;absoluteID&gt; | &lt;relativeID&gt;</p>
+<p>&lt;absoluteID&gt; := &lt;existing-URL&gt;{“?”&lt;parameters&gt;} | “#”&lt;id&gt;</p>
+<p>&lt;locationSpec&gt; := &lt;existing-URL&gt; | “$”&lt;dbName&gt;</p>
+<p>&lt;parameters&gt; := name=&lt;name&gt; | id=&lt;int&gt;</p>
+<p>&lt;relativeID&gt; := {#}&lt;id&gt;</p>
+<p>&lt;id&gt; := &lt;int&gt; | &lt;str-without-whatespace&gt; | &lt;quoted-str&gt;</p>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.persistence.pRef.db">
+<span class="sig-prename descclassname"><span class="pre">util.persistence.pRef.</span></span><span class="sig-name descname"><span class="pre">db</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#util.persistence.pRef.PRDb" title="util.persistence.pRef.PRDb"><span class="pre">PRDb</span></a></span><a class="headerlink" href="#util.persistence.pRef.db" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.persistence.pRef.a">
+<span class="sig-prename descclassname"><span class="pre">util.persistence.pRef.</span></span><span class="sig-name descname"><span class="pre">a</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">CPObject</span></span><a class="headerlink" href="#util.persistence.pRef.a" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.persistence.pRef.b">
+<span class="sig-prename descclassname"><span class="pre">util.persistence.pRef.</span></span><span class="sig-name descname"><span class="pre">b</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">CPObject</span></span><a class="headerlink" href="#util.persistence.pRef.b" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.persistence.pRef.c">
+<span class="sig-prename descclassname"><span class="pre">util.persistence.pRef.</span></span><span class="sig-name descname"><span class="pre">c</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">CPObject</span></span><a class="headerlink" href="#util.persistence.pRef.c" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="util.persistence.serialize.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">util.persistence.serialize module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="util.persistence.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">util.persistence package</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">util.persistence.pRef module</a><ul>
+<li><a class="reference internal" href="#util.persistence.pRef.DuplicateNameError"><code class="docutils literal notranslate"><span class="pre">DuplicateNameError</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.MalformedIDError"><code class="docutils literal notranslate"><span class="pre">MalformedIDError</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.CircularReferenceError"><code class="docutils literal notranslate"><span class="pre">CircularReferenceError</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRObject"><code class="docutils literal notranslate"><span class="pre">PRObject</span></code></a><ul>
+<li><a class="reference internal" href="#util.persistence.pRef.PRObject.__init__"><code class="docutils literal notranslate"><span class="pre">PRObject.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRObject._db"><code class="docutils literal notranslate"><span class="pre">PRObject._db</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRObject._id"><code class="docutils literal notranslate"><span class="pre">PRObject._id</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRObject.getInstantiationInfo"><code class="docutils literal notranslate"><span class="pre">PRObject.getInstantiationInfo()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRObject.id"><code class="docutils literal notranslate"><span class="pre">PRObject.id</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRObject.db"><code class="docutils literal notranslate"><span class="pre">PRObject.db</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRObject.name"><code class="docutils literal notranslate"><span class="pre">PRObject.name</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRObject.getPRef"><code class="docutils literal notranslate"><span class="pre">PRObject.getPRef()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRObject.torepr"><code class="docutils literal notranslate"><span class="pre">PRObject.torepr()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRObject.__str__"><code class="docutils literal notranslate"><span class="pre">PRObject.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRObject.tostring"><code class="docutils literal notranslate"><span class="pre">PRObject.tostring()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRObject._dbUrl"><code class="docutils literal notranslate"><span class="pre">PRObject._dbUrl()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRContainer"><code class="docutils literal notranslate"><span class="pre">PRContainer</span></code></a><ul>
+<li><a class="reference internal" href="#util.persistence.pRef.PRContainer.getMembers"><code class="docutils literal notranslate"><span class="pre">PRContainer.getMembers()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDbContainer"><code class="docutils literal notranslate"><span class="pre">PRDbContainer</span></code></a><ul>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDbContainer.getMembers"><code class="docutils literal notranslate"><span class="pre">PRDbContainer.getMembers()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDbContainer.name"><code class="docutils literal notranslate"><span class="pre">PRDbContainer.name</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb"><code class="docutils literal notranslate"><span class="pre">PRDb</span></code></a><ul>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.AllDBs"><code class="docutils literal notranslate"><span class="pre">PRDb.AllDBs</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.aliases"><code class="docutils literal notranslate"><span class="pre">PRDb.aliases</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.namedURLs"><code class="docutils literal notranslate"><span class="pre">PRDb.namedURLs</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._namesOf"><code class="docutils literal notranslate"><span class="pre">PRDb._namesOf</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.readProgress"><code class="docutils literal notranslate"><span class="pre">PRDb.readProgress</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.READ_PROGRESS_STEP"><code class="docutils literal notranslate"><span class="pre">PRDb.READ_PROGRESS_STEP</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._readingURLs"><code class="docutils literal notranslate"><span class="pre">PRDb._readingURLs</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._initCache"><code class="docutils literal notranslate"><span class="pre">PRDb._initCache()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.getDB"><code class="docutils literal notranslate"><span class="pre">PRDb.getDB()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._read"><code class="docutils literal notranslate"><span class="pre">PRDb._read()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.readFile"><code class="docutils literal notranslate"><span class="pre">PRDb.readFile()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._wasRead"><code class="docutils literal notranslate"><span class="pre">PRDb._wasRead()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._bases"><code class="docutils literal notranslate"><span class="pre">PRDb._bases</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.basedOn"><code class="docutils literal notranslate"><span class="pre">PRDb.basedOn()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.isRelativeURL"><code class="docutils literal notranslate"><span class="pre">PRDb.isRelativeURL()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.absoluteURL"><code class="docutils literal notranslate"><span class="pre">PRDb.absoluteURL()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.MAX_UP"><code class="docutils literal notranslate"><span class="pre">PRDb.MAX_UP</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.relativeURL"><code class="docutils literal notranslate"><span class="pre">PRDb.relativeURL()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._readFrames"><code class="docutils literal notranslate"><span class="pre">PRDb._readFrames</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._relocated"><code class="docutils literal notranslate"><span class="pre">PRDb._relocated</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.FILE_SCHEMES"><code class="docutils literal notranslate"><span class="pre">PRDb.FILE_SCHEMES</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.resolveURL"><code class="docutils literal notranslate"><span class="pre">PRDb.resolveURL()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._alias"><code class="docutils literal notranslate"><span class="pre">PRDb._alias()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._relocate"><code class="docutils literal notranslate"><span class="pre">PRDb._relocate()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.serializationHeader"><code class="docutils literal notranslate"><span class="pre">PRDb.serializationHeader()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.objectCount"><code class="docutils literal notranslate"><span class="pre">PRDb.objectCount()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.__init__"><code class="docutils literal notranslate"><span class="pre">PRDb.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.reading"><code class="docutils literal notranslate"><span class="pre">PRDb.reading</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.superDBs"><code class="docutils literal notranslate"><span class="pre">PRDb.superDBs</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._missingSuperDBs"><code class="docutils literal notranslate"><span class="pre">PRDb._missingSuperDBs</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.url"><code class="docutils literal notranslate"><span class="pre">PRDb.url</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._db"><code class="docutils literal notranslate"><span class="pre">PRDb._db</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.nextID"><code class="docutils literal notranslate"><span class="pre">PRDb.nextID</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.previousURL"><code class="docutils literal notranslate"><span class="pre">PRDb.previousURL</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.getInstantiationInfo"><code class="docutils literal notranslate"><span class="pre">PRDb.getInstantiationInfo()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.allSuperDBs"><code class="docutils literal notranslate"><span class="pre">PRDb.allSuperDBs()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.addSuperDB"><code class="docutils literal notranslate"><span class="pre">PRDb.addSuperDB()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.removeSuperDB"><code class="docutils literal notranslate"><span class="pre">PRDb.removeSuperDB()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.name"><code class="docutils literal notranslate"><span class="pre">PRDb.name</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.save"><code class="docutils literal notranslate"><span class="pre">PRDb.save()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.writeLocked"><code class="docutils literal notranslate"><span class="pre">PRDb.writeLocked()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._register"><code class="docutils literal notranslate"><span class="pre">PRDb._register()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._unregister"><code class="docutils literal notranslate"><span class="pre">PRDb._unregister()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.setDirty"><code class="docutils literal notranslate"><span class="pre">PRDb.setDirty()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.isDirty"><code class="docutils literal notranslate"><span class="pre">PRDb.isDirty()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.findByName"><code class="docutils literal notranslate"><span class="pre">PRDb.findByName()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._resolve"><code class="docutils literal notranslate"><span class="pre">PRDb._resolve()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.__getitem__"><code class="docutils literal notranslate"><span class="pre">PRDb.__getitem__()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb._makeDBContainer"><code class="docutils literal notranslate"><span class="pre">PRDb._makeDBContainer()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.getall"><code class="docutils literal notranslate"><span class="pre">PRDb.getall()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.get"><code class="docutils literal notranslate"><span class="pre">PRDb.get()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.keys"><code class="docutils literal notranslate"><span class="pre">PRDb.keys()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.values"><code class="docutils literal notranslate"><span class="pre">PRDb.values()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.items"><code class="docutils literal notranslate"><span class="pre">PRDb.items()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.torepr"><code class="docutils literal notranslate"><span class="pre">PRDb.torepr()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.__str__"><code class="docutils literal notranslate"><span class="pre">PRDb.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PRDb.tostring"><code class="docutils literal notranslate"><span class="pre">PRDb.tostring()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference"><code class="docutils literal notranslate"><span class="pre">PReference</span></code></a><ul>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference.__init__"><code class="docutils literal notranslate"><span class="pre">PReference.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference.url"><code class="docutils literal notranslate"><span class="pre">PReference.url</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference.name"><code class="docutils literal notranslate"><span class="pre">PReference.name</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference.id"><code class="docutils literal notranslate"><span class="pre">PReference.id</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference.obj"><code class="docutils literal notranslate"><span class="pre">PReference.obj</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference.__call__"><code class="docutils literal notranslate"><span class="pre">PReference.__call__()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference.tostring"><code class="docutils literal notranslate"><span class="pre">PReference.tostring()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference.__str__"><code class="docutils literal notranslate"><span class="pre">PReference.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference.torepr"><code class="docutils literal notranslate"><span class="pre">PReference.torepr()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference.formatForURL"><code class="docutils literal notranslate"><span class="pre">PReference.formatForURL()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference.eval"><code class="docutils literal notranslate"><span class="pre">PReference.eval()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference._isValidID_old"><code class="docutils literal notranslate"><span class="pre">PReference._isValidID_old()</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.PReference._isValidID"><code class="docutils literal notranslate"><span class="pre">PReference._isValidID()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.persistence.pRef.db"><code class="docutils literal notranslate"><span class="pre">db</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.a"><code class="docutils literal notranslate"><span class="pre">a</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.b"><code class="docutils literal notranslate"><span class="pre">b</span></code></a></li>
+<li><a class="reference internal" href="#util.persistence.pRef.c"><code class="docutils literal notranslate"><span class="pre">c</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

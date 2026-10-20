@@ -1,0 +1,167 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="576pt" height="99pt" viewBox="0.00 0.00 576.00 99.00">
+<ns0:g id="graph0" class="graph" transform="scale(0.803067 0.803067) rotate(0) translate(4 119)">
+<ns0:title>inheritance8ec97e252a</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>CommandContext</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:href="../dev/util.commandParser.html#util.commandParser.CommandContext" ns1:title="A container of commands: each public method is a command, callable from code" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="95.5,-20 0,-20 0,0 95.5,0 95.5,-20" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="47.75" y="-6.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">CommandContext</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>CommandGenerator</ns0:title>
+<ns0:g id="a_node2"><ns0:a ns1:href="../dev/util.commandParser.html#util.commandParser.CommandGenerator" ns1:title="This is the top level class for all actual commands that have a *ArgParse*" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="359.62,-96 255.88,-96 255.88,-76 359.62,-76 359.62,-96" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="307.75" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">CommandGenerator</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node5" class="node">
+<ns0:title>MutatingCommandGenerator</ns0:title>
+<ns0:g id="a_node5"><ns0:a ns1:href="../dev/util.commandParser.html#util.commandParser.MutatingCommandGenerator" ns1:title="And abstract class used by *TopCommandParser* requiring the *_makeCommand()* method" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="562.75,-115 421.5,-115 421.5,-95 562.75,-95 562.75,-115" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="492.12" y="-101.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">MutatingCommandGenerator</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge5" class="edge">
+<ns0:title>CommandGenerator-&gt;MutatingCommandGenerator</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M360.04,-91.34C377.07,-93.12 396.43,-95.13 414.93,-97.06" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="415.27,-98.86 420.42,-97.63 415.63,-95.38 415.27,-98.86" />
+</ns0:g>
+
+<ns0:g id="node7" class="node">
+<ns0:title>NonMutatingCommandGenerator</ns0:title>
+<ns0:g id="a_node7"><ns0:a ns1:href="../dev/util.commandParser.html#util.commandParser.NonMutatingCommandGenerator" ns1:title="This is the top level class for all actual commands that do not modify the" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="571.75,-77 412.5,-77 412.5,-57 571.75,-57 571.75,-77" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="492.12" y="-63.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">NonMutatingCommandGenerator</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge6" class="edge">
+<ns0:title>CommandGenerator-&gt;NonMutatingCommandGenerator</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M360.04,-80.66C374.36,-79.16 390.32,-77.5 406.04,-75.86" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="406.73,-77.55 411.53,-75.29 406.37,-74.07 406.73,-77.55" />
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>SubParsable</ns0:title>
+<ns0:g id="a_node3"><ns0:a ns1:href="../dev/util.commandParser.html#util.commandParser.SubParsable" ns1:title="A trivial command used as a subparser for multi word commands like *pip*'s " target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="203,-58 131.5,-58 131.5,-38 203,-38 203,-58" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="167.25" y="-44.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">SubParsable</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>SubParsable-&gt;CommandGenerator</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M203.2,-57.59C221.28,-62.55 243.53,-68.65 262.76,-73.93" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="262.88,-75.78 268.16,-75.41 263.8,-72.4 262.88,-75.78" />
+</ns0:g>
+
+<ns0:g id="node8" class="node">
+<ns0:title>IntermediateCommandWord</ns0:title>
+<ns0:g id="a_node8"><ns0:a ns1:href="../dev/util.commandParser.html#util.commandParser.IntermediateCommandWord" ns1:title="Used for multi-word commands like &quot;model node update&quot;. Obviously, these must" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="376.5,-58 239,-58 239,-38 376.5,-38 376.5,-58" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="307.75" y="-44.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">IntermediateCommandWord</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge4" class="edge">
+<ns0:title>SubParsable-&gt;IntermediateCommandWord</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M203.2,-48C212.16,-48 222.14,-48 232.28,-48" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="232.84,-49.75 237.84,-48 232.84,-46.25 232.84,-49.75" />
+</ns0:g>
+
+<ns0:g id="node12" class="node">
+<ns0:title>TopCommandParser</ns0:title>
+<ns0:g id="a_node12"><ns0:a ns1:href="../dev/util.commandParser.html#util.commandParser.TopCommandParser" ns1:title="A *Command* container meant to be the central hub for interpreting and executing" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="360.38,-20 255.12,-20 255.12,0 360.38,0 360.38,-20" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="307.75" y="-6.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">TopCommandParser</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge9" class="edge">
+<ns0:title>SubParsable-&gt;TopCommandParser</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M203.2,-38.41C221.28,-33.45 243.53,-27.35 262.76,-22.07" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="263.8,-23.6 268.16,-20.59 262.88,-20.22 263.8,-23.6" />
+</ns0:g>
+
+<ns0:g id="node4" class="node">
+<ns0:title>GenFromCommand</ns0:title>
+<ns0:g id="a_node4"><ns0:a ns1:href="../dev/util.commandParser.html#util.commandParser.GenFromCommand" ns1:title="A command generator for a context's method that has a *Command* class (eg: *move()* and *_Move*): running it makes the *Command* and does it on the undo list." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="709.25,-115 607.75,-115 607.75,-95 709.25,-95 709.25,-115" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="658.5" y="-101.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">GenFromCommand</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>MutatingCommandGenerator-&gt;GenFromCommand</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M562.83,-105C575.65,-105 588.88,-105 601.24,-105" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="601.86,-106.75 606.86,-105 601.86,-103.25 601.86,-106.75" />
+</ns0:g>
+
+<ns0:g id="node6" class="node">
+<ns0:title>GenFromFunction</ns0:title>
+<ns0:g id="a_node6"><ns0:a ns1:href="../dev/util.commandParser.html#util.commandParser.GenFromFunction" ns1:title="A command generator for a context's method that has no *Command* class: calling it just runs the method (it isn't undoable)." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="705.5,-77 611.5,-77 611.5,-57 705.5,-57 705.5,-77" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="658.5" y="-63.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">GenFromFunction</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge3" class="edge">
+<ns0:title>NonMutatingCommandGenerator-&gt;GenFromFunction</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M571.94,-67C583.13,-67 594.41,-67 604.93,-67" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="605.62,-68.75 610.62,-67 605.62,-65.25 605.62,-68.75" />
+</ns0:g>
+
+<ns0:g id="node11" class="node">
+<ns0:title>RedoCommand</ns0:title>
+<ns0:g id="a_node11"><ns0:a ns1:href="../dev/util.commandParser.html#util.commandParser.RedoCommand" ns1:title="The *redo* command (see *UndoCommand*)." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="700.62,-39 616.38,-39 616.38,-19 700.62,-19 700.62,-39" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="658.5" y="-25.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">RedoCommand</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge7" class="edge">
+<ns0:title>NonMutatingCommandGenerator-&gt;RedoCommand</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M538.48,-56.52C560.63,-51.4 587.28,-45.23 609.74,-40.04" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="610.74,-41.61 615.22,-38.77 609.95,-38.2 610.74,-41.61" />
+</ns0:g>
+
+<ns0:g id="node9" class="node">
+<ns0:title>NoValue</ns0:title>
+<ns0:g id="a_node9"><ns0:a ns1:href="../dev/util.commandParser.html#util.commandParser.NoValue" ns1:title="Used to represent no value for an object when *None* is otherwise a possible" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="74.75,-96 20.75,-96 20.75,-76 74.75,-76 74.75,-96" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="47.75" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">NoValue</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node10" class="node">
+<ns0:title>Parsable</ns0:title>
+<ns0:g id="a_node10"><ns0:a ns1:href="../dev/util.commandParser.html#util.commandParser.Parsable" ns1:title="This is NOT a command, but a command definition used by a *TopCommandParser* to" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="74.88,-58 20.62,-58 20.62,-38 74.88,-38 74.88,-58" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="47.75" y="-44.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Parsable</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge8" class="edge">
+<ns0:title>Parsable-&gt;SubParsable</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M75.12,-48C89.69,-48 108.14,-48 124.61,-48" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="125.3,-49.75 130.3,-48 125.3,-46.25 125.3,-49.75" />
+</ns0:g>
+</ns0:g>
+</ns0:svg>

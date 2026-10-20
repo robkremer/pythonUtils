@@ -1,0 +1,188 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="576pt" height="127pt" viewBox="0.00 0.00 576.00 127.00">
+<ns0:g id="graph0" class="graph" transform="scale(0.707617 0.707617) rotate(0) translate(4 176)">
+<ns0:title>inheritance285ab8d00d</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>tkinter.BaseWidget</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:title="Internal class.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="290.75,-58 191.5,-58 191.5,-38 290.75,-38 290.75,-58" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="241.12" y="-44.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">tkinter.BaseWidget</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node4" class="node">
+<ns0:title>tkinter.Widget</ns0:title>
+<ns0:g id="a_node4"><ns0:a ns1:title="Internal class.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="406.12,-105 329.38,-105 329.38,-85 406.12,-85 406.12,-105" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="367.75" y="-91.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">tkinter.Widget</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge5" class="edge">
+<ns0:title>tkinter.BaseWidget-&gt;tkinter.Widget</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M269.78,-58.43C288.5,-65.49 313.33,-74.85 333.18,-82.34" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="333.16,-84.2 338.46,-84.33 334.4,-80.93 333.16,-84.2" />
+</ns0:g>
+
+<ns0:g id="node8" class="node">
+<ns0:title>tkinter.Toplevel</ns0:title>
+<ns0:g id="a_node8"><ns0:a ns1:title="Toplevel widget, e.g. for dialogs.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="408.75,-48 326.75,-48 326.75,-28 408.75,-28 408.75,-48" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="367.75" y="-34.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">tkinter.Toplevel</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge3" class="edge">
+<ns0:title>tkinter.BaseWidget-&gt;tkinter.Toplevel</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M291.02,-44.08C300.55,-43.31 310.52,-42.51 319.98,-41.75" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="320.84,-43.44 325.68,-41.3 320.56,-39.95 320.84,-43.44" />
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>tkinter.Misc</ns0:title>
+<ns0:g id="a_node2"><ns0:a ns1:title="Internal class.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="111.25,-58 44.25,-58 44.25,-38 111.25,-38 111.25,-58" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="77.75" y="-44.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">tkinter.Misc</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>tkinter.Misc-&gt;tkinter.BaseWidget</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M111.41,-48C132.46,-48 160.37,-48 184.82,-48" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="185.52,-49.75 190.52,-48 185.52,-46.25 185.52,-49.75" />
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>tkinter.Frame</ns0:title>
+<ns0:g id="a_node3"><ns0:a ns1:title="Frame widget which may contain other widgets and can have a 3D border.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="550,-105 476.25,-105 476.25,-85 550,-85 550,-105" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="513.12" y="-91.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">tkinter.Frame</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node12" class="node">
+<ns0:title>util.attributeEditor.ColorEditor</ns0:title>
+<ns0:g id="a_node12"><ns0:a ns1:href="../dev/util.attributeEditor.html#util.attributeEditor.ColorEditor" ns1:title="An editor for a colour value: a swatch that opens the system colour chooser, and a button to make it transparent." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="783.88,-105 639.62,-105 639.62,-85 783.88,-85 783.88,-105" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="711.75" y="-91.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">util.attributeEditor.ColorEditor</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge10" class="edge">
+<ns0:title>tkinter.Frame-&gt;util.attributeEditor.ColorEditor</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M550.19,-95C573.38,-95 604.42,-95 633.03,-95" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="633.72,-96.75 638.72,-95 633.72,-93.25 633.72,-96.75" />
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>tkinter.Widget-&gt;tkinter.Frame</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M406.42,-95C425.89,-95 449.71,-95 469.8,-95" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="470.43,-96.75 475.43,-95 470.43,-93.25 470.43,-96.75" />
+</ns0:g>
+
+<ns0:g id="node5" class="node">
+<ns0:title>tkinter.Grid</ns0:title>
+<ns0:g id="a_node5"><ns0:a ns1:title="Geometry manager Grid.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="273.12,-172 209.12,-172 209.12,-152 273.12,-152 273.12,-172" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="241.12" y="-158.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">tkinter.Grid</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge8" class="edge">
+<ns0:title>tkinter.Grid-&gt;tkinter.Widget</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M271.58,-151.53C278,-148.97 284.68,-146.07 290.75,-143 310.6,-132.97 331.9,-119.23 346.88,-109.02" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="348.35,-110.14 351.48,-105.87 346.37,-107.25 348.35,-110.14" />
+</ns0:g>
+
+<ns0:g id="node6" class="node">
+<ns0:title>tkinter.Pack</ns0:title>
+<ns0:g id="a_node6"><ns0:a ns1:title="Geometry manager Pack.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="275.38,-134 206.88,-134 206.88,-114 275.38,-114 275.38,-134" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="241.12" y="-120.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">tkinter.Pack</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge6" class="edge">
+<ns0:title>tkinter.Pack-&gt;tkinter.Widget</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M275.85,-116.15C290.36,-112.78 307.51,-108.79 322.98,-105.18" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="323.83,-106.78 328.31,-103.95 323.04,-103.37 323.83,-106.78" />
+</ns0:g>
+
+<ns0:g id="node7" class="node">
+<ns0:title>tkinter.Place</ns0:title>
+<ns0:g id="a_node7"><ns0:a ns1:title="Geometry manager Place.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="276.5,-96 205.75,-96 205.75,-76 276.5,-76 276.5,-96" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="241.12" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">tkinter.Place</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge7" class="edge">
+<ns0:title>tkinter.Place-&gt;tkinter.Widget</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M276.84,-88.51C291.08,-89.54 307.74,-90.74 322.81,-91.83" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="323.3,-93.62 328.41,-92.23 323.55,-90.13 323.3,-93.62" />
+</ns0:g>
+
+<ns0:g id="node10" class="node">
+<ns0:title>util.attributeEditor.AttrEditor</ns0:title>
+<ns0:g id="a_node10"><ns0:a ns1:href="../dev/util.attributeEditor.html#util.attributeEditor.AttrEditor" ns1:title="Implements a graphical editor for an *AttributedObject* of the form:" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="581.5,-48 444.75,-48 444.75,-28 581.5,-28 581.5,-48" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="513.12" y="-34.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">util.attributeEditor.AttrEditor</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge9" class="edge">
+<ns0:title>tkinter.Toplevel-&gt;util.attributeEditor.AttrEditor</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M409.07,-38C418.19,-38 428.16,-38 438.18,-38" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="438.67,-39.75 443.67,-38 438.67,-36.25 438.67,-39.75" />
+</ns0:g>
+
+<ns0:g id="node9" class="node">
+<ns0:title>tkinter.Wm</ns0:title>
+<ns0:g id="a_node9"><ns0:a ns1:title="Provides functions for the communication with the window manager.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="273.12,-20 209.12,-20 209.12,0 273.12,0 273.12,-20" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="241.12" y="-6.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">tkinter.Wm</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge4" class="edge">
+<ns0:title>tkinter.Wm-&gt;tkinter.Toplevel</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M273.57,-17.07C287.71,-20.24 304.67,-24.05 320.23,-27.55" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="320.34,-29.37 325.6,-28.76 321.11,-25.95 320.34,-29.37" />
+</ns0:g>
+
+<ns0:g id="node13" class="node">
+<ns0:title>util.attributeEditor.HierarchicalAttrEditor</ns0:title>
+<ns0:g id="a_node13"><ns0:a ns1:href="../dev/util.attributeEditor.html#util.attributeEditor.HierarchicalAttrEditor" ns1:title="An *AttrEditor* for an *AttributedObject* with supertypes: it shows each" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="806,-48 617.5,-48 617.5,-28 806,-28 806,-48" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="711.75" y="-34.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">util.attributeEditor.HierarchicalAttrEditor</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge11" class="edge">
+<ns0:title>util.attributeEditor.AttrEditor-&gt;util.attributeEditor.HierarchicalAttrEditor</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M581.79,-38C591.18,-38 600.98,-38 610.8,-38" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="611.5,-39.75 616.5,-38 611.5,-36.25 611.5,-39.75" />
+</ns0:g>
+
+<ns0:g id="node11" class="node">
+<ns0:title>util.attributeEditor.ChangeDescr</ns0:title>
+<ns0:g id="a_node11"><ns0:a ns1:href="../dev/util.attributeEditor.html#util.attributeEditor.ChangeDescr" ns1:title="The editor's record of one attribute's row: its Tk variable and widget, whether it's to be deleted, and how to save it." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="155.5,-96 0,-96 0,-76 155.5,-76 155.5,-96" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="77.75" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">util.attributeEditor.ChangeDescr</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+</ns0:g>
+</ns0:svg>

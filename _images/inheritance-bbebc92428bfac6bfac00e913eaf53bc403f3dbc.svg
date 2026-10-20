@@ -1,0 +1,158 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="499pt" height="180pt" viewBox="0.00 0.00 499.00 180.00">
+<ns0:g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 176)">
+<ns0:title>inheritance4ce84383a9</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>enum.Enum</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:title="Create a collection of name/value pairs.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="92.88,-20 24.38,-20 24.38,0 92.88,0 92.88,-20" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="58.62" y="-6.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">enum.Enum</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>enum.Flag</ns0:title>
+<ns0:g id="a_node2"><ns0:a ns1:title="Support for flags">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="263.38,-20 201.62,-20 201.62,0 263.38,0 263.38,-20" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="232.5" y="-6.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">enum.Flag</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>enum.Enum-&gt;enum.Flag</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M93.17,-10C122.45,-10 164.84,-10 194.97,-10" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="195.45,-11.75 200.45,-10 195.45,-8.25 195.45,-11.75" />
+</ns0:g>
+
+<ns0:g id="node11" class="node">
+<ns0:title>util.attribute.RestrictionTypes</ns0:title>
+<ns0:g id="a_node11"><ns0:a ns1:href="../dev/util.attribute.html#util.attribute.RestrictionTypes" ns1:title="Restrictions on how an attribute is inherited, by individuals or by" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="491.25,-20 347.75,-20 347.75,0 491.25,0 491.25,-20" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="419.5" y="-6.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">util.attribute.RestrictionTypes</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge9" class="edge">
+<ns0:title>enum.Flag-&gt;util.attribute.RestrictionTypes</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M263.64,-10C284.77,-10 314.03,-10 341.43,-10" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="341.85,-11.75 346.85,-10 341.85,-8.25 341.85,-11.75" />
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>persistence.serialize.Serializable</ns0:title>
+<ns0:g id="a_node3"><ns0:a ns1:href="../dev/util.persistence.serialize.html#util.persistence.serialize.Serializable" ns1:title="Defines the required protocol (one class method) for any user-defined objects" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="311.75,-172 153.25,-172 153.25,-152 311.75,-152 311.75,-172" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="232.5" y="-158.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">persistence.serialize.Serializable</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node6" class="node">
+<ns0:title>util.attribute.Attribute</ns0:title>
+<ns0:g id="a_node6"><ns0:a ns1:href="../dev/util.attribute.html#util.attribute.Attribute" ns1:title="An attribute's value, with its *type* (a type, or a type name such as" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="472.88,-153 366.12,-153 366.12,-133 472.88,-133 472.88,-153" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="419.5" y="-139.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">util.attribute.Attribute</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge3" class="edge">
+<ns0:title>persistence.serialize.Serializable-&gt;util.attribute.Attribute</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M312.22,-153.91C328.06,-152.29 344.44,-150.61 359.47,-149.06" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="360.27,-150.74 365.06,-148.49 359.91,-147.26 360.27,-150.74" />
+</ns0:g>
+
+<ns0:g id="node8" class="node">
+<ns0:title>util.attribute.AttributedObject</ns0:title>
+<ns0:g id="a_node8"><ns0:a ns1:href="../dev/util.attribute.html#util.attribute.AttributedObject" ns1:title="An object with named *Attribute* objects, which inherits more from its" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="489.75,-115 349.25,-115 349.25,-95 489.75,-95 489.75,-115" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="419.5" y="-101.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">util.attribute.AttributedObject</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge5" class="edge">
+<ns0:title>persistence.serialize.Serializable-&gt;util.attribute.AttributedObject</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M284.57,-151.54C293.74,-149.11 303.12,-146.27 311.75,-143 328.67,-136.59 330.91,-130.61 347.75,-124 354,-121.55 360.69,-119.29 367.36,-117.27" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="368.45,-118.77 372.75,-115.68 367.46,-115.42 368.45,-118.77" />
+</ns0:g>
+
+<ns0:g id="node4" class="node">
+<ns0:title>persistence.serialize.strdict</ns0:title>
+<ns0:g id="a_node4"><ns0:a ns1:href="../dev/util.persistence.serialize.html#util.persistence.serialize.strdict" ns1:title="A simple subclass of *dict* that restricts the type of keys to type *str*." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="300.12,-96 164.88,-96 164.88,-76 300.12,-76 300.12,-96" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="232.5" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">persistence.serialize.strdict</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge7" class="edge">
+<ns0:title>persistence.serialize.strdict-&gt;util.attribute.AttributedObject</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M300.55,-92.89C314.18,-94.29 328.61,-95.77 342.52,-97.2" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="342.97,-99 348.12,-97.77 343.33,-95.52 342.97,-99" />
+</ns0:g>
+
+<ns0:g id="node5" class="node">
+<ns0:title>typing.Generic</ns0:title>
+<ns0:g id="a_node5"><ns0:a ns1:title="Abstract base class for generic types.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="98.12,-96 19.12,-96 19.12,-76 98.12,-76 98.12,-96" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="58.62" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">typing.Generic</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>typing.Generic-&gt;persistence.serialize.strdict</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M98.2,-86C115.96,-86 137.64,-86 158.32,-86" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="158.94,-87.75 163.94,-86 158.94,-84.25 158.94,-87.75" />
+</ns0:g>
+
+<ns0:g id="node7" class="node">
+<ns0:title>util.dirtyable.Dirtyable</ns0:title>
+<ns0:g id="a_node7"><ns0:a ns1:href="../dev/util.dirtyable.html#util.dirtyable.Dirtyable" ns1:title="A mixin class for object needing a dirty bit, using setDirty() and isDirty()" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="287.75,-134 177.25,-134 177.25,-114 287.75,-114 287.75,-134" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="232.5" y="-120.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">util.dirtyable.Dirtyable</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge4" class="edge">
+<ns0:title>util.dirtyable.Dirtyable-&gt;util.attribute.Attribute</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M288.01,-129.6C310.41,-131.9 336.42,-134.57 359.29,-136.92" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="359.75,-138.73 364.9,-137.5 360.11,-135.24 359.75,-138.73" />
+</ns0:g>
+
+<ns0:g id="edge6" class="edge">
+<ns0:title>util.dirtyable.Dirtyable-&gt;util.attribute.AttributedObject</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M288.01,-118.4C305.15,-116.64 324.39,-114.66 342.73,-112.78" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="343.37,-114.48 348.16,-112.22 343.01,-110.99 343.37,-114.48" />
+</ns0:g>
+
+<ns0:g id="node9" class="node">
+<ns0:title>util.observer.Subject</ns0:title>
+<ns0:g id="a_node9"><ns0:a ns1:href="../dev/util.observer.html#util.observer.Subject" ns1:title="The Subject interface declares a set of methods for managing subscribers." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="285.12,-58 179.88,-58 179.88,-38 285.12,-38 285.12,-58" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="232.5" y="-44.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">util.observer.Subject</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge8" class="edge">
+<ns0:title>util.observer.Subject-&gt;util.attribute.AttributedObject</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M280.06,-58.46C290.54,-61.05 301.57,-63.96 311.75,-67 336.8,-74.48 364.61,-84.43 385.56,-92.28" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="385.55,-94.14 390.85,-94.27 386.78,-90.87 385.55,-94.14" />
+</ns0:g>
+
+<ns0:g id="node10" class="node">
+<ns0:title>util.attribute.Restriction</ns0:title>
+<ns0:g id="a_node10"><ns0:a ns1:href="../dev/util.attribute.html#util.attribute.Restriction" ns1:title="How an attribute may be inherited: one *RestrictionTypes* for individuals" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="117.25,-134 0,-134 0,-114 117.25,-114 117.25,-134" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="58.62" y="-120.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">util.attribute.Restriction</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+</ns0:g>
+</ns0:svg>

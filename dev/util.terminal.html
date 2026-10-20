@@ -1,0 +1,1787 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="util.tooltip module" href="util.tooltip.html"><link rel="prev" title="util.rtValuesDialog module" href="util.rtValuesDialog.html">
+        <link rel="prefetch" href="../_static/pu-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/pu-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>util.terminal module - pythonUtils 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">pythonUtils 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/pu-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">pythonUtils 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/persistence.html">Persistence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/attributes.html">Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/commands.html">Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/observer.html">Observers and Changes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/widgets.html">Tk Widgets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/utilities.html">Preferences, Graphs and Utilities</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="util.html">util package</a><input aria-label="Toggle navigation of util package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="util.persistence.html">util.persistence package</a><input aria-label="Toggle navigation of util.persistence package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.pRef.html">util.persistence.pRef module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serialize.html">util.persistence.serialize module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeJSON.html">util.persistence.serializeJSON module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializePlist.html">util.persistence.serializePlist module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeXML.html">util.persistence.serializeXML module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeXML2.html">util.persistence.serializeXML2 module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeXML3.html">util.persistence.serializeXML3 module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="util.abstractGraph.html">util.abstractGraph module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.actionDialog.html">util.actionDialog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.attribute.html">util.attribute module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.attributeEditor.html">util.attributeEditor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.command.html">util.command module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.commandParser.html">util.commandParser module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.dirtyable.html">util.dirtyable module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.errorReportingObject.html">util.errorReportingObject module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.observer.html">util.observer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.prefs.html">util.prefs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.rtValuesDialog.html">util.rtValuesDialog module</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">util.terminal module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.tooltip.html">util.tooltip module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.urlDialog.html">util.urlDialog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html">util.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.validatedList.html">util.validatedList module</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-util.terminal">
+<span id="util-terminal-module"></span><h1>util.terminal module<a class="headerlink" href="#module-util.terminal" title="Link to this heading">¶</a></h1>
+<p>Terminals for an application’s command line, and the routing of its output to
+them:</p>
+<ul class="simple">
+<li><p><em>TerminalWidget</em>: a Tk text widget that behaves like a terminal (a prompt,
+typed commands, history).</p></li>
+<li><p><em>PlainTextTerminal</em>: the same interface on the real console (a REPL).</p></li>
+<li><p><em>TerminalRegistry</em> and <em>installGlobalIORouting()</em>: send <em>stdout</em>, <em>stderr</em>,
+logging and <em>input()</em> to the terminal of whichever window is active.</p></li>
+</ul>
+<dl class="py data">
+<dt class="sig sig-object py" id="util.terminal.PromptType">
+<span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">PromptType</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">str</span> <span class="pre">|</span> <span class="pre">typing.Callable[[],</span> <span class="pre">str]</span></span><a class="headerlink" href="#util.terminal.PromptType" title="Link to this definition">¶</a></dt>
+<dd><p>A prompt passed to a terminal can be either a string constant or 
+a function with no parameters returning a string.  Useful when you
+want to vary the prompt as unix shells often do.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.terminal.OnLineType">
+<span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">OnLineType</span></span><a class="headerlink" href="#util.terminal.OnLineType" title="Link to this definition">¶</a></dt>
+<dd><p>A function that a terminal will call to parse and execute a command
+whenever the user enters the command in the terminal’s REPL.</p>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-obj docutils literal notranslate"><span class="pre">Any</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.terminal.ResultToStringFunType">
+<span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">ResultToStringFunType</span></span><a class="headerlink" href="#util.terminal.ResultToStringFunType" title="Link to this definition">¶</a></dt>
+<dd><p>Since terminals are purely text based, and command can return ANY type,
+terminals will call a function of this type to translate the return value
+to a printable string. This is usually defaulted the builtin str() function,
+but more exotic functions can be passed in in the terminal’s constructor.</p>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-obj docutils literal notranslate"><span class="pre">Any</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.terminal.AbstractTerminal">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">AbstractTerminal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">onLine:</span> <span class="pre">~typing.Callable[[str],</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None],</span> <span class="pre">prompt:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~typing.Callable[[],</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">'&gt;</span> <span class="pre">',</span> <span class="pre">resultToStringFun:</span> <span class="pre">~typing.Callable[[~typing.Any],</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">**_kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.terminal.AbstractTerminal" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>What a terminal does, whatever it’s drawn on: show a prompt, take a line of
+input and hand it to the <em>onLine</em> callback, and print the result.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.AbstractTerminal.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">onLine:</span> <span class="pre">~typing.Callable[[str],</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None],</span> <span class="pre">prompt:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~typing.Callable[[],</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">'&gt;</span> <span class="pre">',</span> <span class="pre">resultToStringFun:</span> <span class="pre">~typing.Callable[[~typing.Any],</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">**_kwargs</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.AbstractTerminal.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>onLine</strong> (<em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>None</em><em>]</em>) – Callback invoked (on a background thread) for each submitted line.</p></li>
+<li><p><strong>prompt</strong> (<em>str</em><em>|</em><em>Callable</em><em>[</em><em>[</em><em>]</em><em>,</em><em>str</em><em>]</em>) – The prompt string shown before each new command line.</p></li>
+<li><p><strong>resultToStringFun</strong> (<a class="reference internal" href="#util.terminal.ResultToStringFunType" title="util.terminal.ResultToStringFunType"><em>ResultToStringFunType</em></a>)</p></li>
+<li><p><strong>_kwargs</strong></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.AbstractTerminal.onLine">
+<span class="sig-name descname"><span class="pre">onLine</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#util.terminal.AbstractTerminal.onLine" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.AbstractTerminal._prompt">
+<span class="sig-name descname"><span class="pre">_prompt</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#util.terminal.AbstractTerminal._prompt" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.AbstractTerminal.resultToStringFun">
+<span class="sig-name descname"><span class="pre">resultToStringFun</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#util.terminal.AbstractTerminal.resultToStringFun" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.AbstractTerminal.oldOut">
+<span class="sig-name descname"><span class="pre">oldOut</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TextIO</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.terminal.AbstractTerminal.oldOut" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.AbstractTerminal.oldErr">
+<span class="sig-name descname"><span class="pre">oldErr</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TextIO</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.terminal.AbstractTerminal.oldErr" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.AbstractTerminal.oldInput">
+<span class="sig-name descname"><span class="pre">oldInput</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.terminal.AbstractTerminal.oldInput" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.AbstractTerminal.lastExecutionResult">
+<span class="sig-name descname"><span class="pre">lastExecutionResult</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></span><a class="headerlink" href="#util.terminal.AbstractTerminal.lastExecutionResult" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="util.terminal.AbstractTerminal.prompt">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">prompt</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#util.terminal.AbstractTerminal.prompt" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.AbstractTerminal.input">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.terminal.AbstractTerminal.input" title="Link to this definition">¶</a></dt>
+<dd><p>Method to imitate <em>buildins.input()</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prompt</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.AbstractTerminal.printLine">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">printLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">font</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.AbstractTerminal.printLine" title="Link to this definition">¶</a></dt>
+<dd><p>Write a line of output above the current prompt, with optional styling.
+Safe to call from any thread — calls from off the main thread are
+marshalled onto it via after().</p>
+<p>Concrete terminal implementations may ignore the optional parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> (<em>str</em>) – The text to print.</p></li>
+<li><p><strong>style</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Registered style name (e.g. “stdout”, “stderr”, “result”).
+Takes precedence over fg/bg/font.</p></li>
+<li><p><strong>fg</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Foreground color, used only if style is not given.</p></li>
+<li><p><strong>bg</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Background color, used only if style is not given.</p></li>
+<li><p><strong>font</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Font spec, used only if style is not given.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.terminal.PlainTextTerminal">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">PlainTextTerminal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">onLine:</span> <span class="pre">~typing.Callable[[str],</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None],</span> <span class="pre">prompt:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~typing.Callable[[],</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">'&gt;</span> <span class="pre">',</span> <span class="pre">resultToStringFun:</span> <span class="pre">~typing.Callable[[~typing.Any],</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">stderrfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'red',</span> <span class="pre">stdoutfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'',</span> <span class="pre">promptfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'yellow',</span> <span class="pre">queryfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'green',</span> <span class="pre">resultfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'blue',</span> <span class="pre">**_kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.terminal.PlainTextTerminal" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#util.terminal.AbstractTerminal" title="util.terminal.AbstractTerminal"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractTerminal</span></code></a></p>
+<p>Not really a terminal at all. This is a pure text interface (REPL -
+Real, Evaluate, Print, Loop) that expects to operate called from
+a command line on a regular terminal. It does VT terminal or emulator.
+Colors are supported to the limited extent of the VT terminals.</p>
+<p>Instantiating this object runs the REPL, and the <em>__init__()</em> method
+does not return until the user presses ctrl-D.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.PlainTextTerminal.TERMINAL_SEQUENCES">
+<span class="sig-name descname"><span class="pre">TERMINAL_SEQUENCES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'black':</span> <span class="pre">'30',</span> <span class="pre">'blue':</span> <span class="pre">'34',</span> <span class="pre">'boldblack':</span> <span class="pre">'40',</span> <span class="pre">'boldblue':</span> <span class="pre">'44',</span> <span class="pre">'boldcyan':</span> <span class="pre">'46',</span> <span class="pre">'boldgreen':</span> <span class="pre">'42',</span> <span class="pre">'boldmagenta':</span> <span class="pre">'45',</span> <span class="pre">'boldred':</span> <span class="pre">'41',</span> <span class="pre">'boldwhite':</span> <span class="pre">'47',</span> <span class="pre">'boldyellow':</span> <span class="pre">'43',</span> <span class="pre">'cyan':</span> <span class="pre">'36',</span> <span class="pre">'default':</span> <span class="pre">'0',</span> <span class="pre">'green':</span> <span class="pre">'32',</span> <span class="pre">'magenta':</span> <span class="pre">'35',</span> <span class="pre">'red':</span> <span class="pre">'31',</span> <span class="pre">'underline':</span> <span class="pre">'4',</span> <span class="pre">'white':</span> <span class="pre">'37',</span> <span class="pre">'yellow':</span> <span class="pre">'33'}</span></span><a class="headerlink" href="#util.terminal.PlainTextTerminal.TERMINAL_SEQUENCES" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.PlainTextTerminal._getStyleSeq">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_getStyleSeq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.terminal.PlainTextTerminal._getStyleSeq" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>default</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.PlainTextTerminal.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">onLine:</span> <span class="pre">~typing.Callable[[str],</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None],</span> <span class="pre">prompt:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~typing.Callable[[],</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">'&gt;</span> <span class="pre">',</span> <span class="pre">resultToStringFun:</span> <span class="pre">~typing.Callable[[~typing.Any],</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">stderrfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'red',</span> <span class="pre">stdoutfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'',</span> <span class="pre">promptfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'yellow',</span> <span class="pre">queryfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'green',</span> <span class="pre">resultfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'blue',</span> <span class="pre">**_kwargs</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.PlainTextTerminal.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Run a plain text REPL interface.</p>
+<p>Possible values for the various colour parameters are: default, underline, black, 
+red, green, yellow, blue, magenta, cyan, white, boldblack, boldred, boldgreen, 
+boldyellow, boldblue, boldmagenta, boldcyan, boldwhite.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>onLine</strong> (<em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>None</em><em>]</em>) – Callback invoked (on a background thread) for each submitted line.</p></li>
+<li><p><strong>prompt</strong> (<em>str</em><em>|</em><em>Callable</em><em>[</em><em>[</em><em>]</em><em>,</em><em>str</em><em>]</em>) – The prompt string shown before each new command line.</p></li>
+<li><p><strong>stderrfg</strong> – The colour of text from stderr. Default “red”.</p></li>
+<li><p><strong>stdoutfg</strong> – The colour of text from stdout. Default “” (terminal default).</p></li>
+<li><p><strong>promptfg</strong> – The colour of text for the prompt. Default “yellow”.</p></li>
+<li><p><strong>queryfg</strong> – The colour of text prompts from self.input(). Default “green”.</p></li>
+<li><p><strong>resultfg</strong> – The colour of text for command returned results. Default “blue”.</p></li>
+<li><p><strong>resultToStringFun</strong> (<a class="reference internal" href="#util.terminal.ResultToStringFunType" title="util.terminal.ResultToStringFunType"><em>ResultToStringFunType</em></a>)</p></li>
+<li><p><strong>_kwargs</strong></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.PlainTextTerminal.styleTags">
+<span class="sig-name descname"><span class="pre">styleTags</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#util.terminal.PlainTextTerminal.styleTags" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.PlainTextTerminal.input">
+<span class="sig-name descname"><span class="pre">input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.terminal.PlainTextTerminal.input" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prompt</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.PlainTextTerminal.printLine">
+<span class="sig-name descname"><span class="pre">printLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">font</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.PlainTextTerminal.printLine" title="Link to this definition">¶</a></dt>
+<dd><p>Write a line of output above the current prompt, with optional styling.
+Safe to call from any thread — calls from off the main thread are
+marshalled onto it via after().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> (<em>str</em>) – The text to print.</p></li>
+<li><p><strong>style</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Registered style name (e.g. “stdout”, “stderr”, “result”).
+Takes precedence over fg/bg/font.</p></li>
+<li><p><strong>fg</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Foreground color, used only if style is not given.</p></li>
+<li><p><strong>bg</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Background color, used only if style is not given.</p></li>
+<li><p><strong>font</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Font spec, used only if style is not given.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.terminal.LineBufferedStream">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">LineBufferedStream</span></span><a class="headerlink" href="#util.terminal.LineBufferedStream" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TextIOBase</span></code></p>
+<p>Base class for file-like stream wrappers that buffer writes by line and
+hand each complete line to a subclass for emission.</p>
+<p>Subclasses implement _emitLine() to decide how a line actually gets displayed
+(e.g. ANSI escape codes for a text console, or styled inserts into a Tk widget).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.LineBufferedStream.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.LineBufferedStream.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.LineBufferedStream.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#util.terminal.LineBufferedStream.write" title="Link to this definition">¶</a></dt>
+<dd><p>Buffer incoming text and flush complete lines via _emitLine().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – Text written by print() or similar.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number of characters accepted.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.LineBufferedStream.flush">
+<span class="sig-name descname"><span class="pre">flush</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.LineBufferedStream.flush" title="Link to this definition">¶</a></dt>
+<dd><p>Flush any partial (no trailing newline) buffered text as a final line.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.LineBufferedStream._emitLine">
+<span class="sig-name descname"><span class="pre">_emitLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'\n'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.LineBufferedStream._emitLine" title="Link to this definition">¶</a></dt>
+<dd><p>Emit one complete line (no trailing newline). Subclasses must override.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>line</strong> (<em>str</em>) – The line to emit.</p></li>
+<li><p><strong>end</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.LineBufferedStream._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#util.terminal.LineBufferedStream._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.terminal.LineFilteringStream">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">LineFilteringStream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TextIO</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.terminal.LineFilteringStream" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#util.terminal.LineBufferedStream" title="util.terminal.LineBufferedStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">LineBufferedStream</span></code></a></p>
+<p>Applies a transform to each complete line, then forwards it to an
+underlying stream (e.g. real stdout/stderr in a text console, using ANSI
+escape codes for color).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target</strong> (<em>TextIO</em>) – The underlying stream to write transformed lines to.</p></li>
+<li><p><strong>transform</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em>) – Function applied to each line. Return None to suppress
+(drop) a line entirely. Defaults to passing lines through unchanged.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.LineFilteringStream.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TextIO</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.LineFilteringStream.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target</strong> (<em>TextIO</em>)</p></li>
+<li><p><strong>transform</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.LineFilteringStream._emitLine">
+<span class="sig-name descname"><span class="pre">_emitLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'\n'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.LineFilteringStream._emitLine" title="Link to this definition">¶</a></dt>
+<dd><p>Apply the transform and write the result to the target stream, unless
+the transform suppressed the line.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>line</strong> (<em>str</em>) – The line to emit.</p></li>
+<li><p><strong>end</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.LineFilteringStream.flush">
+<span class="sig-name descname"><span class="pre">flush</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.LineFilteringStream.flush" title="Link to this definition">¶</a></dt>
+<dd><p>Flush buffered content, then the underlying target stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.LineFilteringStream._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#util.terminal.LineFilteringStream._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.terminal.writeToRealConsole">
+<span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">writeToRealConsole</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.writeToRealConsole" title="Link to this definition">¶</a></dt>
+<dd><p>Last-resort output path: write directly to the real console, bypassing
+routing entirely. Used when TerminalRegistry.resolveTerminal() can’t find
+ANY terminal to route to, so output is never silently dropped — just less
+conveniently placed than it would be in a TerminalWidget.</p>
+<p>Deliberately targets sys.__stdout__/__stderr__ (the interpreter’s original
+streams, unaffected by installGlobalIORouting()’s reassignment of
+sys.stdout/sys.stderr) rather than the current sys.stdout/sys.stderr,
+which would just loop back into routing and hit this same fallback again.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> (<em>str</em>) – The text to write (a newline is appended).</p></li>
+<li><p><strong>style</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – “stderr” routes to sys.__stderr__; anything else (including
+None) routes to sys.__stdout__.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.terminal.TerminalRegistry">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">TerminalRegistry</span></span><a class="headerlink" href="#util.terminal.TerminalRegistry" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Routes stdio/logging/input() output to the correct TerminalWidget.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalRegistry.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalRegistry.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalRegistry._byThread">
+<span class="sig-name descname"><span class="pre">_byThread</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget"><span class="pre">TerminalWidget</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#util.terminal.TerminalRegistry._byThread" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalRegistry._focusedMainThreadTarget">
+<span class="sig-name descname"><span class="pre">_focusedMainThreadTarget</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget"><span class="pre">TerminalWidget</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.terminal.TerminalRegistry._focusedMainThreadTarget" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalRegistry._windows">
+<span class="sig-name descname"><span class="pre">_windows</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Misc</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget"><span class="pre">TerminalWidget</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#util.terminal.TerminalRegistry._windows" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalRegistry.registerWindow">
+<span class="sig-name descname"><span class="pre">registerWindow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Misc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget"><span class="pre">TerminalWidget</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalRegistry.registerWindow" title="Link to this definition">¶</a></dt>
+<dd><p>Record which terminal belongs to a given top-level window, so it can be
+found by resolveTerminal()’s active-window fallback even if that window’s
+widgets never actually took Tk keyboard focus (e.g. a right-click that
+only ever posts a popup menu). Call this once, when the window is built.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>window</strong> (<em>tk.Misc</em>) – The Toplevel (or any of its ancestors’ Tk path resolves to
+it) that owns <em>terminal</em>.</p></li>
+<li><p><strong>terminal</strong> (<a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget"><em>TerminalWidget</em></a>) – This window’s terminal.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalRegistry.unregisterWindow">
+<span class="sig-name descname"><span class="pre">unregisterWindow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Misc</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalRegistry.unregisterWindow" title="Link to this definition">¶</a></dt>
+<dd><p>Remove a window’s entry once it’s closed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>window</strong> (<em>tk.Misc</em>) – The window previously passed to registerWindow().</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalRegistry.bindThreadToTerminal">
+<span class="sig-name descname"><span class="pre">bindThreadToTerminal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">terminal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget"><span class="pre">TerminalWidget</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">thread</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Thread</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalRegistry.bindThreadToTerminal" title="Link to this definition">¶</a></dt>
+<dd><p>Associate a thread with a specific terminal for the lifetime of its work.
+Call this from the code that STARTS the thread (e.g. a window’s command
+dispatch, or the graphics editor launching a background computation).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>terminal</strong> (<a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget"><em>TerminalWidget</em></a>) – The terminal that output from this thread should route to.</p></li>
+<li><p><strong>thread</strong> (<em>Optional</em><em>[</em><em>threading.Thread</em><em>]</em>) – The thread to bind. Defaults to the current thread.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalRegistry.unbindThread">
+<span class="sig-name descname"><span class="pre">unbindThread</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thread</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Thread</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalRegistry.unbindThread" title="Link to this definition">¶</a></dt>
+<dd><p>Remove a thread’s routing entry once its work is done.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>thread</strong> (<em>Optional</em><em>[</em><em>threading.Thread</em><em>]</em>) – The thread to unbind. Defaults to the current thread.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalRegistry.resolveTerminal">
+<span class="sig-name descname"><span class="pre">resolveTerminal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget"><span class="pre">TerminalWidget</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalRegistry.resolveTerminal" title="Link to this definition">¶</a></dt>
+<dd><p>Determine which terminal the current call should route to.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The bound terminal for this thread, or (for the main thread,
+when unbound) the focused terminal, falling back to whichever
+registered window’s terminal is currently active per the window
+manager if nothing has explicitly taken Tk focus. None if nothing
+resolves.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Optional[<a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget">TerminalWidget</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalRegistry._resolveActiveWindowTerminal">
+<span class="sig-name descname"><span class="pre">_resolveActiveWindowTerminal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget"><span class="pre">TerminalWidget</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalRegistry._resolveActiveWindowTerminal" title="Link to this definition">¶</a></dt>
+<dd><p>Fallback for resolveTerminal(): find the terminal for whichever
+registered window is currently frontmost, per the window manager’s
+stacking order — independent of Tk’s logical keyboard focus.</p>
+<p>This covers cases _focusedMainThreadTarget can’t: a click that never
+moves Tk focus (e.g. SNCanvas’s right-click popup menu), or an exception
+raised before the user has interacted with the window at all (e.g.
+during initial model population). ‘wm stackorder’ reports windows
+lowest-to-highest, so the LAST element is topmost.</p>
+<p>Confirmed empirically (headless Tk) that ‘wm stackorder’ must be queried
+THROUGH THE APPLICATION ROOT (_root()) to get the full sibling list —
+querying it via one of the child Toplevels themselves returns only that
+single window, not its siblings, presumably because stacking-group
+membership is keyed off the group leader (the hidden root here), not off
+each Toplevel’s Python-level .master.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[<a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget">TerminalWidget</a>]</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalRegistry.onFocusIn">
+<span class="sig-name descname"><span class="pre">onFocusIn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">terminal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget"><span class="pre">TerminalWidget</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalRegistry.onFocusIn" title="Link to this definition">¶</a></dt>
+<dd><p>Set the default routing target for interactive (main-thread) actions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>terminal</strong> (<a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget"><em>TerminalWidget</em></a>) – The terminal belonging to the window that gained focus.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalRegistry.onFocusOut">
+<span class="sig-name descname"><span class="pre">onFocusOut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">terminal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget"><span class="pre">TerminalWidget</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalRegistry.onFocusOut" title="Link to this definition">¶</a></dt>
+<dd><p>Clear the default target if this terminal’s window is the one losing focus.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>terminal</strong> (<a class="reference internal" href="#util.terminal.TerminalWidget" title="util.terminal.TerminalWidget"><em>TerminalWidget</em></a>) – The terminal belonging to the window that lost focus.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.terminal.LineBufferedRoutingStream">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">LineBufferedRoutingStream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">registry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><span class="pre">TerminalRegistry</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.terminal.LineBufferedRoutingStream" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TextIOBase</span></code></p>
+<p>A file-like object that buffers writes by line and routes each complete
+line to whichever terminal the TerminalRegistry resolves to at write time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>registry</strong> (<a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><em>TerminalRegistry</em></a>) – The shared registry used to resolve the target terminal.</p></li>
+<li><p><strong>style</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Style name to use when printing (e.g. “stdout”, “stderr”).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.LineBufferedRoutingStream.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">registry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><span class="pre">TerminalRegistry</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.LineBufferedRoutingStream.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>registry</strong> (<a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><em>TerminalRegistry</em></a>)</p></li>
+<li><p><strong>style</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.LineBufferedRoutingStream.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#util.terminal.LineBufferedRoutingStream.write" title="Link to this definition">¶</a></dt>
+<dd><p>Buffer incoming text and route complete lines to the resolved terminal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – Text written by print() or similar.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number of characters accepted.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.LineBufferedRoutingStream.flush">
+<span class="sig-name descname"><span class="pre">flush</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.LineBufferedRoutingStream.flush" title="Link to this definition">¶</a></dt>
+<dd><p>Emit any partial (no trailing newline) buffered text as a final line.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.LineBufferedRoutingStream._emit">
+<span class="sig-name descname"><span class="pre">_emit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.LineBufferedRoutingStream._emit" title="Link to this definition">¶</a></dt>
+<dd><p>Resolve the current target terminal and print the line to it.</p>
+<p>Falls back to the real console (sys.__stdout__/__stderr__, per <em>style</em>)
+if no terminal resolves at all — e.g. an unbound background thread with
+no window ever focused or found active — so output is never silently
+lost, just less conveniently placed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>line</strong> (<em>str</em>) – The line to emit.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.LineBufferedRoutingStream._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#util.terminal.LineBufferedRoutingStream._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.terminal.TerminalLogHandler">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">TerminalLogHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">registry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><span class="pre">TerminalRegistry</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.terminal.TerminalLogHandler" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Handler</span></code></p>
+<p>A logging.Handler that routes formatted records to whichever terminal the
+TerminalRegistry resolves to at emit time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>registry</strong> (<a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><em>TerminalRegistry</em></a>) – The shared registry used to resolve the target terminal.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalLogHandler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">registry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><span class="pre">TerminalRegistry</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalLogHandler.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>registry</strong> (<a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><em>TerminalRegistry</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalLogHandler.emit">
+<span class="sig-name descname"><span class="pre">emit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">LogRecord</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalLogHandler.emit" title="Link to this definition">¶</a></dt>
+<dd><p>Format and route a log record to the resolved terminal, styled by level.</p>
+<p>Falls back to the real console if no terminal resolves at all — this is
+what previously let an exception logged from a Tk callback (e.g.
+Subject._notify() catching an Observer’s exception) vanish until the
+separately-buffered log file eventually flushed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>record</strong> (<em>logging.LogRecord</em>) – The log record to emit.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.terminal.installGlobalIORouting">
+<span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">installGlobalIORouting</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">registry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><span class="pre">TerminalRegistry</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.installGlobalIORouting" title="Link to this definition">¶</a></dt>
+<dd><p>Install stdout/stderr/input() redirection and logging routing ONCE, for
+the lifetime of the application. Safe to call more than once with the same
+registry — later calls are a no-op. TerminalWidget calls this itself, so a
+simple, single-terminal app never has to call it explicitly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>registry</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><em>TerminalRegistry</em></a><em>]</em>) – The shared registry that resolves which terminal each call routes
+to. Defaults to the module-level singleton (terminalRegistry) — a simple,
+single-terminal app doesn’t need to know TerminalRegistry exists at all.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.terminal.inputAsync">
+<span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">inputAsync</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onResult</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onError</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">BaseException</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">registry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><span class="pre">TerminalRegistry</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.inputAsync" title="Link to this definition">¶</a></dt>
+<dd><p>Module-level counterpart to the routed builtin input() — but safe to
+call from the main/GUI thread (e.g. a menu command or button handler,
+as in SNCanvas.makeMenu()). Resolves the target terminal the same way the
+routed input() does (the focused terminal, for main-thread callers), then
+delegates to that terminal’s TerminalWidget.inputAsync(). Use this from
+code that doesn’t hold a reference to any particular TerminalWidget; call
+the method directly on a widget instead if you already have one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prompt</strong> (<em>object</em>) – The prompt to display.</p></li>
+<li><p><strong>onResult</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – Called on the main thread with the line the user typed.</p></li>
+<li><p><strong>onError</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>BaseException</em><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – Called on the main thread with any exception raised (e.g.
+EOFError on Ctrl+D). If omitted, the exception is logged and swallowed.</p></li>
+<li><p><strong>registry</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><em>TerminalRegistry</em></a><em>]</em>) – Defaults to the module-level singleton (terminalRegistry).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If no terminal can be resolved (nothing focused).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">TerminalWidget</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">master:</span> <span class="pre">~tkinter.Widget,</span> <span class="pre">onLine:</span> <span class="pre">~typing.Callable[[str],</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None],</span> <span class="pre">prompt:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~typing.Callable[[],</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">'&gt;</span> <span class="pre">',</span> <span class="pre">resultToStringFun:</span> <span class="pre">~typing.Callable[[~typing.Any],</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">registry:</span> <span class="pre">~util.terminal.TerminalRegistry</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">stdoutfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'black',</span> <span class="pre">stderrfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'red',</span> <span class="pre">promptfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'darkgreen',</span> <span class="pre">queryfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'violet</span> <span class="pre">red',</span> <span class="pre">resultfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'purple4',</span> <span class="pre">queryFont:</span> <span class="pre">tuple[str,</span> <span class="pre">int,</span> <span class="pre">str]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">queryFlashColor:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">'yellow',</span> <span class="pre">queryFlashCount:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">6,</span> <span class="pre">queryFlashIntervalMs:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">150,</span> <span class="pre">errorFlashCount:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0,</span> <span class="pre">errorBurstGapMs:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">500,</span> <span class="pre">**kwargs:</span> <span class="pre">object</span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.terminal.TerminalWidget" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#util.terminal.AbstractTerminal" title="util.terminal.AbstractTerminal"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractTerminal</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Text</span></code></p>
+<p>A Text widget that behaves like a simple terminal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>master</strong> (<em>tk.Widget</em>) – The parent Tk widget.</p></li>
+<li><p><strong>onLine</strong> (<em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>Any</em><em>]</em>) – Callback invoked (on a background thread) for each submitted
+line. May return a value — if non-None, it is converted via
+resultToStringFun and printed with the “result” style.</p></li>
+<li><p><strong>prompt</strong> (<a class="reference internal" href="#util.terminal.PromptType" title="util.terminal.PromptType"><em>PromptType</em></a>) – The prompt shown before each new command line. Either a
+plain string, or a zero-argument callable re-evaluated on every prompt
+write (e.g. a bound method that reflects current state).</p></li>
+<li><p><strong>registry</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><em>TerminalRegistry</em></a><em>]</em>) – The shared TerminalRegistry used for stdio/input() routing.
+Global streams (sys.stdout, sys.stderr, builtins.input) and logging are
+expected to already be installed once at app startup via
+installGlobalIORouting(registry) — this widget only binds/unbinds its
+own worker thread against that registry. Defaults to the module-level
+singleton (terminalRegistry) — a simple, single-TerminalWidget app doesn’t
+need to know TerminalRegistry exists at all.</p></li>
+<li><p><strong>resultToStringFun</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Any</em><em>]</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Converts a non-None onLine() return value to a
+string for display. Defaults to str().</p></li>
+<li><p><strong>stdoutfg</strong> (<em>str</em>) – Foreground color for stdout-routed lines.</p></li>
+<li><p><strong>stderrfg</strong> (<em>str</em>) – Foreground color for stderr-routed lines.</p></li>
+<li><p><strong>promptfg</strong> (<em>str</em>) – Foreground color for the command prompt.</p></li>
+<li><p><strong>queryfg</strong> (<em>str</em>) – Foreground color for input()-style query prompts.</p></li>
+<li><p><strong>resultfg</strong> (<em>str</em>) – Foreground color for onLine()’s returned result.</p></li>
+<li><p><strong>queryFont</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Font spec (family, size, style) for input()-style query
+prompts, e.g. (“Helvetica”, 12, “bold”). Defaults to a bold variant of
+the widget’s own font, so a pending input() request stands out from
+ordinary output even without any styling of your own.</p></li>
+<li><p><strong>queryFlashColor</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Background color the widget flashes to draw
+attention to a pending input() request. Set to None to disable flashing
+entirely.</p></li>
+<li><p><strong>queryFlashCount</strong> (<em>int</em>) – Number of on/off flashes to run when input() is
+called. The flash stops early, automatically, once the reply arrives.</p></li>
+<li><p><strong>queryFlashIntervalMs</strong> (<em>int</em>) – Milliseconds between flash transitions.</p></li>
+<li><p><strong>errorFlashCount</strong> (<em>int</em>) – Number of on/off flashes (in queryFlashColor) to run
+when a warning, error or exception – anything printed in the “stderr”
+style – arrives. A burst of such lines (a traceback, several log lines in
+a row) gets one flash: another starts only once the widget has stopped
+flashing and no “stderr” line has arrived for <em>errorBurstGapMs</em>. 0 turns
+it off.</p></li>
+<li><p><strong>errorBurstGapMs</strong> (<em>int</em>) – Milliseconds without a “stderr” line that end a burst.</p></li>
+<li><p><strong>kwargs</strong> (<em>object</em>) – Forwarded to tk.Text (e.g. bg, fg, font, width, height).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">master:</span> <span class="pre">~tkinter.Widget,</span> <span class="pre">onLine:</span> <span class="pre">~typing.Callable[[str],</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None],</span> <span class="pre">prompt:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~typing.Callable[[],</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">'&gt;</span> <span class="pre">',</span> <span class="pre">resultToStringFun:</span> <span class="pre">~typing.Callable[[~typing.Any],</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">registry:</span> <span class="pre">~util.terminal.TerminalRegistry</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">stdoutfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'black',</span> <span class="pre">stderrfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'red',</span> <span class="pre">promptfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'darkgreen',</span> <span class="pre">queryfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'violet</span> <span class="pre">red',</span> <span class="pre">resultfg:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'purple4',</span> <span class="pre">queryFont:</span> <span class="pre">tuple[str,</span> <span class="pre">int,</span> <span class="pre">str]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">queryFlashColor:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">'yellow',</span> <span class="pre">queryFlashCount:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">6,</span> <span class="pre">queryFlashIntervalMs:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">150,</span> <span class="pre">errorFlashCount:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0,</span> <span class="pre">errorBurstGapMs:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">500,</span> <span class="pre">**kwargs:</span> <span class="pre">object</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>master</strong> (<em>tk.Widget</em>)</p></li>
+<li><p><strong>onLine</strong> (<a class="reference internal" href="#util.terminal.OnLineType" title="util.terminal.OnLineType"><em>OnLineType</em></a>)</p></li>
+<li><p><strong>prompt</strong> (<a class="reference internal" href="#util.terminal.PromptType" title="util.terminal.PromptType"><em>PromptType</em></a>)</p></li>
+<li><p><strong>resultToStringFun</strong> (<a class="reference internal" href="#util.terminal.ResultToStringFunType" title="util.terminal.ResultToStringFunType"><em>ResultToStringFunType</em></a>)</p></li>
+<li><p><strong>registry</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><em>TerminalRegistry</em></a><em>]</em>)</p></li>
+<li><p><strong>stdoutfg</strong> (<em>str</em>)</p></li>
+<li><p><strong>stderrfg</strong> (<em>str</em>)</p></li>
+<li><p><strong>promptfg</strong> (<em>str</em>)</p></li>
+<li><p><strong>queryfg</strong> (<em>str</em>)</p></li>
+<li><p><strong>resultfg</strong> (<em>str</em>)</p></li>
+<li><p><strong>queryFont</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>queryFlashColor</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>queryFlashCount</strong> (<em>int</em>)</p></li>
+<li><p><strong>queryFlashIntervalMs</strong> (<em>int</em>)</p></li>
+<li><p><strong>errorFlashCount</strong> (<em>int</em>)</p></li>
+<li><p><strong>errorBurstGapMs</strong> (<em>int</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>object</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.registry">
+<span class="sig-name descname"><span class="pre">registry</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#util.terminal.TerminalRegistry" title="util.terminal.TerminalRegistry"><span class="pre">TerminalRegistry</span></a></span><a class="headerlink" href="#util.terminal.TerminalWidget.registry" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.history">
+<span class="sig-name descname"><span class="pre">history</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget.history" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.historyIndex">
+<span class="sig-name descname"><span class="pre">historyIndex</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.terminal.TerminalWidget.historyIndex" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.styleTags">
+<span class="sig-name descname"><span class="pre">styleTags</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget.styleTags" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.adHocTagCache">
+<span class="sig-name descname"><span class="pre">adHocTagCache</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget.adHocTagCache" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._workerThread">
+<span class="sig-name descname"><span class="pre">_workerThread</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Thread</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.terminal.TerminalWidget._workerThread" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._replyQueue">
+<span class="sig-name descname"><span class="pre">_replyQueue</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Queue</span><span class="p"><span class="pre">[</span></span><span class="pre">object</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._replyQueue" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._awaitingReply">
+<span class="sig-name descname"><span class="pre">_awaitingReply</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#util.terminal.TerminalWidget._awaitingReply" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.queryFlashColor">
+<span class="sig-name descname"><span class="pre">queryFlashColor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#util.terminal.TerminalWidget.queryFlashColor" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._flashJob">
+<span class="sig-name descname"><span class="pre">_flashJob</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.terminal.TerminalWidget._flashJob" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._lastErrorTime">
+<span class="sig-name descname"><span class="pre">_lastErrorTime</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.terminal.TerminalWidget._lastErrorTime" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._atLineStart">
+<span class="sig-name descname"><span class="pre">_atLineStart</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._atLineStart" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the widget is positioned at the start of a fresh line — either
+because it’s still empty, or because the last character written was a
+newline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if a prompt can be written without first breaking onto a
+new line of its own.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._writePrompt">
+<span class="sig-name descname"><span class="pre">_writePrompt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'prompt'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._writePrompt" title="Link to this definition">¶</a></dt>
+<dd><p>Write a prompt (styled) and mark the start of the editable input region.
+Only ever appends — callers that need to replace the current line
+(printLine, _showInputPrompt, _finishCommand) must delete it first.</p>
+<p>If the most recently written character isn’t a newline (e.g. output
+printed from a background thread that didn’t end its own line), a
+newline is inserted first so the prompt always starts on its own line
+rather than getting appended to whatever came before it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Prompt text to use. Defaults to the resolved self.prompt.</p></li>
+<li><p><strong>style</strong> (<em>str</em>) – Registered style to apply to the prompt text.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._currentLine">
+<span class="sig-name descname"><span class="pre">_currentLine</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._currentLine" title="Link to this definition">¶</a></dt>
+<dd><p>Get the text the user has typed on the current input line.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The current (uncommitted) input line.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._replaceCurrentLine">
+<span class="sig-name descname"><span class="pre">_replaceCurrentLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._replaceCurrentLine" title="Link to this definition">¶</a></dt>
+<dd><p>Replace the current input line with new text (used for history recall).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – The text to place on the input line.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._handleReturn">
+<span class="sig-name descname"><span class="pre">_handleReturn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Event</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._handleReturn" title="Link to this definition">¶</a></dt>
+<dd><p>Handle Enter: feed a pending input() request, or start a new command.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>event</strong> (<em>tk.Event</em>)</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._runCommand">
+<span class="sig-name descname"><span class="pre">_runCommand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._runCommand" title="Link to this definition">¶</a></dt>
+<dd><p>Run onLine on a background thread, bound to THIS terminal via the
+registry for the duration. If onLine returns a non-None value, it is
+converted via resultToStringFun and printed with the “result” style.
+Restores the prompt when done.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>line</strong> (<em>str</em>) – The submitted command line.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._finishCommand">
+<span class="sig-name descname"><span class="pre">_finishCommand</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._finishCommand" title="Link to this definition">¶</a></dt>
+<dd><p>Clear the current (empty) line and write a fresh command prompt.
+Runs on the main thread via after().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.input">
+<span class="sig-name descname"><span class="pre">input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget.input" title="Link to this definition">¶</a></dt>
+<dd><p>Block and return a line of input, input()-style. Safe to call from
+onLine’s worker thread, or from any other thread that has bound itself
+to this terminal via the registry. Never call from the main/GUI thread.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prompt</strong> (<em>str</em>) – The prompt text to display (uses the “query” style).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The line the user typed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>EOFError</strong> – If the user sent EOF (Ctrl+D) instead of a line.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.inputAsync">
+<span class="sig-name descname"><span class="pre">inputAsync</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onResult</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onError</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">BaseException</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget.inputAsync" title="Link to this definition">¶</a></dt>
+<dd><p>input(), but safe to call from the main/GUI thread — e.g. a menu
+command or button handler. Returns immediately; spawns a short-lived
+worker thread bound to this terminal that calls self.input(prompt), then
+marshals the result (or any exception) back onto the main thread via
+onResult/onError.</p>
+<p>Calling input() directly and blocking for its return value is never safe
+from the main thread, no matter how you get there (a plain thread spawn
+included) — blocking the GUI callback on the worker thread’s result would
+freeze the event loop exactly as calling input() directly does. The fix
+is this callback/continuation style: kick off the request, return, and
+let onResult pick up the answer once it actually arrives.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prompt</strong> (<em>str</em>) – The prompt text to display (uses the “query” style).</p></li>
+<li><p><strong>onResult</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – Called on the main thread with the line the user typed.</p></li>
+<li><p><strong>onError</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>BaseException</em><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – Called on the main thread with any exception input()
+raised (e.g. EOFError on Ctrl+D). If omitted, the exception is logged
+and otherwise swallowed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._showInputPrompt">
+<span class="sig-name descname"><span class="pre">_showInputPrompt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._showInputPrompt" title="Link to this definition">¶</a></dt>
+<dd><p>Display an input() prompt (styled as a “query”) and mark that the next
+Enter is a reply, not a command. Runs on the main thread via after().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prompt</strong> (<em>str</em>) – The prompt text.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._startQueryFlash">
+<span class="sig-name descname"><span class="pre">_startQueryFlash</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._startQueryFlash" title="Link to this definition">¶</a></dt>
+<dd><p>Flash the widget’s background a few times to draw attention to a
+newly-shown input() prompt. No-ops if queryFlashColor is None. Stops
+automatically as soon as the reply arrives — see _stopQueryFlash(),
+called from _handleReturn()/_handleCtrlD() — so a fast typist never
+sees it run past their answer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.flash">
+<span class="sig-name descname"><span class="pre">flash</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget.flash" title="Link to this definition">¶</a></dt>
+<dd><p>Flash the widget’s background a few times (as for an input() prompt:
+see <em>queryFlashColor</em>, <em>queryFlashCount</em>) to draw attention to something
+just written to it – whether or not a reply is wanted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._noteErrorLine">
+<span class="sig-name descname"><span class="pre">_noteErrorLine</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._noteErrorLine" title="Link to this definition">¶</a></dt>
+<dd><p>A line in the “stderr” style (a warning, an error, part of a traceback)
+has just been printed: flash (<em>errorFlashCount</em> times) if it starts a new
+burst. It doesn’t if the widget is already flashing, or if the previous
+“stderr” line came less than <em>errorBurstGapMs</em> ago – so a traceback, or
+several log lines in a row, gets one flash, not one per line.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._flashTick">
+<span class="sig-name descname"><span class="pre">_flashTick</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ticksRemaining</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">untilReply</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._flashTick" title="Link to this definition">¶</a></dt>
+<dd><p>One step of the attention-flash. Alternates the widget’s background
+between queryFlashColor and its normal color; reschedules itself via
+after() until ticksRemaining reaches 0 – or, for an input() prompt, the
+reply arrives.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ticksRemaining</strong> (<em>int</em>) – Number of color alternations left.</p></li>
+<li><p><strong>untilReply</strong> (<em>bool</em>) – Whether to stop when no reply is awaited (an input()
+prompt’s flash), or just run its course (see <em>flash()</em>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._stopQueryFlash">
+<span class="sig-name descname"><span class="pre">_stopQueryFlash</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._stopQueryFlash" title="Link to this definition">¶</a></dt>
+<dd><p>Cancel any in-progress input() attention-flash and restore the normal
+background immediately. Safe to call even when no flash is running.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.destroy">
+<span class="sig-name descname"><span class="pre">destroy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget.destroy" title="Link to this definition">¶</a></dt>
+<dd><p>Cancel any flash in progress, so it doesn’t outlive the widget.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._handleCtrlD">
+<span class="sig-name descname"><span class="pre">_handleCtrlD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Event</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._handleCtrlD" title="Link to this definition">¶</a></dt>
+<dd><p>Signal EOF to a pending input() call, mimicking terminal Ctrl+D semantics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>event</strong> (<em>tk.Event</em>)</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._handleUp">
+<span class="sig-name descname"><span class="pre">_handleUp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Event</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._handleUp" title="Link to this definition">¶</a></dt>
+<dd><p>Recall the previous history entry.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>event</strong> (<em>tk.Event</em>)</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._handleDown">
+<span class="sig-name descname"><span class="pre">_handleDown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Event</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._handleDown" title="Link to this definition">¶</a></dt>
+<dd><p>Recall the next history entry, or clear the line at the end of history.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>event</strong> (<em>tk.Event</em>)</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._handleBackspace">
+<span class="sig-name descname"><span class="pre">_handleBackspace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Event</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._handleBackspace" title="Link to this definition">¶</a></dt>
+<dd><p>Prevent backspacing past the start of the input region.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>event</strong> (<em>tk.Event</em>)</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._guardEditableRegion">
+<span class="sig-name descname"><span class="pre">_guardEditableRegion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Event</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._guardEditableRegion" title="Link to this definition">¶</a></dt>
+<dd><p>Block edits (other than at/after inputStart) to protect prior output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>event</strong> (<em>tk.Event</em>)</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.registerStyle">
+<span class="sig-name descname"><span class="pre">registerStyle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">font</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget.registerStyle" title="Link to this definition">¶</a></dt>
+<dd><p>Register (or re-register) a named style for use by printLine/_writePrompt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Style name, e.g. “stdout”, “stderr”, “prompt”, “query”, “result”.</p></li>
+<li><p><strong>fg</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Foreground (text) color.</p></li>
+<li><p><strong>bg</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Background highlight color.</p></li>
+<li><p><strong>font</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Font spec as (family, size, style).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget._getAdHocTag">
+<span class="sig-name descname"><span class="pre">_getAdHocTag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">font</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget._getAdHocTag" title="Link to this definition">¶</a></dt>
+<dd><p>Get (creating and caching if necessary) a tag for an unnamed style combo.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fg</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Foreground color.</p></li>
+<li><p><strong>bg</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Background color.</p></li>
+<li><p><strong>font</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Font spec.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The tag name to use for this style combination.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.printLine">
+<span class="sig-name descname"><span class="pre">printLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">font</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.terminal.TerminalWidget.printLine" title="Link to this definition">¶</a></dt>
+<dd><p>Write a line of output above the current prompt, with optional styling.
+Safe to call from any thread — calls from off the main thread are
+marshalled onto it via after().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> (<em>str</em>) – The text to print.</p></li>
+<li><p><strong>style</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Registered style name (e.g. “stdout”, “stderr”, “result”).
+Takes precedence over fg/bg/font.</p></li>
+<li><p><strong>fg</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Foreground color, used only if style is not given.</p></li>
+<li><p><strong>bg</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Background color, used only if style is not given.</p></li>
+<li><p><strong>font</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Font spec, used only if style is not given.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.terminal.TerminalWidget.wrap">
+<span class="sig-name descname"><span class="pre">wrap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.terminal.TerminalWidget.wrap" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>on</strong> (<em>bool</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.terminal._EofSentinel">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">_EofSentinel</span></span><a class="headerlink" href="#util.terminal._EofSentinel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Distinct sentinel object put on the reply queue to signal EOF (Ctrl+D),
+distinguishable from any real string a user could type.</p>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="util.tooltip.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">util.tooltip module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="util.rtValuesDialog.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">util.rtValuesDialog module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">util.terminal module</a><ul>
+<li><a class="reference internal" href="#util.terminal.PromptType"><code class="docutils literal notranslate"><span class="pre">PromptType</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.OnLineType"><code class="docutils literal notranslate"><span class="pre">OnLineType</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.ResultToStringFunType"><code class="docutils literal notranslate"><span class="pre">ResultToStringFunType</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.AbstractTerminal"><code class="docutils literal notranslate"><span class="pre">AbstractTerminal</span></code></a><ul>
+<li><a class="reference internal" href="#util.terminal.AbstractTerminal.__init__"><code class="docutils literal notranslate"><span class="pre">AbstractTerminal.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.AbstractTerminal.onLine"><code class="docutils literal notranslate"><span class="pre">AbstractTerminal.onLine</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.AbstractTerminal._prompt"><code class="docutils literal notranslate"><span class="pre">AbstractTerminal._prompt</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.AbstractTerminal.resultToStringFun"><code class="docutils literal notranslate"><span class="pre">AbstractTerminal.resultToStringFun</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.AbstractTerminal.oldOut"><code class="docutils literal notranslate"><span class="pre">AbstractTerminal.oldOut</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.AbstractTerminal.oldErr"><code class="docutils literal notranslate"><span class="pre">AbstractTerminal.oldErr</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.AbstractTerminal.oldInput"><code class="docutils literal notranslate"><span class="pre">AbstractTerminal.oldInput</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.AbstractTerminal.lastExecutionResult"><code class="docutils literal notranslate"><span class="pre">AbstractTerminal.lastExecutionResult</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.AbstractTerminal.prompt"><code class="docutils literal notranslate"><span class="pre">AbstractTerminal.prompt</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.AbstractTerminal.input"><code class="docutils literal notranslate"><span class="pre">AbstractTerminal.input()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.AbstractTerminal.printLine"><code class="docutils literal notranslate"><span class="pre">AbstractTerminal.printLine()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.terminal.PlainTextTerminal"><code class="docutils literal notranslate"><span class="pre">PlainTextTerminal</span></code></a><ul>
+<li><a class="reference internal" href="#util.terminal.PlainTextTerminal.TERMINAL_SEQUENCES"><code class="docutils literal notranslate"><span class="pre">PlainTextTerminal.TERMINAL_SEQUENCES</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.PlainTextTerminal._getStyleSeq"><code class="docutils literal notranslate"><span class="pre">PlainTextTerminal._getStyleSeq()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.PlainTextTerminal.__init__"><code class="docutils literal notranslate"><span class="pre">PlainTextTerminal.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.PlainTextTerminal.styleTags"><code class="docutils literal notranslate"><span class="pre">PlainTextTerminal.styleTags</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.PlainTextTerminal.input"><code class="docutils literal notranslate"><span class="pre">PlainTextTerminal.input()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.PlainTextTerminal.printLine"><code class="docutils literal notranslate"><span class="pre">PlainTextTerminal.printLine()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.terminal.LineBufferedStream"><code class="docutils literal notranslate"><span class="pre">LineBufferedStream</span></code></a><ul>
+<li><a class="reference internal" href="#util.terminal.LineBufferedStream.__init__"><code class="docutils literal notranslate"><span class="pre">LineBufferedStream.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.LineBufferedStream.write"><code class="docutils literal notranslate"><span class="pre">LineBufferedStream.write()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.LineBufferedStream.flush"><code class="docutils literal notranslate"><span class="pre">LineBufferedStream.flush()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.LineBufferedStream._emitLine"><code class="docutils literal notranslate"><span class="pre">LineBufferedStream._emitLine()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.LineBufferedStream._abc_impl"><code class="docutils literal notranslate"><span class="pre">LineBufferedStream._abc_impl</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.terminal.LineFilteringStream"><code class="docutils literal notranslate"><span class="pre">LineFilteringStream</span></code></a><ul>
+<li><a class="reference internal" href="#util.terminal.LineFilteringStream.__init__"><code class="docutils literal notranslate"><span class="pre">LineFilteringStream.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.LineFilteringStream._emitLine"><code class="docutils literal notranslate"><span class="pre">LineFilteringStream._emitLine()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.LineFilteringStream.flush"><code class="docutils literal notranslate"><span class="pre">LineFilteringStream.flush()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.LineFilteringStream._abc_impl"><code class="docutils literal notranslate"><span class="pre">LineFilteringStream._abc_impl</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.terminal.writeToRealConsole"><code class="docutils literal notranslate"><span class="pre">writeToRealConsole()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalRegistry"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry</span></code></a><ul>
+<li><a class="reference internal" href="#util.terminal.TerminalRegistry.__init__"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalRegistry._byThread"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry._byThread</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalRegistry._focusedMainThreadTarget"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry._focusedMainThreadTarget</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalRegistry._windows"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry._windows</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalRegistry.registerWindow"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry.registerWindow()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalRegistry.unregisterWindow"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry.unregisterWindow()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalRegistry.bindThreadToTerminal"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry.bindThreadToTerminal()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalRegistry.unbindThread"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry.unbindThread()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalRegistry.resolveTerminal"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry.resolveTerminal()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalRegistry._resolveActiveWindowTerminal"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry._resolveActiveWindowTerminal()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalRegistry.onFocusIn"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry.onFocusIn()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalRegistry.onFocusOut"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry.onFocusOut()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.terminal.LineBufferedRoutingStream"><code class="docutils literal notranslate"><span class="pre">LineBufferedRoutingStream</span></code></a><ul>
+<li><a class="reference internal" href="#util.terminal.LineBufferedRoutingStream.__init__"><code class="docutils literal notranslate"><span class="pre">LineBufferedRoutingStream.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.LineBufferedRoutingStream.write"><code class="docutils literal notranslate"><span class="pre">LineBufferedRoutingStream.write()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.LineBufferedRoutingStream.flush"><code class="docutils literal notranslate"><span class="pre">LineBufferedRoutingStream.flush()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.LineBufferedRoutingStream._emit"><code class="docutils literal notranslate"><span class="pre">LineBufferedRoutingStream._emit()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.LineBufferedRoutingStream._abc_impl"><code class="docutils literal notranslate"><span class="pre">LineBufferedRoutingStream._abc_impl</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.terminal.TerminalLogHandler"><code class="docutils literal notranslate"><span class="pre">TerminalLogHandler</span></code></a><ul>
+<li><a class="reference internal" href="#util.terminal.TerminalLogHandler.__init__"><code class="docutils literal notranslate"><span class="pre">TerminalLogHandler.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalLogHandler.emit"><code class="docutils literal notranslate"><span class="pre">TerminalLogHandler.emit()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.terminal.installGlobalIORouting"><code class="docutils literal notranslate"><span class="pre">installGlobalIORouting()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.inputAsync"><code class="docutils literal notranslate"><span class="pre">inputAsync()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget"><code class="docutils literal notranslate"><span class="pre">TerminalWidget</span></code></a><ul>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.__init__"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.registry"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.registry</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.history"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.history</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.historyIndex"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.historyIndex</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.styleTags"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.styleTags</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.adHocTagCache"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.adHocTagCache</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._workerThread"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._workerThread</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._replyQueue"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._replyQueue</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._awaitingReply"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._awaitingReply</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.queryFlashColor"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.queryFlashColor</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._flashJob"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._flashJob</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._lastErrorTime"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._lastErrorTime</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._atLineStart"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._atLineStart()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._writePrompt"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._writePrompt()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._currentLine"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._currentLine()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._replaceCurrentLine"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._replaceCurrentLine()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._handleReturn"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._handleReturn()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._runCommand"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._runCommand()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._finishCommand"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._finishCommand()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.input"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.input()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.inputAsync"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.inputAsync()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._showInputPrompt"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._showInputPrompt()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._startQueryFlash"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._startQueryFlash()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.flash"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.flash()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._noteErrorLine"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._noteErrorLine()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._flashTick"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._flashTick()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._stopQueryFlash"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._stopQueryFlash()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.destroy"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.destroy()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._handleCtrlD"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._handleCtrlD()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._handleUp"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._handleUp()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._handleDown"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._handleDown()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._handleBackspace"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._handleBackspace()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._guardEditableRegion"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._guardEditableRegion()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.registerStyle"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.registerStyle()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget._getAdHocTag"><code class="docutils literal notranslate"><span class="pre">TerminalWidget._getAdHocTag()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.printLine"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.printLine()</span></code></a></li>
+<li><a class="reference internal" href="#util.terminal.TerminalWidget.wrap"><code class="docutils literal notranslate"><span class="pre">TerminalWidget.wrap()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.terminal._EofSentinel"><code class="docutils literal notranslate"><span class="pre">_EofSentinel</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

@@ -1,0 +1,1458 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="util.attributeEditor module" href="util.attributeEditor.html"><link rel="prev" title="util.actionDialog module" href="util.actionDialog.html">
+        <link rel="prefetch" href="../_static/pu-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/pu-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>util.attribute module - pythonUtils 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">pythonUtils 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/pu-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">pythonUtils 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/persistence.html">Persistence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/attributes.html">Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/commands.html">Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/observer.html">Observers and Changes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/widgets.html">Tk Widgets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/utilities.html">Preferences, Graphs and Utilities</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="util.html">util package</a><input aria-label="Toggle navigation of util package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="util.persistence.html">util.persistence package</a><input aria-label="Toggle navigation of util.persistence package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.pRef.html">util.persistence.pRef module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serialize.html">util.persistence.serialize module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeJSON.html">util.persistence.serializeJSON module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializePlist.html">util.persistence.serializePlist module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeXML.html">util.persistence.serializeXML module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeXML2.html">util.persistence.serializeXML2 module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeXML3.html">util.persistence.serializeXML3 module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="util.abstractGraph.html">util.abstractGraph module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.actionDialog.html">util.actionDialog module</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">util.attribute module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.attributeEditor.html">util.attributeEditor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.command.html">util.command module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.commandParser.html">util.commandParser module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.dirtyable.html">util.dirtyable module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.errorReportingObject.html">util.errorReportingObject module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.observer.html">util.observer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.prefs.html">util.prefs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.rtValuesDialog.html">util.rtValuesDialog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.terminal.html">util.terminal module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.tooltip.html">util.tooltip module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.urlDialog.html">util.urlDialog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html">util.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.validatedList.html">util.validatedList module</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-util.attribute">
+<span id="util-attribute-module"></span><h1>util.attribute module<a class="headerlink" href="#module-util.attribute" title="Link to this heading">¶</a></h1>
+<div class="graphviz"><object data="../_images/inheritance-bbebc92428bfac6bfac00e913eaf53bc403f3dbc.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of RestrictionTypes, Restriction, Attribute, AttributedObject</p></object></div>
+<ol class="arabic simple">
+<li><p>Objects are either TYPES or INDIVIDUALS</p></li>
+</ol>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>A TYPE T is identified by T-&gt;ISTYPE-&gt;Type, an INDIVIDUAL I is identified by I-&gt;ISINSTANCE-&gt;Type</p></li>
+<li><p>A TYPE T can be marked as ABSTRACT, meaning A-&gt;ISINSTANCE-&gt;T is disallowd (eg: ISINSTANCE&lt;:ISA:&gt;ISTYPE)</p></li>
+</ol>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>A&lt;-ISTYPE&lt;-X-&gt;ISINSTANCE-&gt;B is illegal</p></li>
+<li><p>ISA: TOP-&gt;ISA-&gt;TOP, ISTYPE: [TYPE&lt;:TOP]-&gt;(ISTYPE&lt;:ISA)-&gt;[TYPE], ISINSTANCE: [IND&lt;:TOP]-&gt;(ISINSTANCE&lt;:ISA)-&gt;[TYPE] seems hopelessly circular if 1.1</p></li>
+</ol>
+</div></blockquote>
+</div></blockquote>
+<p>TYPE-ATTRIBUtES’ values can only be modified by TYPES (eg: fill-color) but the value is inherited by INDIVIDUALS</p>
+<blockquote>
+<div><p>Individual-attributes are only non-TYPE-ATTRIBUTES because TYPES are also individuals (eg: name)</p>
+</div></blockquote>
+<p>ROLE is an Attribute type that is covarient</p>
+<p>non-ROLE Attribute types are invarient</p>
+<p>Some VALUES are inherited (eg: color) and others are not (eg: name)</p>
+<p>Created on Oct 10, 2024</p>
+<p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<hr class="docutils" />
+<dl class="py class">
+<dt class="sig sig-object py" id="util.attribute.RestrictionTypes">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">RestrictionTypes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.attribute.RestrictionTypes" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Flag</span></code></p>
+<p>Restrictions on how an attribute is inherited, by individuals or by
+subtypes (see <a class="reference internal" href="#util.attribute.Restriction" title="util.attribute.Restriction"><code class="xref py py-class docutils literal notranslate"><span class="pre">Restriction</span></code></a>):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>NOINHERIT: the key is inherited, but the value isn’t (a slot that must
+be filled locally).</p></li>
+<li><p>NOOVERRIDE: the inherited value can’t be overridden.</p></li>
+<li><p>PRIVATE: the key isn’t inherited at all; the attribute is invisible. It
+subsumes the other bits.</p></li>
+</ul>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.RestrictionTypes.UNRESTRICTED">
+<span class="sig-name descname"><span class="pre">UNRESTRICTED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#util.attribute.RestrictionTypes.UNRESTRICTED" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.RestrictionTypes.NOINHERIT">
+<span class="sig-name descname"><span class="pre">NOINHERIT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="headerlink" href="#util.attribute.RestrictionTypes.NOINHERIT" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.RestrictionTypes.NOOVERRIDE">
+<span class="sig-name descname"><span class="pre">NOOVERRIDE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#util.attribute.RestrictionTypes.NOOVERRIDE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.RestrictionTypes.ILLEGAL">
+<span class="sig-name descname"><span class="pre">ILLEGAL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></span><a class="headerlink" href="#util.attribute.RestrictionTypes.ILLEGAL" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.RestrictionTypes.PRIVATE">
+<span class="sig-name descname"><span class="pre">PRIVATE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></span><a class="headerlink" href="#util.attribute.RestrictionTypes.PRIVATE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.RestrictionTypes._generate_next_value_">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_generate_next_value_</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.attribute.RestrictionTypes._generate_next_value_" title="Link to this definition">¶</a></dt>
+<dd><p>Generate the next value when not given.</p>
+<p>name: the name of the member
+start: the initial start value or None
+count: the number of existing members
+last_values: the last value assigned or None</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.RestrictionTypes._boundary_">
+<span class="sig-name descname"><span class="pre">_boundary_</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'strict'</span></span><a class="headerlink" href="#util.attribute.RestrictionTypes._boundary_" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.RestrictionTypes._flag_mask_">
+<span class="sig-name descname"><span class="pre">_flag_mask_</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">7</span></span><a class="headerlink" href="#util.attribute.RestrictionTypes._flag_mask_" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.RestrictionTypes._singles_mask_">
+<span class="sig-name descname"><span class="pre">_singles_mask_</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">7</span></span><a class="headerlink" href="#util.attribute.RestrictionTypes._singles_mask_" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.RestrictionTypes._all_bits_">
+<span class="sig-name descname"><span class="pre">_all_bits_</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">7</span></span><a class="headerlink" href="#util.attribute.RestrictionTypes._all_bits_" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.RestrictionTypes._inverted_">
+<span class="sig-name descname"><span class="pre">_inverted_</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.attribute.RestrictionTypes._inverted_" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.attribute.restrictionTypesToString">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">restrictionTypesToString</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><span class="pre">RestrictionTypes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.attribute.restrictionTypesToString" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The flag’s name; a combination is “|”-separated (eg: “NOINHERIT|PRIVATE”),
+or “None” for None.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>r</strong> (<a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><em>RestrictionTypes</em></a><em> | </em><em>None</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.attribute.restrictionTypesFromString">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">restrictionTypesFromString</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><span class="pre">RestrictionTypes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.attribute.restrictionTypesFromString" title="Link to this definition">¶</a></dt>
+<dd><p>The inverse of <a class="reference internal" href="#util.attribute.restrictionTypesToString" title="util.attribute.restrictionTypesToString"><code class="xref py py-func docutils literal notranslate"><span class="pre">restrictionTypesToString()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>s</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes">RestrictionTypes</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.attribute.Restriction">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">Restriction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">individual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><span class="pre">RestrictionTypes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><span class="pre">RestrictionTypes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.attribute.Restriction" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>How an attribute may be inherited: one <em>RestrictionTypes</em> for individuals
+that inherit it (<em>individual</em>) and one for subtypes (<em>type</em>); None means no
+restriction.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.Restriction.individual">
+<span class="sig-name descname"><span class="pre">individual</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><span class="pre">RestrictionTypes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.attribute.Restriction.individual" title="Link to this definition">¶</a></dt>
+<dd><p>The restriction on individuals inheriting the attribute.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.Restriction.type">
+<span class="sig-name descname"><span class="pre">type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><span class="pre">RestrictionTypes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.attribute.Restriction.type" title="Link to this definition">¶</a></dt>
+<dd><p>The restriction on subtypes inheriting the attribute.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.Restriction.hides">
+<span class="sig-name descname"><span class="pre">hides</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">isIndividual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.attribute.Restriction.hides" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True iff an inheriting individual (or type, if <em>isIndividual</em> is
+False) can’t see the attribute at all.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>isIndividual</strong> (<em>bool</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.Restriction.legalityError">
+<span class="sig-name descname"><span class="pre">legalityError</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.attribute.Restriction.legalityError" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Why this restriction is illegal, or None if it’s legal.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.Restriction.fromstring">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">fromstring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#util.attribute.Restriction" title="util.attribute.Restriction"><span class="pre">Restriction</span></a></span></span><a class="headerlink" href="#util.attribute.Restriction.fromstring" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#util.attribute.Restriction" title="util.attribute.Restriction">Restriction</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.Restriction.tostring">
+<span class="sig-name descname"><span class="pre">tostring</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.attribute.Restriction.tostring" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.Restriction.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">individual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><span class="pre">RestrictionTypes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><span class="pre">RestrictionTypes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.attribute.Restriction.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.attribute.VAR_DEFAULTED">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">VAR_DEFAULTED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Restriction(individual=&lt;RestrictionTypes.UNRESTRICTED:</span> <span class="pre">0&gt;,</span> <span class="pre">type=&lt;RestrictionTypes.UNRESTRICTED:</span> <span class="pre">0&gt;)</span></span><a class="headerlink" href="#util.attribute.VAR_DEFAULTED" title="Link to this definition">¶</a></dt>
+<dd><p>Restriction: Normal variable with a default. Eg: “degree” field with default “None”.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.attribute.VAR">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">VAR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Restriction(individual=&lt;RestrictionTypes.NOINHERIT:</span> <span class="pre">1&gt;,</span> <span class="pre">type=&lt;RestrictionTypes.UNRESTRICTED:</span> <span class="pre">0&gt;)</span></span><a class="headerlink" href="#util.attribute.VAR" title="Link to this definition">¶</a></dt>
+<dd><p>Restriction: Normal variable, individuals must assign as value. Eg: name of an object.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.attribute.CONST_TYPEOVERRIDE">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">CONST_TYPEOVERRIDE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Restriction(individual=&lt;RestrictionTypes.NOOVERRIDE:</span> <span class="pre">2&gt;,</span> <span class="pre">type=&lt;RestrictionTypes.UNRESTRICTED:</span> <span class="pre">0&gt;)</span></span><a class="headerlink" href="#util.attribute.CONST_TYPEOVERRIDE" title="Link to this definition">¶</a></dt>
+<dd><p>Restriction: Constant that types can change.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.attribute.LOCAL">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">LOCAL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Restriction(individual=&lt;RestrictionTypes.PRIVATE:</span> <span class="pre">4&gt;,</span> <span class="pre">type=&lt;RestrictionTypes.PRIVATE:</span> <span class="pre">4&gt;)</span></span><a class="headerlink" href="#util.attribute.LOCAL" title="Link to this definition">¶</a></dt>
+<dd><p>Restriction: Visible only on the object that defines it. Eg: a relation’s “symmetric” tag.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.attribute.TYPEONLY">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">TYPEONLY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Restriction(individual=&lt;RestrictionTypes.PRIVATE:</span> <span class="pre">4&gt;,</span> <span class="pre">type=&lt;RestrictionTypes.UNRESTRICTED:</span> <span class="pre">0&gt;)</span></span><a class="headerlink" href="#util.attribute.TYPEONLY" title="Link to this definition">¶</a></dt>
+<dd><p>Restriction: Subtypes inherit it, individuals can’t see it.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.attribute.UNINHERITED">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">UNINHERITED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Restriction(individual=&lt;RestrictionTypes.NOINHERIT:</span> <span class="pre">1&gt;,</span> <span class="pre">type=&lt;RestrictionTypes.NOINHERIT:</span> <span class="pre">1&gt;)</span></span><a class="headerlink" href="#util.attribute.UNINHERITED" title="Link to this definition">¶</a></dt>
+<dd><p>Restriction: Everything below sees the key, but must supply its own value.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.attribute.TYPENAME">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">TYPENAME</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Restriction(individual=&lt;RestrictionTypes.NOOVERRIDE:</span> <span class="pre">2&gt;,</span> <span class="pre">type=&lt;RestrictionTypes.NOINHERIT:</span> <span class="pre">1&gt;)</span></span><a class="headerlink" href="#util.attribute.TYPENAME" title="Link to this definition">¶</a></dt>
+<dd><p>Restriction: Types must change but individuals can’t. Eg: name of a relation.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.attribute.CONST">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">CONST</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Restriction(individual=&lt;RestrictionTypes.NOOVERRIDE:</span> <span class="pre">2&gt;,</span> <span class="pre">type=&lt;RestrictionTypes.NOOVERRIDE:</span> <span class="pre">2&gt;)</span></span><a class="headerlink" href="#util.attribute.CONST" title="Link to this definition">¶</a></dt>
+<dd><p>Restriction: Constant</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.attribute.NoValue">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">NoValue</span></span><a class="headerlink" href="#util.attribute.NoValue" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Serializable</span></code></a></p>
+<p>A singleton null class (similar) to <em>None</em> that can be used in situations 
+where you’d want <em>None</em>, but <em>None</em> is a legitimate value. Any call to the
+constructor returns the one <em>NOVALUE</em> object.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.NoValue.NOVALUE">
+<span class="sig-name descname"><span class="pre">NOVALUE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">NOVALUE</span></span><a class="headerlink" href="#util.attribute.NoValue.NOVALUE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.NoValue.getInstantiationInfo">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">getInstantiationInfo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><span class="pre">InstantiationInfo</span></a></span></span><a class="headerlink" href="#util.attribute.NoValue.getInstantiationInfo" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstantiationInfo</span></code></a> 
+structure describing the constructor parameters and how to fill them
+(conArgs, conKWArgs), and a further description of any additional data to
+be filled after immediately after the constructor (postconSetters) and 
+more after any contained objects have been fully constructed (finalSetters),
+both how to write them and read them.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">util.persistence.serialize.InstantiationInfo</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.attribute.isValidType">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">isValidType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">typ</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.attribute.isValidType" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>typ</strong> – a type spec with may be subtype to <em>Type</em> or a string describing a app-specific type.</p></li>
+<li><p><strong>value</strong> – A value that is expected to be a legitimate instance the <em>typ</em></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True iff the type <em>typ</em> argument is a valid type specification and <em>value</em> is <em>None</em> or a valid instance of <em>typ</em>.</p>
+</dd>
+</dl>
+<p>A valid type is:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>“choices[” &lt;listOfStrings&gt; “]”</p></li>
+<li><p>a member of <em>KNOWN_STRING_TYPES</em> (“str”, “text”, “mtext”, “color”, “colour”)</p></li>
+<li><p>a member of <em>KNOWN_TYPES</em> (“int”, “float”, “bool”, “str”, “text”, “mtext”, “color”, “colour”, “choices”, “list”, “dict”, “attrs”)</p></li>
+<li><p>a subclass of <code class="xref py py-class docutils literal notranslate"><span class="pre">Serializable</span></code> or it’s fully-qualified string representation.</p></li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.attribute.FALSE_STRINGS">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">FALSE_STRINGS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('false',</span> <span class="pre">'no',</span> <span class="pre">'off',</span> <span class="pre">'f',</span> <span class="pre">'n',</span> <span class="pre">'0',</span> <span class="pre">'')</span></span><a class="headerlink" href="#util.attribute.FALSE_STRINGS" title="Link to this definition">¶</a></dt>
+<dd><p>What <em>coerceValue()</em> takes as a bool, as text (in any case).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.attribute.coerceValue">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">coerceValue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">typ</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.Restriction.type" title="util.attribute.Restriction.type"><span class="pre">type</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="headerlink" href="#util.attribute.coerceValue" title="Link to this definition">¶</a></dt>
+<dd><p><em>value</em>, made the type <em>typ</em> says, if it isn’t already and it can be without
+losing anything: eg: 30 or “30” for a float is 30.0; 3.0 or “3” for an int
+is 3 (but 3.5 isn’t an int); “yes” or 1 for a bool is True; anything for a
+string type (“str”, “color”, …) is its text; “ a “ for “choices[a, b]” is
+“a”. For use where values come from somewhere that doesn’t know the types
+(eg: typed text, or a reasoner’s conclusions).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>typ</strong> (<em>AttributeValueTypes</em><em> | </em><em>None</em>) – A type, as for <em>isValidType()</em>: None for “anything”.</p></li>
+<li><p><strong>value</strong> (<em>Any</em>) – The value.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value, as <em>typ</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If it can’t be made <em>typ</em> (eg: “abc” for an int, or a choice that isn’t one).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.attribute.typeAsString">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">typeAsString</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.Restriction.type" title="util.attribute.Restriction.type"><span class="pre">type</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#util.attribute.Restriction.type" title="util.attribute.Restriction.type"><span class="pre">type</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.attribute.typeAsString" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a either the string version of supported types or the
+the fully qualified class name of of any other types. If the non-supported
+type is in string form, it is converted to a type and back again to check
+it’s validity, thus it could change from a mere type name to a fully qualified
+class name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<em>AttributeValueTypes</em>)</p></li>
+<li><p><strong>throw</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>AttributeValueTypes | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.attribute.typeAsCanonical">
+<span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">typeAsCanonical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.Restriction.type" title="util.attribute.Restriction.type"><span class="pre">type</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#util.attribute.Restriction.type" title="util.attribute.Restriction.type"><span class="pre">type</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.attribute.typeAsCanonical" title="Link to this definition">¶</a></dt>
+<dd><p>Attempts to return the given type t as an actual class.  Note that a string may
+also be returned in the case of the few supported “types” that do not correspond 
+to actual classes, currently “mtext”, “color”, “colour”, “choices”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<em>AttributeValueTypes</em>)</p></li>
+<li><p><strong>throw</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>AttributeValueTypes | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.attribute.Attribute">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">Attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><span class="pre">Serializable</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.strdict" title="util.persistence.serialize.strdict"><span class="pre">strdict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">set</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#util.attribute.NoValue" title="util.attribute.NoValue"><span class="pre">NoValue</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">typ</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.Restriction.type" title="util.attribute.Restriction.type"><span class="pre">type</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restriction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.Restriction" title="util.attribute.Restriction"><span class="pre">Restriction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><span class="pre">RestrictionTypes</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><span class="pre">RestrictionTypes</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">note</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inferred</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.attribute.Attribute" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Serializable</span></code></a>, <a class="reference internal" href="util.dirtyable.html#util.dirtyable.Dirtyable" title="util.dirtyable.Dirtyable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dirtyable</span></code></a></p>
+<p>An attribute’s value, with its <em>type</em> (a type, or a type name such as
+“color” or “choices[…]”), its <em>restriction</em> on how it’s inherited (see
+<em>Restriction</em>), and a <em>note</em> describing it (shown as a tooltip by the attribute
+editor).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.Attribute.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><span class="pre">Serializable</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.strdict" title="util.persistence.serialize.strdict"><span class="pre">strdict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">set</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#util.attribute.NoValue" title="util.attribute.NoValue"><span class="pre">NoValue</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">typ</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.Attribute.type" title="util.attribute.Attribute.type"><span class="pre">type</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restriction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.Restriction" title="util.attribute.Restriction"><span class="pre">Restriction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><span class="pre">RestrictionTypes</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><span class="pre">RestrictionTypes</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">note</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inferred</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.attribute.Attribute.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> (<em>Union</em><em>[</em><em>SerializableType</em><em>, </em><a class="reference internal" href="#util.attribute.NoValue" title="util.attribute.NoValue"><em>NoValue</em></a><em>]</em>)</p></li>
+<li><p><strong>typ</strong> (<em>Optional</em><em>[</em><em>AttributeValueTypes</em><em>]</em>)</p></li>
+<li><p><strong>restriction</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#util.attribute.Restriction" title="util.attribute.Restriction"><em>Restriction</em></a><em> | </em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>] </em><em>| </em><em>tuple</em><em>[</em><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><em>RestrictionTypes</em></a><em>, </em><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><em>RestrictionTypes</em></a><em>]</em><em>]</em>)</p></li>
+<li><p><strong>note</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>inferred</strong> (<em>bool</em>) – See <em>inferred</em>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.Attribute._value">
+<span class="sig-name descname"><span class="pre">_value</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><span class="pre">Serializable</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.strdict" title="util.persistence.serialize.strdict"><span class="pre">strdict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">set</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#util.attribute.NoValue" title="util.attribute.NoValue"><span class="pre">NoValue</span></a></span><a class="headerlink" href="#util.attribute.Attribute._value" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.Attribute._type">
+<span class="sig-name descname"><span class="pre">_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#util.attribute.Attribute.type" title="util.attribute.Attribute.type"><span class="pre">type</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.attribute.Attribute._type" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.Attribute._restriction">
+<span class="sig-name descname"><span class="pre">_restriction</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#util.attribute.Restriction" title="util.attribute.Restriction"><span class="pre">Restriction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.attribute.Attribute._restriction" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.Attribute.userNote">
+<span class="sig-name descname"><span class="pre">userNote</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#util.attribute.Attribute.userNote" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the note was written by the user (eg: in the attribute editor), not
+by the program: such a note is saved (see <em>getInstantiationInfo()</em>), and
+<em>AttributedObject.get()</em> doesn’t replace it with the program’s own.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="util.attribute.Attribute.inferred">
+<span class="sig-name descname"><span class="pre">inferred</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#util.attribute.Attribute.inferred" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the value was concluded (eg: by a reasoner), not given: such an
+attribute isn’t saved with its object (see <em>AttributedObject.getInstantiationInfo()</em>),
+and the attribute editor shows it greyed out, with an “assert” button that
+makes it an ordinary (given) one.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="util.attribute.Attribute.value">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">value</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><span class="pre">Serializable</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.strdict" title="util.persistence.serialize.strdict"><span class="pre">strdict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">set</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#util.attribute.NoValue" title="util.attribute.NoValue"><span class="pre">NoValue</span></a></span><a class="headerlink" href="#util.attribute.Attribute.value" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>SerializableType | <a class="reference internal" href="#util.attribute.NoValue" title="util.attribute.NoValue">NoValue</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="util.attribute.Attribute.type">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#util.attribute.Attribute.type" title="util.attribute.Attribute.type"><span class="pre">type</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.attribute.Attribute.type" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>AttributeValueTypes | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="util.attribute.Attribute.restriction">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">restriction</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#util.attribute.Restriction" title="util.attribute.Restriction"><span class="pre">Restriction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#util.attribute.Attribute.restriction" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#util.attribute.Restriction" title="util.attribute.Restriction">Restriction</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.Attribute.isComplete">
+<span class="sig-name descname"><span class="pre">isComplete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.attribute.Attribute.isComplete" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.Attribute.getInstantiationInfo">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">getInstantiationInfo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><span class="pre">InstantiationInfo</span></a></span></span><a class="headerlink" href="#util.attribute.Attribute.getInstantiationInfo" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstantiationInfo</span></code></a> 
+structure describing the constructor parameters and how to fill them
+(conArgs, conKWArgs), and a further description of any additional data to
+be filled after immediately after the constructor (postconSetters) and 
+more after any contained objects have been fully constructed (finalSetters),
+both how to write them and read them.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">util.persistence.serialize.InstantiationInfo</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.Attribute.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.attribute.Attribute.__str__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">util.attribute.</span></span><span class="sig-name descname"><span class="pre">AttributedObject</span></span><a class="headerlink" href="#util.attribute.AttributedObject" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Serializable</span></code></a>, <a class="reference internal" href="util.dirtyable.html#util.dirtyable.Dirtyable" title="util.dirtyable.Dirtyable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dirtyable</span></code></a>, <a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.strdict" title="util.persistence.serialize.strdict"><code class="xref py py-class docutils literal notranslate"><span class="pre">strdict</span></code></a>, <a class="reference internal" href="util.observer.html#util.observer.Subject" title="util.observer.Subject"><code class="xref py py-class docutils literal notranslate"><span class="pre">Subject</span></code></a></p>
+<p>An object with named <em>Attribute</em> objects, which inherits more from its
+supertypes (<em>getSupers()</em>, which subclasses must define), as their
+<em>Restriction</em> objects allow. <em>get()</em> finds a key’s effective value – the
+object’s own, or else the one it inherits; <em>getLocal()</em> and <em>getInh()</em> find
+only one or the other.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.getInstantiationInfo">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">getInstantiationInfo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><span class="pre">InstantiationInfo</span></a></span></span><a class="headerlink" href="#util.attribute.AttributedObject.getInstantiationInfo" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstantiationInfo</span></code></a> 
+structure describing the constructor parameters and how to fill them
+(conArgs, conKWArgs), and a further description of any additional data to
+be filled after immediately after the constructor (postconSetters) and 
+more after any contained objects have been fully constructed (finalSetters),
+both how to write them and read them.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="util.persistence.serialize.InstantiationInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">util.persistence.serialize.InstantiationInfo</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#util.attribute.AttributedObject.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.setDirty">
+<span class="sig-name descname"><span class="pre">setDirty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dirty</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.setDirty" title="Link to this definition">¶</a></dt>
+<dd><p>An object is dirty if it has been modified and should probably be
+saved on exit.  This should be called from all methods that modify
+the state of this object.</p>
+<p>If <em>dirty</em> is False, resets all the contained <em>Attributes</em> to False.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dirty</strong> (<em>bool</em>) – (default True) The dirty to set <em>dirty</em> to.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.isDirty">
+<span class="sig-name descname"><span class="pre">isDirty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.isDirty" title="Link to this definition">¶</a></dt>
+<dd><p>Returns True iff the object (or an of it’s contained <em>Attributes</em>) have
+been modified and should probably be saved on exit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">NOVALUE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">storeDefault</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">NOVALUE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">storeType</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.Restriction.type" title="util.attribute.Restriction.type"><span class="pre">type</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">note</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><span class="pre">Serializable</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.strdict" title="util.persistence.serialize.strdict"><span class="pre">strdict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">set</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#util.attribute.NoValue" title="util.attribute.NoValue"><span class="pre">NoValue</span></a></span></span><a class="headerlink" href="#util.attribute.AttributedObject.get" title="Link to this definition">¶</a></dt>
+<dd><p>Return the <em>value</em> of the attribute at the key. If it isn’t found locally,
+search the inheritance lattice.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – The index string to retrieve.</p></li>
+<li><p><strong>default</strong> (<em>Any</em>) – The value to return if index doesn’t exist in the dictionary. Ignored
+if <em>storeDefault</em> is not <em>None.</em></p></li>
+<li><p><strong>storeDefault</strong> (<em>Any</em>) – Same as <em>default,</em> but the value is ALSO stored in the
+dictionary if the value is not <em>None.</em> Useful for applications like preferences.
+If <em>storeDefault</em> is present, <em>default</em> is ignored.</p></li>
+<li><p><strong>storeType</strong> (<em>AttributeValueTypes</em><em>|</em><em>None=None</em>) – Any legal <em>Attribute</em> value type. Saved as the type of <em>storeDefault</em>.
+Ignored if if key is found or <em>storeDefault</em> is <em>None</em>.</p></li>
+<li><p><strong>note</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>if the key is found, the value (NOT the Attribute record) associated with the key, or</p></li>
+<li><p>if <em>storeDefault</em> is specified, the value of <em>storeDefault</em>, or</p></li>
+<li><p>if <em>default</em> is specified, the value of <em>default</em>, or</p></li>
+<li><p><em>None</em>.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.getLocal">
+<span class="sig-name descname"><span class="pre">getLocal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">NOVALUE</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><span class="pre">Serializable</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.strdict" title="util.persistence.serialize.strdict"><span class="pre">strdict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">set</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Any</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.getLocal" title="Link to this definition">¶</a></dt>
+<dd><p>Return the LOCAL (not inherited) <em>value</em> of the attribute at the key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – The key to access.</p></li>
+<li><p><strong>default</strong> (<em>Any</em>) – The value to return if <em>key</em> is not found. Default is <em>NoValue</em>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value field of the <em>Attribute</em> object at <em>key</em> if found.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>SerializeableType|<a class="reference internal" href="#util.attribute.NoValue" title="util.attribute.NoValue">NoValue</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.getLocalAttr">
+<span class="sig-name descname"><span class="pre">getLocalAttr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute"><span class="pre">Attribute</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.getLocalAttr" title="Link to this definition">¶</a></dt>
+<dd><p>Return the LOCAL (not inherited) <em>Attribute</em> of the attribute at the key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – The key to access.</p></li>
+<li><p><strong>default</strong> (<em>Any</em>) – The value to return if <em>key</em> is not found. Default is <em>NoValue</em>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value field of the <em>Attribute</em> object at <em>key</em> if found.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute">Attribute</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.getInh">
+<span class="sig-name descname"><span class="pre">getInh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">NOVALUE</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><span class="pre">Serializable</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.strdict" title="util.persistence.serialize.strdict"><span class="pre">strdict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">set</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Any</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.getInh" title="Link to this definition">¶</a></dt>
+<dd><p>Return the INHERITED (not local) <em>value</em> of the attribute at the key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – The key to access.</p></li>
+<li><p><strong>default</strong> (<em>Any</em>) – The value to return if <em>key</em> is not found. Default is <em>NoValue</em>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value field of the <em>Attribute</em> object at <em>key</em> if found.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>SerializeableType|<a class="reference internal" href="#util.attribute.NoValue" title="util.attribute.NoValue">NoValue</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.getInhAttr">
+<span class="sig-name descname"><span class="pre">getInhAttr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute"><span class="pre">Attribute</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.getInhAttr" title="Link to this definition">¶</a></dt>
+<dd><p>Return the INHERITED (not local) <em>Attribute</em> of the attribute at the key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – The key to access.</p></li>
+<li><p><strong>default</strong> (<em>Any</em>) – The value to return if <em>key</em> is not found. Default is <em>NoValue</em>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value field of the <em>Attribute</em> object at <em>key</em> if found.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute">Attribute</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.getAttr">
+<span class="sig-name descname"><span class="pre">getAttr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute"><span class="pre">Attribute</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.getAttr" title="Link to this definition">¶</a></dt>
+<dd><p>Return the <em>Attribute</em> object at the key. If it isn’t found locally,
+search the inheritance lattice.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> (<em>str</em>) – The key to access.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The <em>Attribute</em> object at <em>key</em> or <em>None</em> if it isn’t found.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute">Attribute</a>|None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><span class="pre">Serializable</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.strdict" title="util.persistence.serialize.strdict"><span class="pre">strdict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">set</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.__getitem__" title="Link to this definition">¶</a></dt>
+<dd><p>The override for the indici access method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> (<em>str</em>) – The attribute name.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value associated with <em>key</em>, which could be <em>NOVALUE</em> if the
+the key exists, but here is not value associated with it (ie: the value
+was not inherited via the <em>NOINHERIT</em> restriction.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>SerializableType</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>KeyError</strong> – if the key doesn’t exist.</p>
+</dd>
+</dl>
+<p>Calls <em>self.getAttr()</em> and returns the value it finds (if any) – or,
+if this object has a value of its own, that, at once: <em>getAttr()</em> would
+give that value too (whatever it inherits, and whatever its restriction),
+but first looks up what it inherits (eg: for the note), which is slow for
+something with many ancestors, asked often (eg: a name, for a label).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.__setitem__">
+<span class="sig-name descname"><span class="pre">__setitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.Serializable" title="util.persistence.serialize.Serializable"><span class="pre">Serializable</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="util.persistence.serialize.html#util.persistence.serialize.strdict" title="util.persistence.serialize.strdict"><span class="pre">strdict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">set</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.__setitem__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – The attribute name.</p></li>
+<li><p><strong>value</strong> (<em>SerializableType</em>) – The value to record under <em>key</em>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+</dl>
+<p>Can do one of 3 things:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>if there is already a local attribute, its value is updated</p></li>
+<li><p>if there is no local attribute but there is a super attribute, create
+a value-only attribute and associate that with <em>key</em>.</p></li>
+<li><p>if there is no local attribute and no super attribute, create a complete
+(default) local attribute.</p></li>
+</ul>
+</div></blockquote>
+<p>The value is first made the attribute’s type, if it can be (see
+<em>coerceValue()</em>). In all cases, this method will throw if the value does
+not pass validation checks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.keys">
+<span class="sig-name descname"><span class="pre">keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">KeysView</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.keys" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A live, set-algebra-capable <code class="xref py py-class docutils literal notranslate"><span class="pre">KeysView</span></code>
+over this object’s LOCAL and INHERITED attribute keys.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>KeysView</p>
+</dd>
+</dl>
+<p>Unlike plain <em>dict.keys()</em> (which reads the underlying storage directly
+and so would silently ignore inheritance), this is backed by
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">__iter__()</span></code>/<code class="xref py py-meth docutils literal notranslate"><span class="pre">__contains__()</span></code>/<code class="xref py py-meth docutils literal notranslate"><span class="pre">__len__()</span></code>, so it
+stays consistent with <code class="docutils literal notranslate"><span class="pre">iter(self)</span></code>, <code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">in</span> <span class="pre">self</span></code> and <code class="docutils literal notranslate"><span class="pre">len(self)</span></code>.
+As with a real <em>dict.keys()</em>, the view is <em>live</em>: it reflects later
+changes to this object (or its supers) rather than being a frozen
+snapshot, and supports set operations (<code class="docutils literal notranslate"><span class="pre">&amp;</span></code>, <code class="docutils literal notranslate"><span class="pre">|</span></code>, <code class="docutils literal notranslate"><span class="pre">-</span></code>, <code class="docutils literal notranslate"><span class="pre">^</span></code>)
+against other key sets/views.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.values">
+<span class="sig-name descname"><span class="pre">values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ValuesView</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.values" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A live <code class="xref py py-class docutils literal notranslate"><span class="pre">ValuesView</span></code> over this
+object’s LOCAL and INHERITED attribute values – each one fully
+resolved through the inheritance lattice (i.e. via
+<a class="reference internal" href="#util.attribute.AttributedObject.__getitem__" title="util.attribute.AttributedObject.__getitem__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__getitem__()</span></code></a>/<a class="reference internal" href="#util.attribute.AttributedObject.getAttr" title="util.attribute.AttributedObject.getAttr"><code class="xref py py-meth docutils literal notranslate"><span class="pre">getAttr()</span></code></a>, not the raw stored
+<em>Attribute</em> record).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>ValuesView</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.items">
+<span class="sig-name descname"><span class="pre">items</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ItemsView</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.items" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A live <code class="xref py py-class docutils literal notranslate"><span class="pre">ItemsView</span></code> of
+<code class="docutils literal notranslate"><span class="pre">(key,</span> <span class="pre">value)</span></code> pairs, <em>value</em> fully resolved through inheritance
+(as with <a class="reference internal" href="#util.attribute.AttributedObject.values" title="util.attribute.AttributedObject.values"><code class="xref py py-meth docutils literal notranslate"><span class="pre">values()</span></code></a>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>ItemsView</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.setAttr">
+<span class="sig-name descname"><span class="pre">setAttr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute"><span class="pre">Attribute</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute"><span class="pre">Attribute</span></a></span></span><a class="headerlink" href="#util.attribute.AttributedObject.setAttr" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – The attribute name.</p></li>
+<li><p><strong>attr</strong> (<a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute"><em>Attribute</em></a>) – The candate attribute to associate with <em>key</em>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The parameter <em>attr</em></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute">Attribute</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+</dl>
+<p>Set a local attribute if it passes validation rules. Throws if the rules 
+are violated. A value-only <em>attr</em> (one that inherits its type) has its
+value made that type first, if it can be (see <em>coerceValue()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.getSupers">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">getSupers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.getSupers" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of all super types to this object in mro order.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="#util.attribute.AttributedObject" title="util.attribute.AttributedObject">AttributedObject</a>]</p>
+</dd>
+</dl>
+<p>Concrete subclasses must override to return a list of super types to this object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.isIndividual">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">isIndividual</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.isIndividual" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>True</em> iff this object is an individual.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+<p>Concrete subclasses must override to return <em>True</em> if this object is a
+<strong>individual</strong> or <em>False</em> if this obejct is a <strong>type</strong>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.isType">
+<span class="sig-name descname"><span class="pre">isType</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.isType" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>True</em> iff this object is a type.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.isValueEditable">
+<span class="sig-name descname"><span class="pre">isValueEditable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.isValueEditable" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> (<em>str</em>) – The key for which to check.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>True</em> iff the value for that key is editable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.isTypeEditable">
+<span class="sig-name descname"><span class="pre">isTypeEditable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.isTypeEditable" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> (<em>str</em>) – The key for which to check.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>True</em> iff the type for that key is editable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject.isQualifierEditable">
+<span class="sig-name descname"><span class="pre">isQualifierEditable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject.isQualifierEditable" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> (<em>str</em>) – The key for which to check.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>True</em> iff the restrictions for that key is editable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject._validateOverride">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_validateOverride</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">isIndividual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute"><span class="pre">Attribute</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">superAttr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute"><span class="pre">Attribute</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#util.attribute.AttributedObject._validateOverride" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – The attribute name.</p></li>
+<li><p><strong>attr</strong> (<a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute"><em>Attribute</em></a>) – The candate attribute to validate against the inherited attribute.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the value is of the wrong type.</p></li>
+<li><p><strong>TypeError</strong> – If the type field is incorrect.</p></li>
+<li><p><strong>PermissionError</strong> – If the inheritance restrictions are incorrect.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Validates the <em>attr</em> against the inherited attribute. If <em>attr</em> is not legal
+against the inherited attribute, an exception will be raised.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>isIndividual</strong> (<em>bool</em>)</p></li>
+<li><p><strong>superAttr</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute"><em>Attribute</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject._getRestriction">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_getRestriction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">isIndividual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">superRestriction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.Restriction" title="util.attribute.Restriction"><span class="pre">Restriction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thisRestriction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#util.attribute.Restriction" title="util.attribute.Restriction"><span class="pre">Restriction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><span class="pre">RestrictionTypes</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.attribute.AttributedObject._getRestriction" title="Link to this definition">¶</a></dt>
+<dd><p>Resolve the actual restriction on the object with respect to it being an
+individual/type and its inheritance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>isIndividual</strong> (<em>bool</em>)</p></li>
+<li><p><strong>superRestriction</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#util.attribute.Restriction" title="util.attribute.Restriction"><em>Restriction</em></a><em>]</em>)</p></li>
+<li><p><strong>thisRestriction</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#util.attribute.Restriction" title="util.attribute.Restriction"><em>Restriction</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <em>typle</em> pair of the <a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes"><code class="xref py py-class docutils literal notranslate"><span class="pre">RestrictionTypes</span></code></a> and a bool 
+indicating whether of not it is an override (True) or original (False).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="#util.attribute.RestrictionTypes" title="util.attribute.RestrictionTypes">RestrictionTypes</a>, bool]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="util.attribute.AttributedObject._getSuperAttr">
+<span class="sig-name descname"><span class="pre">_getSuperAttr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute"><span class="pre">Attribute</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#util.attribute.AttributedObject._getSuperAttr" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – The attribute name.</p></li>
+<li><p><strong>default</strong> (<em>None</em>) – (default: <em>None</em>) The value returned if they items isn’t found.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The <em>Attribute</em> object from the first parent it’s found in</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[<a class="reference internal" href="#util.attribute.Attribute" title="util.attribute.Attribute">Attribute</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="util.attributeEditor.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">util.attributeEditor module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="util.actionDialog.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">util.actionDialog module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">util.attribute module</a><ul>
+<li><a class="reference internal" href="#util.attribute.RestrictionTypes"><code class="docutils literal notranslate"><span class="pre">RestrictionTypes</span></code></a><ul>
+<li><a class="reference internal" href="#util.attribute.RestrictionTypes.UNRESTRICTED"><code class="docutils literal notranslate"><span class="pre">RestrictionTypes.UNRESTRICTED</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.RestrictionTypes.NOINHERIT"><code class="docutils literal notranslate"><span class="pre">RestrictionTypes.NOINHERIT</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.RestrictionTypes.NOOVERRIDE"><code class="docutils literal notranslate"><span class="pre">RestrictionTypes.NOOVERRIDE</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.RestrictionTypes.ILLEGAL"><code class="docutils literal notranslate"><span class="pre">RestrictionTypes.ILLEGAL</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.RestrictionTypes.PRIVATE"><code class="docutils literal notranslate"><span class="pre">RestrictionTypes.PRIVATE</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.RestrictionTypes._generate_next_value_"><code class="docutils literal notranslate"><span class="pre">RestrictionTypes._generate_next_value_()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.RestrictionTypes._boundary_"><code class="docutils literal notranslate"><span class="pre">RestrictionTypes._boundary_</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.RestrictionTypes._flag_mask_"><code class="docutils literal notranslate"><span class="pre">RestrictionTypes._flag_mask_</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.RestrictionTypes._singles_mask_"><code class="docutils literal notranslate"><span class="pre">RestrictionTypes._singles_mask_</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.RestrictionTypes._all_bits_"><code class="docutils literal notranslate"><span class="pre">RestrictionTypes._all_bits_</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.RestrictionTypes._inverted_"><code class="docutils literal notranslate"><span class="pre">RestrictionTypes._inverted_</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.attribute.restrictionTypesToString"><code class="docutils literal notranslate"><span class="pre">restrictionTypesToString()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.restrictionTypesFromString"><code class="docutils literal notranslate"><span class="pre">restrictionTypesFromString()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Restriction"><code class="docutils literal notranslate"><span class="pre">Restriction</span></code></a><ul>
+<li><a class="reference internal" href="#util.attribute.Restriction.individual"><code class="docutils literal notranslate"><span class="pre">Restriction.individual</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Restriction.type"><code class="docutils literal notranslate"><span class="pre">Restriction.type</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Restriction.hides"><code class="docutils literal notranslate"><span class="pre">Restriction.hides()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Restriction.legalityError"><code class="docutils literal notranslate"><span class="pre">Restriction.legalityError()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Restriction.fromstring"><code class="docutils literal notranslate"><span class="pre">Restriction.fromstring()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Restriction.tostring"><code class="docutils literal notranslate"><span class="pre">Restriction.tostring()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Restriction.__init__"><code class="docutils literal notranslate"><span class="pre">Restriction.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.attribute.VAR_DEFAULTED"><code class="docutils literal notranslate"><span class="pre">VAR_DEFAULTED</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.VAR"><code class="docutils literal notranslate"><span class="pre">VAR</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.CONST_TYPEOVERRIDE"><code class="docutils literal notranslate"><span class="pre">CONST_TYPEOVERRIDE</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.LOCAL"><code class="docutils literal notranslate"><span class="pre">LOCAL</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.TYPEONLY"><code class="docutils literal notranslate"><span class="pre">TYPEONLY</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.UNINHERITED"><code class="docutils literal notranslate"><span class="pre">UNINHERITED</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.TYPENAME"><code class="docutils literal notranslate"><span class="pre">TYPENAME</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.CONST"><code class="docutils literal notranslate"><span class="pre">CONST</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.NoValue"><code class="docutils literal notranslate"><span class="pre">NoValue</span></code></a><ul>
+<li><a class="reference internal" href="#util.attribute.NoValue.NOVALUE"><code class="docutils literal notranslate"><span class="pre">NoValue.NOVALUE</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.NoValue.getInstantiationInfo"><code class="docutils literal notranslate"><span class="pre">NoValue.getInstantiationInfo()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.attribute.isValidType"><code class="docutils literal notranslate"><span class="pre">isValidType()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.FALSE_STRINGS"><code class="docutils literal notranslate"><span class="pre">FALSE_STRINGS</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.coerceValue"><code class="docutils literal notranslate"><span class="pre">coerceValue()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.typeAsString"><code class="docutils literal notranslate"><span class="pre">typeAsString()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.typeAsCanonical"><code class="docutils literal notranslate"><span class="pre">typeAsCanonical()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Attribute"><code class="docutils literal notranslate"><span class="pre">Attribute</span></code></a><ul>
+<li><a class="reference internal" href="#util.attribute.Attribute.__init__"><code class="docutils literal notranslate"><span class="pre">Attribute.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Attribute._value"><code class="docutils literal notranslate"><span class="pre">Attribute._value</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Attribute._type"><code class="docutils literal notranslate"><span class="pre">Attribute._type</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Attribute._restriction"><code class="docutils literal notranslate"><span class="pre">Attribute._restriction</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Attribute.userNote"><code class="docutils literal notranslate"><span class="pre">Attribute.userNote</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Attribute.inferred"><code class="docutils literal notranslate"><span class="pre">Attribute.inferred</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Attribute.value"><code class="docutils literal notranslate"><span class="pre">Attribute.value</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Attribute.type"><code class="docutils literal notranslate"><span class="pre">Attribute.type</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Attribute.restriction"><code class="docutils literal notranslate"><span class="pre">Attribute.restriction</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Attribute.isComplete"><code class="docutils literal notranslate"><span class="pre">Attribute.isComplete()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Attribute.getInstantiationInfo"><code class="docutils literal notranslate"><span class="pre">Attribute.getInstantiationInfo()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.Attribute.__str__"><code class="docutils literal notranslate"><span class="pre">Attribute.__str__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject"><code class="docutils literal notranslate"><span class="pre">AttributedObject</span></code></a><ul>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.getInstantiationInfo"><code class="docutils literal notranslate"><span class="pre">AttributedObject.getInstantiationInfo()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.__init__"><code class="docutils literal notranslate"><span class="pre">AttributedObject.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.setDirty"><code class="docutils literal notranslate"><span class="pre">AttributedObject.setDirty()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.isDirty"><code class="docutils literal notranslate"><span class="pre">AttributedObject.isDirty()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.get"><code class="docutils literal notranslate"><span class="pre">AttributedObject.get()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.getLocal"><code class="docutils literal notranslate"><span class="pre">AttributedObject.getLocal()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.getLocalAttr"><code class="docutils literal notranslate"><span class="pre">AttributedObject.getLocalAttr()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.getInh"><code class="docutils literal notranslate"><span class="pre">AttributedObject.getInh()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.getInhAttr"><code class="docutils literal notranslate"><span class="pre">AttributedObject.getInhAttr()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.getAttr"><code class="docutils literal notranslate"><span class="pre">AttributedObject.getAttr()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.__getitem__"><code class="docutils literal notranslate"><span class="pre">AttributedObject.__getitem__()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.__setitem__"><code class="docutils literal notranslate"><span class="pre">AttributedObject.__setitem__()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.keys"><code class="docutils literal notranslate"><span class="pre">AttributedObject.keys()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.values"><code class="docutils literal notranslate"><span class="pre">AttributedObject.values()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.items"><code class="docutils literal notranslate"><span class="pre">AttributedObject.items()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.setAttr"><code class="docutils literal notranslate"><span class="pre">AttributedObject.setAttr()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.getSupers"><code class="docutils literal notranslate"><span class="pre">AttributedObject.getSupers()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.isIndividual"><code class="docutils literal notranslate"><span class="pre">AttributedObject.isIndividual()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.isType"><code class="docutils literal notranslate"><span class="pre">AttributedObject.isType()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.isValueEditable"><code class="docutils literal notranslate"><span class="pre">AttributedObject.isValueEditable()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.isTypeEditable"><code class="docutils literal notranslate"><span class="pre">AttributedObject.isTypeEditable()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject.isQualifierEditable"><code class="docutils literal notranslate"><span class="pre">AttributedObject.isQualifierEditable()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject._validateOverride"><code class="docutils literal notranslate"><span class="pre">AttributedObject._validateOverride()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject._getRestriction"><code class="docutils literal notranslate"><span class="pre">AttributedObject._getRestriction()</span></code></a></li>
+<li><a class="reference internal" href="#util.attribute.AttributedObject._getSuperAttr"><code class="docutils literal notranslate"><span class="pre">AttributedObject._getSuperAttr()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

@@ -1,0 +1,53 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="202pt" height="85pt" viewBox="0.00 0.00 202.00 85.00">
+<ns0:g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 81)">
+<ns0:title>inheritance9ca1145281</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>Command</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:href="../dev/util.command.html#util.command.Command" ns1:title="The top-level object for do/undo command objects. The minimal interface for these are" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="61,-39 0,-39 0,-19 61,-19 61,-39" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="30.5" y="-25.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Command</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>CommandWrapper</ns0:title>
+<ns0:g id="a_node2"><ns0:a ns1:href="../dev/util.command.html#util.command.CommandWrapper" ns1:title="A *Command* wrapper that always executes a setup function before a *do()* and *undo()*" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="194,-58 97,-58 97,-38 194,-38 194,-58" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="145.5" y="-44.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">CommandWrapper</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>Command-&gt;CommandWrapper</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M61.49,-34.04C70.47,-35.55 80.62,-37.26 90.65,-38.95" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="90.91,-40.76 96.13,-39.87 91.49,-37.31 90.91,-40.76" />
+</ns0:g>
+
+<ns0:g id="node4" class="node">
+<ns0:title>LambdaCommand</ns0:title>
+<ns0:g id="a_node4"><ns0:a ns1:href="../dev/util.command.html#util.command.LambdaCommand" ns1:title="A alternative to implementing a new class overriding the *do()* and *undo()* methods." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="193.25,-20 97.75,-20 97.75,0 193.25,0 193.25,-20" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="145.5" y="-6.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">LambdaCommand</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>Command-&gt;LambdaCommand</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M61.49,-23.96C70.58,-22.43 80.86,-20.7 91.02,-18.99" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="91.92,-20.62 96.56,-18.06 91.34,-17.16 91.92,-20.62" />
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>DoList</ns0:title>
+<ns0:g id="a_node3"><ns0:a ns1:href="../dev/util.command.html#util.command.DoList" ns1:title="A do/undo list responsible to execute *Commands*, keeping track of do's and undo's." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="57.5,-77 3.5,-77 3.5,-57 57.5,-57 57.5,-77" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="30.5" y="-63.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">DoList</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+</ns0:g>
+</ns0:svg>

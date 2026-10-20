@@ -1,0 +1,74 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="576pt" height="43pt" viewBox="0.00 0.00 576.00 43.00">
+<ns0:g id="graph0" class="graph" transform="scale(0.653617 0.653617) rotate(0) translate(4 62)">
+<ns0:title>inheritance491ce6875c</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>abc.ABC</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:title="Helper class that provides a standard way to create an ABC using">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="67.38,-58 11.62,-58 11.62,-38 67.38,-38 67.38,-58" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="39.5" y="-44.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">abc.ABC</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>persistence.serialize.SerializationStrategy</ns0:title>
+<ns0:g id="a_node2"><ns0:a ns1:href="../dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy" ns1:title="A Strategy pattern class designed to save objects in a manner that allows for" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="313.25,-39 115,-39 115,-19 313.25,-19 313.25,-39" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="214.12" y="-25.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">persistence.serialize.SerializationStrategy</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>abc.ABC-&gt;persistence.serialize.SerializationStrategy</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M67.85,-44.99C80.11,-43.64 95.4,-41.96 111.42,-40.19" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="112.3,-41.86 117.08,-39.57 111.92,-38.38 112.3,-41.86" />
+</ns0:g>
+
+<ns0:g id="node4" class="node">
+<ns0:title>persistence.serializeXML.XMLSerializationStrategy</ns0:title>
+<ns0:g id="a_node4"><ns0:a ns1:href="../dev/util.persistence.serializeXML.html#util.persistence.serializeXML.XMLSerializationStrategy" ns1:title="The *SerializationStrategy* for the original, verbose XML format (see *serializeXML2* for the compact one)." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="588,-39 349.25,-39 349.25,-19 588,-19 588,-39" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="468.62" y="-25.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">persistence.serializeXML.XMLSerializationStrategy</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge3" class="edge">
+<ns0:title>persistence.serialize.SerializationStrategy-&gt;persistence.serializeXML.XMLSerializationStrategy</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M313.47,-29C323.01,-29 332.78,-29 342.53,-29" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="343.19,-30.75 348.19,-29 343.19,-27.25 343.19,-30.75" />
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>typing.Generic</ns0:title>
+<ns0:g id="a_node3"><ns0:a ns1:title="Abstract base class for generic types.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="79,-20 0,-20 0,0 79,0 79,-20" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="39.5" y="-6.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">typing.Generic</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>typing.Generic-&gt;persistence.serialize.SerializationStrategy</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M79.24,-14.26C89.05,-15.34 100.06,-16.56 111.43,-17.81" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="111.87,-19.62 117.03,-18.42 112.26,-16.14 111.87,-19.62" />
+</ns0:g>
+
+<ns0:g id="node5" class="node">
+<ns0:title>persistence.serializeXML2.XML2SerializationStrategy</ns0:title>
+<ns0:g id="a_node5"><ns0:a ns1:href="../dev/util.persistence.serializeXML2.html#util.persistence.serializeXML2.XML2SerializationStrategy" ns1:title="The compact XML strategy (see the module doc): the default strategy." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="873.25,-39 624,-39 624,-19 873.25,-19 873.25,-39" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="748.62" y="-25.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">persistence.serializeXML2.XML2SerializationStrategy</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge4" class="edge">
+<ns0:title>persistence.serializeXML.XMLSerializationStrategy-&gt;persistence.serializeXML2.XML2SerializationStrategy</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M588.33,-29C597.89,-29 607.59,-29 617.23,-29" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="617.79,-30.75 622.79,-29 617.79,-27.25 617.79,-30.75" />
+</ns0:g>
+</ns0:g>
+</ns0:svg>
