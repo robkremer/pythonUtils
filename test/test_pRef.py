@@ -29,7 +29,6 @@ from util.persistence.pRef import PRDb, PRObject, DuplicateNameError, PReference
 from typing import override
 from util.persistence.serialize import InstantiationInfo, PropertyInfo
 from pathlib import Path
-from isort.exceptions import ProfileDoesNotExist
 import gc
 
 class TestObject(PRObject):

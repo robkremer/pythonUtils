@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pythonUtils"
+version = "1.0"
+description = "Building blocks for Python applications: cross-file persistence, inherited attributes, undoable commands and a command parser, observers, preferences, and Tk widgets."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Rob Kremer", email = "robkremer@me.com" }]
+requires-python = ">=3.14"
+dependencies = [
+  "requests",
+  "urllib3",
+  "docstring_parser",
+]
+
+[project.optional-dependencies]
+rtvalues = ["matplotlib"] # (util.rtValuesDialog only)
+docs = ["sphinx"]
+
+[project.urls]
+Source = "https://github.com/robkremer/pythonUtils"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["util", "util.*"]
+exclude = ["util.help", "util.help.*"]
