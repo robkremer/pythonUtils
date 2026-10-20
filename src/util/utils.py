@@ -1620,31 +1620,218 @@ def iterableToList(it: Iterable) -> list:
 # ---- TK USER INTERFACE ----------------------------------------------------------
 ################################################################################
 
-def getSubMenu(menu:tk.Menu, name:str, makeIfNone:Optional[str]=tk.END) -> Optional[tk.Menu]:
+def getSubMenu(menu:tk.Menu, name:str, makeIfNone:int|str|None=tk.END) -> Optional[tk.Menu]:
   """
   Find a submenu in *menu* with label *name* .
-  
+
   :param menu: The menu to search
   :param name: The label of the item we are searching for
-  :param makeIfNone: [default: tk.END (insert at end)] if an *int* and *menu* does not contain any
-      menu items named *name* then insert a new menu named *name* at position 
-      *makeIfNone* .
+  :param makeIfNone: [default: tk.END (insert at end)] if not *None* and *menu* does not
+      contain any menu items named *name* then insert a new menu named *name* at position
+      *makeIfNone* -- either an *int* index or one of Tkinter's symbolic index constants
+      (e.g. *tk.END*, which is itself just the *str* "end"; this is what *insert_cascade()*
+      itself accepts, so we just pass it straight through).
   :return: Return a *tk.Menu* if it is found or created; if it is not found and
       *makeIfNone* is *None*, return *None* .
   """
-  submenu = None      
+  submenu = None
   try:
     index = menu.index(name)
-    # let exceptions occur...
-    assert menu.type(index) == "cascade" #type: ignore[arg-type]
-    submenu = menu.entrycget(index,'menu') #type: ignore[arg-type]
+    assert index is not None and menu.type(index) == "cascade"
+    submenu = menu.entrycget(index,'menu')
     submenu = menu.winfo_toplevel().nametowidget(submenu)
-  except Exception as ex:
+  except Exception:
     if makeIfNone is not None:
-      assert isinstance(makeIfNone, int)
+      assert isinstance(makeIfNone, (int, str))
       submenu = tk.Menu(menu) #TODO: should probably make an effort to put this in the right place
       menu.insert_cascade(makeIfNone, label=name, menu=submenu)
   return submenu
+
+def getToplevelWindows(root:tk.Tk):
+  '''
+  *root*'s top-level windows.
+  '''
+  return [x for x in root.winfo_children() if isinstance(x , tk.Toplevel)]
+
+def getMenuBar() -> Optional[tk.Menu]:
+  """
+  Resolve the app's menu bar -- the configured menu of ``tk._default_root``.
+
+  :return: The resolved *tk.Menu*, or *None* if there's no default root, or
+      it has no menu bar configured.
+  """
+  root = tk._default_root  # type: ignore[attr-defined] # @UndefinedVariable
+  if root is None:
+    return None
+  menuName = root.cget("menu")
+  if not menuName:
+    return None
+  return root.nametowidget(menuName)
+
+def _findEntry(menu:tk.Menu, label:str) -> tuple[Optional[int], Optional[str]]:
+  """
+  :param menu: The menu to search.
+  :param label: The label of the item we are searching for.
+  :return: *(index, type)* of the entry in *menu* labelled *label*, or
+      *(None, None)* if there is no such entry.
+  """
+  try:
+    # Menu.index(label) raises TclError (not "returns None") when no entry
+    # matches -- e.g. on an otherwise-empty menu -- so absence has to be
+    # caught, not tested for. Same gotcha getSubMenu() above works around.
+    index = menu.index(label)
+  except tk.TclError:
+    return None, None
+  if index is None:
+    return None, None
+  return index, menu.type(index)
+
+_separatedItems:set[tuple[str, str]] = set()
+"(menu, label) of the items added with a separator just above them (see *addToMenuBar()*'s *separatorBefore*)."
+
+def _separate(menu:tk.Menu, label:str, separatorBefore:bool) -> None:
+  '''
+  If *separatorBefore*: make sure the item labelled *label* in *menu* has a
+  separator just above it (unless it's the first), and note that it's the
+  item's, to go with it (see *removeFromMenuBar()*).
+
+  :param menu: The menu.
+  :param label: The item's label.
+  :param separatorBefore: Whether it has a separator above it.
+  '''
+  if not separatorBefore:
+    return
+  index, _ = _findEntry(menu, label)
+  if index is None:
+    return
+  _separatedItems.add((str(menu), label))
+  if index > 0 and menu.type(index - 1) != "separator":
+    menu.insert_separator(index)
+
+def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.Menu]=None,
+    accelerator:Optional[str]=None, cascadePositions:Optional[dict[str, int]]=None,
+    separatorBefore:bool=False) -> None:
+  """
+  Add -- or, if already present, replace -- an entry in the app's menu bar.
+
+  Pass exactly one of *command* or *menu*: *command* adds/replaces a plain
+  command entry that invokes *command* when chosen; *menu* adds/replaces a
+  cascade entry whose submenu is *menu*. The top-level menu bar itself is
+  always the app's own -- resolved from ``tk._default_root``'s configured
+  menu (see *getMenuBar()*) -- there's no need to look it up and pass it in.
+
+  :param path: A ``"|"``-separated path of cascade labels ending in the
+      item's own label, e.g. ``"File|Save view"``. All but the last segment
+      name cascade submenus, created via *getSubMenu()* if they don't
+      already exist; the last segment is the item's own label.
+  :param command: The callable to invoke when the item is chosen. Give this
+      to add/replace a plain command item; mutually exclusive with *menu*.
+  :param menu: The submenu to show as a cascade. Give this to add/replace a
+      cascade item; mutually exclusive with *command*.
+  :param accelerator: Optional accelerator string to display (e.g. "Cmd+S").
+  :param cascadePositions: Where to put any cascade that has to be made, by
+      label, eg: ``{"Edit": 1}``; by default, at the end (as for *addCheckToMenuBar()*).
+  :param separatorBefore: Put a separator just above the item (unless it's
+      the first, or there's one there already): it starts a group of items.
+      *removeFromMenuBar()* removes the separator with the item.
+  :note: Safe to call repeatedly with the same *path* -- e.g. every time a
+      window gains focus -- since an existing entry with the same final
+      label is reconfigured in place rather than duplicated (and, if it was
+      previously the other kind of entry -- command vs. cascade -- it's
+      replaced in place, at the same position). So a window can add its
+      items unconditionally whenever it gains focus.
+  """
+  assert (command is None) != (menu is None), \
+      'addToMenuBar(): pass exactly one of command= (add/replace a command item) or menu= (add/replace a cascade item).'
+  segments = path.split("|")
+  assert len(segments) >= 1, 'addToMenuBar(): empty path.'
+  target = getMenuBar()
+  assert target is not None, \
+      'addToMenuBar(): no default menu bar could be resolved (no default root, or it has no menu configured).'
+  for seg in segments[:-1]:
+    target = getSubMenu(target, seg, makeIfNone=(cascadePositions or {}).get(seg, tk.END))
+    assert target is not None # (made if it isn't there)
+  label = segments[-1]
+  kwargs:dict[str, Any] = {} if accelerator is None else {"accelerator": accelerator}
+  wantType = "command" if command is not None else "cascade"
+  found, existingType = _findEntry(target, label)
+  if found is not None and existingType != wantType:
+    target.delete(found)  # entry exists but as the other kind -- replace it in place
+  index:int|str = tk.END if found is None else found
+  if command is not None:
+    if existingType == wantType:
+      target.entryconfig(index, command=command, state=tk.NORMAL, **kwargs)
+    else:
+      target.insert_command(index, label=label, command=command, state=tk.NORMAL, **kwargs)
+  else:
+    assert menu is not None
+    if existingType == wantType:
+      target.entryconfig(index, menu=menu, state=tk.NORMAL, **kwargs)
+    else:
+      target.insert_cascade(index, label=label, menu=menu, state=tk.NORMAL, **kwargs)
+  _separate(target, label, separatorBefore)
+
+def addCheckToMenuBar(path:str, variable:tk.Variable, command:Optional[Callable]=None, *,
+                      cascadePositions:Optional[dict[str, int]]=None, separatorBefore:bool=False) -> None:
+  """
+  Add -- or, if already present, replace -- a check item in the app's menu
+  bar: it shows (and sets) the boolean *variable*, and calls *command* when
+  chosen. Like *addToMenuBar()*, safe to call repeatedly with the same *path*
+  (eg: each time a window gains focus, rebinding it to that window's variable),
+  and removed with *removeFromMenuBar()*.
+
+  :param path: A ``"|"``-separated path of cascade labels ending in the
+      item's own label, e.g. ``"View|Animation toolbar"``.
+  :param variable: The (boolean) variable the item shows and sets.
+  :param command: Called (after *variable* is set) when the item is chosen.
+  :param cascadePositions: Where to put any cascade that has to be made, by
+      label, eg: ``{"View": 1}`` (just after "File"); by default, at the end.
+  :param separatorBefore: As for *addToMenuBar()*.
+  """
+  segments = path.split("|")
+  target = getMenuBar()
+  assert target is not None, \
+      'addCheckToMenuBar(): no default menu bar could be resolved (no default root, or it has no menu configured).'
+  for seg in segments[:-1]:
+    target = getSubMenu(target, seg, makeIfNone=(cascadePositions or {}).get(seg, tk.END))
+    assert target is not None # (made if it isn't there)
+  label = segments[-1]
+  found, _existingType = _findEntry(target, label)
+  if found is not None:
+    target.delete(found) # (rebuilt: a check item's variable can't be rebound by entryconfig on every platform)
+  index:int|str = tk.END if found is None else found
+  target.insert_checkbutton(index, label=label, variable=variable, onvalue=True, offvalue=False,
+                            command=command, state=tk.NORMAL) # type: ignore[arg-type] # (command=None: tkinter leaves it out)
+  _separate(target, label, separatorBefore)
+
+def removeFromMenuBar(path:str) -> None:
+  """
+  Remove an entry (as added by *addToMenuBar()*) from the app's menu bar --
+  and the separator above it, if it was added with one (*separatorBefore*).
+
+  Safe to call even when the item (or an intervening cascade) isn't
+  currently present -- this is simply a no-op in that case, so callers
+  (eg: a window's focus-out handler) don't need to track whether they
+  actually added the item first.
+
+  :param path: Same ``"|"``-separated path as passed to *addToMenuBar()*.
+  """
+  segments = path.split("|")
+  assert len(segments) >= 1, 'removeFromMenuBar(): empty path.'
+  target = getMenuBar()
+  if target is None:
+    return
+  for seg in segments[:-1]:
+    target = getSubMenu(target, seg, makeIfNone=None)
+    if target is None:
+      return
+  label = segments[-1]
+  index, _ = _findEntry(target, label)
+  if index is not None:
+    target.delete(index)
+    # (the separator it was added with: see addToMenuBar()'s separatorBefore)
+    if (str(target), label) in _separatedItems and index > 0 and target.type(index - 1) == "separator":
+      target.delete(index - 1)
 
 def isGuiAvailable() -> bool:
   """Determine whether a graphical display environment appears to be available.
@@ -1787,12 +1974,7 @@ class VerticalScrolledFrame(ttk.Frame):
     """
     def __init__(self, parent, *args, **kw):
         '''
-        :param parent:
-        :type parent:
-        :param args:
-        :type args:
-        :param kw:
-        :type kw:
+        A frame that scrolls vertically: put widgets in its *interior*.
         '''
         ttk.Frame.__init__(self, parent, *args, **kw)
 
@@ -1832,10 +2014,7 @@ class VerticalScrolledFrame(ttk.Frame):
 
 def bindRightMouse(window, func):
   '''
-  :param window:
-  :type window:
-  :param func:
-  :type func:
+  Bind *func* to a right click in *window*: also Control-click, on macOS.
   '''
   if window.winfo_toplevel().tk.call("tk", "windowingsystem") == 'aqua':
     window.bind("<2>", func)
@@ -1845,12 +2024,7 @@ def bindRightMouse(window, func):
 
 def tag_bindRightMouse(window, id_, func):
   '''
-  :param window:
-  :type window:
-  :param id_:
-  :type id_:
-  :param func:
-  :type func:
+  Bind *func* to a right click on canvas item *id_* (see *bindRightMouse()*).
   '''
   if window.tk.call("tk", "windowingsystem") == 'aqua':
     window.tag_bind(id_, "<2>", func)
@@ -1860,10 +2034,7 @@ def tag_bindRightMouse(window, id_, func):
 
 def tag_unbindRightMouse(window, id_):
   '''
-  :param window:
-  :type window:
-  :param id_:
-  :type id_:
+  Unbind a right click on canvas item *id_* (see *tag_bindRightMouse()*).
   '''
   if window.tk.call("tk", "windowingsystem") == 'aqua':
     window.tag_unbind(id_, "<2>")
@@ -1873,12 +2044,7 @@ def tag_unbindRightMouse(window, id_):
 
 def eventEqual(e1, e2):
   '''
-  :param e1:
-  :type e1:
-  :param e2:
-  :type e2:
-  :returns:
-  :rtype:
+  Whether *e1* and *e2* are the same event: of the same type, at the same place on the screen.
   '''
   return isinstance(e1, tk.Event) and isinstance(e2, tk.Event) and \
       e1.x_root == e2.x_root and \
