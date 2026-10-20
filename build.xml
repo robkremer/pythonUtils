@@ -48,6 +48,10 @@
     </copy>
   </target>
 
+  <target name="publishDocs" depends="doc" description="Build the documentation and publish it to GitHub Pages: commit it to the gh-pages branch and push that to origin (see tools/publishDocs.sh).">
+    <exec executable="${basedir}/tools/publishDocs.sh" failonerror="true"/>
+  </target>
+
   <target name="logo" description="Redraw the documentation's logo and favicon (sphinx/makeLogo.py: needs Pillow, eg: ../semanticNets/.venv-build).">
     <exec executable="${basedir}/../semanticNets/.venv-build/bin/python" dir="${basedir}" failonerror="true">
       <arg value="${sphinx}/makeLogo.py"/>

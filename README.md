@@ -27,7 +27,7 @@ Everything is in the `util` package, under `src/`.
 | `util.abstractGraph` | Graphs whose nodes and relations are persistent objects. |
 | `util.errorReportingObject` | A mix-in for objects that validate themselves and report problems. |
 | `util.validatedList` | A list that checks each item against a predicate. |
-| `util.utils` | Miscellaneous helpers (list utilities, URL handling, docstring inheritance, and more). |
+| `util.utils` | Miscellaneous helpers (list utilities, URL handling, docstring inheritance, rectangle geometry, Tk menu-bar and mouse helpers, and more). |
 | `util.terminal` | A terminal widget for Tk and a console REPL with the same interface, plus output routing. |
 | `util.attributeEditor` | A Tk dialog for viewing and editing an object's attributes. |
 | `util.actionDialog`, `util.urlDialog`, `util.tooltip`, `util.rtValuesDialog` | Smaller Tk dialogs and widgets. |
@@ -94,10 +94,15 @@ PYTHONPATH=../src python3.14 -m unittest discover -s . -p 'test*.py'
 
 ## Documentation
 
-The documentation (a developer guide and an API reference) is built with
-Sphinx from `sphinx/source`; it needs Graphviz for the diagrams. `ant doc`
-regenerates the API pages from the code and builds the HTML, and
-`make html` in `sphinx/` builds it without regenerating them. The paths to
+The documentation -- a developer guide and an API reference -- is at
+[robkremer.github.io/pythonUtils](https://robkremer.github.io/pythonUtils/).
+
+It's built with Sphinx from `sphinx/source`; it needs Graphviz for the
+diagrams. `ant doc` regenerates the API pages from the code and builds the
+HTML, and `make html` in `sphinx/` builds it without regenerating them.
+`ant publishDocs` builds it and publishes it on GitHub Pages:
+`tools/publishDocs.sh` commits the HTML to the `gh-pages` branch, which holds
+nothing else, and pushes that (`--no-push` just commits it). The paths to
 Python, `sphinx-build` and `dot` in `build.xml`, `sphinx/Makefile` and
 `sphinx/source/conf.py` are set for the author's machine and may need
 changing.
