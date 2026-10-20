@@ -24,3 +24,6 @@ src/util/help/
 !/build.xml
 *.json
 *.plist
+
+# --- Machine-specific build settings (eg: html, for ant doc) ---
+build.properties

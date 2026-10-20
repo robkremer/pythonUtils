@@ -3,8 +3,10 @@
     Builds pythonUtils' documentation (and runs its tests).
   </description>
   <property name="src" location="src"/>
-  <!--property name="html" location="${src}/util/help"/-->
-  <property name="html" location="/Users/kremer/webserver/dev/pythonUtils"/> <!-- (where the built HTML is copied, to be served; also read by Semantic Nets' doc build, through intersphinx) -->
+  <!-- html: a folder the built HTML is also copied to, eg: to be served locally. Optional, and
+       machine-specific, so it's not set here: put it in build.properties (not in git), eg:
+       html=/path/to/webserver/pythonUtils, or give it as ant -Dhtml=... -->
+  <property file="build.properties"/>
   <property name="sphinx" location="sphinx"/>
   <property name="sphinxBuild" location="${sphinx}/build"/>
   <property name="sphinxHTML" location="${sphinxBuild}/html"/>
@@ -31,7 +33,9 @@
     </exec>
   </target>
 
-  <target name="doc" depends="rebuildAutoDoc" description="Build the documentation (regenerating the API pages from the code first), and copy it to ${html}.">
+  <target name="doc" depends="buildDoc, copyHtml" description="Build the documentation (regenerating the API pages from the code first), in sphinx/build/html; and copy it to the html folder, if one is set (see build.properties)."/>
+
+  <target name="buildDoc" depends="rebuildAutoDoc">
     <delete includeEmptyDirs="false"> <!-- clean the build directory -->
       <fileset dir="${sphinxBuild}" erroronmissingdir="false"/>
     </delete>
@@ -40,6 +44,9 @@
       <env key="PATH" path="/usr/local/bin:/usr/local/sbin:${pythonVersionPath}/bin"/>
       <env key="PYTHONPATH" path=":${pythonLibPath}:${pythonLibPath}/site-packages"/><!-- (Python ${pythonVersion}'s packages only: not anaconda's 3.12 ones) -->
     </exec>
+  </target>
+
+  <target name="copyHtml" if="html"> <!-- (skipped when html isn't set) -->
     <delete includeEmptyDirs="false"> <!-- clean the served directory -->
       <fileset dir="${html}" erroronmissingdir="false"/>
     </delete>
