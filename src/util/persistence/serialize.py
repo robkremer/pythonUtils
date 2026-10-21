@@ -161,7 +161,7 @@ from dataclasses import dataclass, field
 import weakref
 
 import util
-from util.utils import fetchURL
+from util.utils import fetchURL, urlPath, openFile
 from util.utils import getFullClassName, getClassFromFullyQualifiedName,\
   fixURL, getFullyQualifiedClass, findConcreteSubclasses, \
   importSubmodules
@@ -911,7 +911,7 @@ class SerializationStrategy[T](ABC):
     if parsed.scheme not in ("", "file"):
       return b""
     try:
-      with open(unquote(parsed.path), "rb") as f:
+      with open(urlPath(url) or "", "rb") as f:
         return f.read(cls.SNIFF_SIZE)
     except OSError:
       return b""
@@ -1022,9 +1022,8 @@ class SerializationStrategy[T](ABC):
     url, parsedUrl = fixURL(url, replaceExt=replaceExt, mode="w", extension=self.defaultExtension())
     
     if parsedUrl.scheme == "file":
-      localPath: str = parsedUrl.netloc + parsedUrl.path
-      absolutePath: str = os.path.abspath(localPath)
-      with open(unquote(absolutePath), "w", encoding="utf-8") as f:
+      absolutePath: str = os.path.abspath(urlPath(url) or "")
+      with open(absolutePath, "w", encoding="utf-8") as f:
         f.write(self.tostring(obj, wrap=wrap, **kwargs))
       return
   
@@ -1086,9 +1085,8 @@ class SerializationStrategy[T](ABC):
     scheme:str = parsedUrl.scheme.lower() if parsedUrl.scheme else "file"
 
     if scheme == "file":
-      localPath:str = parsedUrl.path if parsedUrl.path else url
-      localPath = unquote(localPath)
-      with open(localPath, "r", encoding="utf-8") as f:
+      localPath:str = (urlPath(url) or "") if parsedUrl.path else url
+      with openFile(localPath, "r", encoding="utf-8") as f:
         return f.read()
     elif scheme in ("http", "https"):
       return fetchURL(url).decode(encoding="utf-8") # (kept, for when the server can't be reached: see webCacheFolder)

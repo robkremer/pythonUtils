@@ -42,6 +42,7 @@ import util
 from util.persistence.serialize import SerializationStrategy, strdict
 from util.persistence.serialize import DEFAULT_STRATEGY
 from util import attribute
+from util.platformSupport import WINDOW_BACKGROUND
 
 import logging
 import tkinter as tk
@@ -498,7 +499,7 @@ class ColorEditor(tk.Frame):
     self.var = var
     #self.style = ttk.Style()
     #self.style.configure('My.TFrame', background="purple")#color)
-    self.c = "systemWindowBackgroundColor" if color=="" else color
+    self.c = WINDOW_BACKGROUND if color=="" else color
     tk.Frame.__init__(self, master)
     self.colorButton = tk.Button(self, text=str(color), command=self.colorChooser)#, highlightbackground=None if color=="" else color, padx=-15)
     self.colorButton.pack(side="left", expand=0)#), fill="x")
@@ -538,7 +539,7 @@ class ColorEditor(tk.Frame):
     :type conf:
     '''
     def setSwatch(key:str):
-      self.c = "systemWindowBackgroundColor" if conf[key]=="" else conf[key]
+      self.c = WINDOW_BACKGROUND if conf[key]=="" else conf[key]
       d = {key: self.c}
       self.swatch.configure(**d)
       del conf[key]

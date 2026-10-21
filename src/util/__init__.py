@@ -120,7 +120,8 @@ def setupLogger(loggerClass:type|None=None, logFileName:str|None=None):
   :param logFileName: The name of the file to log to.  By default it will
     be the stem (filename only) of current executable, and it will be in
     the current directory.  If it doesn't have a file extension, ".log" will be
-    appended. A relative name is put in *~/Library/Logs/<program>/* instead when
+    appended. A relative name is put in the user's log folder instead (eg:
+    *~/Library/Logs/<program>/*: see *util.platformSupport.logFolder()*) when
     the program is packaged (eg: a .app) or the current directory can't be
     written.
   :type logFileName: str|None
@@ -139,18 +140,39 @@ def setupLogger(loggerClass:type|None=None, logFileName:str|None=None):
   if not os.path.isabs(logFileName) and (getattr(sys, "frozen", False) or not os.access(os.getcwd(), os.W_OK)):
     # A packaged app (eg: a .app started from the Finder, whose current
     # directory is "/") -- or anywhere the current directory can't be written:
-    # log in the user's log folder instead, eg: ~/Library/Logs/Semantic Nets/.
-    folder = os.path.join(os.path.expanduser("~"), "Library", "Logs", Path(sys.argv[0]).stem)
+    # log in the user's log folder instead, eg: ~/Library/Logs/Semantic Nets/
+    # (see util.platformSupport.logFolder()).
+    from util.platformSupport import logFolder
+    folder = logFolder(Path(sys.argv[0]).stem)
     os.makedirs(folder, exist_ok=True)
     logFileName = os.path.join(folder, logFileName)
   global _loggingSetUp
   _loggingSetUp = True
-  if os.path.isfile(logFileName): os.remove(logFileName)
+  logFileName = _freshLogFile(logFileName)
   fileHandler = logging.FileHandler(logFileName)
   fileHandler.setFormatter(logging.Formatter('**%(levelname)s: %(name)s: %(message)s\n  at %(filename)s, func=%(funcName)s, line=%(lineno)d', style='%'))
   streamHandler = DynamicStderrHandler()
   logging.basicConfig(force=True, level=logging.INFO, handlers=[fileHandler, streamHandler])
  
+
+def _freshLogFile(logFileName:str) -> str:
+  '''
+  :returns: *logFileName*, emptied (the last run's log is removed); or, if it
+    can't be removed because another copy of the program has it open (as on
+    Windows, where an open file can't be removed), the first of "<name>-2.log",
+    "<name>-3.log", ... that can.
+  '''
+  stem, ext = os.path.splitext(logFileName)
+  for n in range(1, 10):
+    name = logFileName if n == 1 else f"{stem}-{n}{ext}"
+    try:
+      if os.path.isfile(name):
+        os.remove(name)
+      return name
+    except PermissionError:
+      continue
+  return f"{stem}-{os.getpid()}{ext}"
+
 
 class DynamicStderrHandler(logging.StreamHandler):
   """A StreamHandler that always writes to the CURRENT sys.stderr at emit time,
