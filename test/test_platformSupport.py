@@ -37,7 +37,7 @@ from types import SimpleNamespace
 from unittest import mock
 from util import platformSupport
 from util.platformSupport import shortcut, altKey, MAC, WINDOWS, LINUX
-from util.utils import urlPath, pathURL, isWindowsPath, isValidURL, wheelSteps, s_CMD, s_ALT
+from util.utils import urlPath, pathURL, isWindowsPath, isValidURL, wheelSteps, s_CMD, s_ALT, openFile
 
 
 class TestURLs(unittest.TestCase):
@@ -125,6 +125,18 @@ class TestFiles(unittest.TestCase):
     if MAC:
       self.assertIn(os.path.join("Library", "Logs"), folder)
 
+  def test0150openFile(self):
+    # a name that can't be a file's is no file (on Windows, '"' isn't allowed in one: an OSError "Invalid argument")
+    with self.assertRaises(FileNotFoundError):
+      openFile(os.path.join(self.folder, '"no body".xml'))
+    import errno
+    with mock.patch("builtins.open", side_effect=OSError(errno.EINVAL, "Invalid argument")):
+      with self.assertRaises(FileNotFoundError):
+        openFile("x")
+    with mock.patch("builtins.open", side_effect=PermissionError(errno.EACCES, "Permission denied")):
+      with self.assertRaises(PermissionError):
+        openFile("x")
+
   @unittest.skipUnless(LINUX, "the freedesktop.org trash is Linux's")
   def test0200trashFreedesktop(self):
     data = os.path.join(self.folder, "data")
@@ -144,6 +156,28 @@ class TestFiles(unittest.TestCase):
       self.assertTrue(os.path.isfile(os.path.join(data, "Trash", "files", "a b 2.txt")))
     with self.assertRaises(FileNotFoundError):
       platformSupport.moveToTrash(f)
+
+
+class TestTerminalRouting(unittest.TestCase):
+
+  def test0100closedWindowsTerminal(self):
+    # a terminal whose window was closed with no FocusOut (as on Windows) isn't printed to
+    import tkinter as tk
+    from util.terminal import TerminalRegistry
+    try:
+      root = tk.Tk()
+    except tk.TclError:
+      self.skipTest("there's no display")
+    try:
+      root.withdraw()
+      registry = TerminalRegistry()
+      terminal = tk.Text(root)
+      registry.onFocusIn(terminal) # type: ignore[arg-type]
+      self.assertIs(registry.resolveTerminal(), terminal)
+      terminal.destroy()
+      self.assertIsNone(registry.resolveTerminal())
+    finally:
+      root.destroy()
 
 
 class TestSingleInstance(unittest.TestCase):

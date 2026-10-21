@@ -393,6 +393,20 @@ def isWindowsPath(s:str, windows:bool=WINDOWS) -> bool:
   '''
   return windows and (bool(_DRIVE_PATH.match(s)) or s.startswith("\\\\"))
 
+def openFile(path:str, mode:str="r", **kwargs) -> Any:
+  '''
+  Like *open()*, but a path that can't be a file's (eg, one with a '"' in it,
+  on Windows, which raises an *OSError* "Invalid argument") raises
+  *FileNotFoundError*, as it does elsewhere: there's no such file.
+  '''
+  try:
+    return open(path, mode, **kwargs)
+  except OSError as ex:
+    import errno
+    if ex.errno == errno.EINVAL and not isinstance(ex, FileNotFoundError):
+      raise FileNotFoundError(errno.ENOENT, f"No such file (not a possible file name): {ex.strerror}", path) from ex
+    raise
+
 def urlPath(url:str, windows:bool=WINDOWS) -> str|None:
   '''
   :param url: A "file:" URL (eg: "file:///Users/me/family.snm", or on Windows

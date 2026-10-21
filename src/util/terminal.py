@@ -546,7 +546,10 @@ class TerminalRegistry:
     if bound is not None:
       return bound
     if threading.current_thread() is threading.main_thread():
-      return self._focusedMainThreadTarget or self._resolveActiveWindowTerminal()
+      focused = self._focusedMainThreadTarget
+      if focused is not None and not _exists(focused): # (its window was closed without a FocusOut, as on Windows)
+        self._focusedMainThreadTarget = focused = None
+      return focused or self._resolveActiveWindowTerminal()
     return None
 
   def _resolveActiveWindowTerminal(self) -> Optional[TerminalWidget]:
@@ -580,7 +583,7 @@ class TerminalRegistry:
     for path in reversed(order):  # topmost first
       for window, terminal in self._windows.items():
         try:
-          if str(window) == str(path) and window.winfo_viewable():
+          if str(window) == str(path) and window.winfo_viewable() and _exists(terminal):
             return terminal
         except tk.TclError:
           continue  # window was destroyed out from under us; skip it
@@ -604,6 +607,16 @@ class TerminalRegistry:
     """
     if self._focusedMainThreadTarget is terminal:
       self._focusedMainThreadTarget = None
+
+
+def _exists(widget: tk.Misc) -> bool:
+  """
+  :returns: Whether *widget* hasn't been destroyed.
+  """
+  try:
+    return bool(widget.winfo_exists())
+  except tk.TclError:
+    return False
 
 
 class LineBufferedRoutingStream(io.TextIOBase):

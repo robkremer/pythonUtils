@@ -148,12 +148,31 @@ def setupLogger(loggerClass:type|None=None, logFileName:str|None=None):
     logFileName = os.path.join(folder, logFileName)
   global _loggingSetUp
   _loggingSetUp = True
-  if os.path.isfile(logFileName): os.remove(logFileName)
+  logFileName = _freshLogFile(logFileName)
   fileHandler = logging.FileHandler(logFileName)
   fileHandler.setFormatter(logging.Formatter('**%(levelname)s: %(name)s: %(message)s\n  at %(filename)s, func=%(funcName)s, line=%(lineno)d', style='%'))
   streamHandler = DynamicStderrHandler()
   logging.basicConfig(force=True, level=logging.INFO, handlers=[fileHandler, streamHandler])
  
+
+def _freshLogFile(logFileName:str) -> str:
+  '''
+  :returns: *logFileName*, emptied (the last run's log is removed); or, if it
+    can't be removed because another copy of the program has it open (as on
+    Windows, where an open file can't be removed), the first of "<name>-2.log",
+    "<name>-3.log", ... that can.
+  '''
+  stem, ext = os.path.splitext(logFileName)
+  for n in range(1, 10):
+    name = logFileName if n == 1 else f"{stem}-{n}{ext}"
+    try:
+      if os.path.isfile(name):
+        os.remove(name)
+      return name
+    except PermissionError:
+      continue
+  return f"{stem}-{os.getpid()}{ext}"
+
 
 class DynamicStderrHandler(logging.StreamHandler):
   """A StreamHandler that always writes to the CURRENT sys.stderr at emit time,

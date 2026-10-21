@@ -161,7 +161,7 @@ from dataclasses import dataclass, field
 import weakref
 
 import util
-from util.utils import fetchURL, urlPath
+from util.utils import fetchURL, urlPath, openFile
 from util.utils import getFullClassName, getClassFromFullyQualifiedName,\
   fixURL, getFullyQualifiedClass, findConcreteSubclasses, \
   importSubmodules
@@ -1086,7 +1086,7 @@ class SerializationStrategy[T](ABC):
 
     if scheme == "file":
       localPath:str = (urlPath(url) or "") if parsedUrl.path else url
-      with open(localPath, "r", encoding="utf-8") as f:
+      with openFile(localPath, "r", encoding="utf-8") as f:
         return f.read()
     elif scheme in ("http", "https"):
       return fetchURL(url).decode(encoding="utf-8") # (kept, for when the server can't be reached: see webCacheFolder)
