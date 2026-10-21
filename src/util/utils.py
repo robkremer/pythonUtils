@@ -34,9 +34,10 @@ import sys
 from typing import Optional, Any, Iterable, Callable,\
   Union, Tuple, overload, Self, Generator, override, Type, get_origin
 from enum import EnumMeta, Flag
-from urllib.parse import urlparse, unquote, urlunparse, ParseResult
+from urllib.parse import urlparse, unquote, quote, urlunparse, ParseResult
 import requests
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+import re
 from importlib import import_module
 import subprocess
 import inspect
@@ -313,14 +314,20 @@ def quoteIfNecessary(s:str) -> str:
 
 # State bits in events
 _MAC = sys.platform == "darwin"
-"(Tk on macOS sets Mod1 for Command and Mod2 for Option: the other masks would take one for the other.)"
+_CMD_MASK = 0x8 if _MAC else 0x4
+"""The bit of the key shortcuts are made with: Command (Mod1) on macOS, Control
+elsewhere (see *util.platformSupport.SHORTCUT*). (Not Mod1 or Mod2 off the Mac:
+on X11, Mod1 is Alt and Mod2 is usually Num Lock; on Windows, 0x8 is Num Lock.)"""
+_ALT_MASK = 0x10 if _MAC else 0x20000 if sys.platform == "win32" else 0x8
+"The Option (Mod2) bit on macOS; Alt's on Windows (0x20000) and on X11 (Mod1)."
 def s_CMD(s:int) -> bool:
   """
-  :return: *True* iff *s* has the Command key bit set.
+  :return: *True* iff *s* has the Command key bit set (Control, off the Mac:
+    the key shortcuts are made with there).
   :param s:
   :type s: int
   """
-  return (s&(0x8 if _MAC else 0x18)) != 0
+  return (s&_CMD_MASK) != 0
 def s_SHIFT(s:int) -> bool: 
   """
   :return: *True* iff *s* has the Shift key bit set.
@@ -341,7 +348,7 @@ def s_ALT(s:int) -> bool:
   :param s:
   :type s: int
   """
-  return (s&(0x10 if _MAC else 0x88)) != 0
+  return (s&_ALT_MASK) != 0
 s_OPT = s_ALT
 
 # Graphical representations for control keys
@@ -370,12 +377,74 @@ def strToBool(b:str):
 # ---- URLs --------------------------------------------------------------------
 ################################################################################
 
+WINDOWS = sys.platform == "win32"
+"Whether this is Windows, where paths look like \"C:\\folder\\file\" (see *urlPath()*, *pathURL()*)."
+
+_DRIVE_PATH = re.compile(r"^[A-Za-z]:[\\/]")
+
+def isWindowsPath(s:str, windows:bool=WINDOWS) -> bool:
+  '''
+  :param s: A path or URL.
+  :param windows: Whether this is Windows (by default: whether it is). Elsewhere,
+    there are no such paths: "x:/..." is a URL.
+  :returns: Whether *s* is a Windows path with a drive letter (eg: "C:\\Users\\me",
+    "C:/Users/me") or a network one ("\\\\server\\share\\..."): a path, not
+    a URL whose scheme is one letter (as *urlparse()* takes it to be).
+  '''
+  return windows and (bool(_DRIVE_PATH.match(s)) or s.startswith("\\\\"))
+
+def urlPath(url:str, windows:bool=WINDOWS) -> str|None:
+  '''
+  :param url: A "file:" URL (eg: "file:///Users/me/family.snm", or on Windows
+    "file:///C:/Users/me/family.snm"), or a path.
+  :param windows: Whether to make a Windows path (by default: on Windows).
+  :returns: The path of the file *url* is of, on this computer ("%20" is a space,
+    ...): eg: "/Users/me/family.snm", or "C:\\Users\\me\\family.snm" on
+    Windows. A path is as it is (unquoted). None if *url* is some other URL (eg:
+    "https:", "sn:").
+  '''
+  if isWindowsPath(url, windows):
+    return url
+  u = urlparse(url)
+  if u.scheme not in ("file", ""):
+    return None
+  path = unquote(u.path)
+  if not windows:
+    return path
+  host = u.netloc
+  if re.match(r"^[A-Za-z]:$", host): # ("file://C:/...", as "file://" + a path makes)
+    path = host + path
+  elif host and host.lower() != "localhost": # a network share ("file://server/share/...")
+    path = "//" + host + path
+  elif re.match(r"^/[A-Za-z]:", path): # ("file:///C:/...")
+    path = path[1:]
+  return path.replace("/", "\\")
+
+def pathURL(path:str, quoted:bool=True, windows:bool=WINDOWS) -> str:
+  '''
+  :param path: An absolute path.
+  :param quoted: Whether characters not allowed in URLs are quoted (eg: a space
+    as "%20"), as *Path.as_uri()* does; else they're as they are (as in
+    "file://" + *path*).
+  :param windows: Whether *path* is a Windows path (by default: on Windows).
+  :returns: The "file:" URL of *path*: eg: "file:///Users/me/family.snm", or
+    "file:///C:/Users/me/family.snm" for "C:\\Users\\me\\family.snm".
+  '''
+  q = quote if quoted else (lambda s: s)
+  if windows:
+    path = path.replace("\\", "/")
+    return "file:" + q(path) if path.startswith("//") else "file:///" + path[:2] + q(path[2:]) # (the drive's "C:" as it is)
+  return "file://" + q(path)
+
 def isValidURL(url:str) -> bool:
   '''
   :param url: A string to determine if it's a proper URL
-  :return: *True* iff the str appears to be well-formed URL
+  :return: *True* iff the str appears to be well-formed URL (a Windows path,
+    eg: "C:\\Users\\me", isn't one: see *isWindowsPath()*)
   '''
   # from sn import BASE_URL
+  if isWindowsPath(url):
+    return False
   try:
     # if url == BASE_URL:
     #   return True
@@ -472,9 +541,8 @@ def urlExists(url:str) -> bool:
     for a web URL whose server can't be reached, if there's a copy of it (see
     *fetchURL()*).
   '''
-  result = urlparse(unquote(url))
-  if result.scheme == "file":
-    return os.path.isfile(result.path)
+  if urlparse(url).scheme == "file":
+    return os.path.isfile(urlPath(url) or "")
 
   else:
     try:
@@ -499,7 +567,7 @@ def canWriteUrl(url: str) -> bool:
   '''
   parsed = urlparse(url)
   if parsed.scheme == "file":
-    decodedPath = Path(unquote(parsed.path))
+    decodedPath = Path(urlPath(url) or "")
     return os.access(decodedPath.parent, os.W_OK)
   try:
     response = requests.options(url, timeout=5)
@@ -550,7 +618,7 @@ def fixURL(url:str, extension:Optional[str]=None, replaceExt:Optional[bool]=None
     parsedUrl = parsedUrl._replace(scheme='file')
     url = parsedUrl.geturl()
     
-  path:Path = Path(parsedUrl.path)
+  path = PurePosixPath(parsedUrl.path) # (a URL's path: "/"-separated, whatever this computer's paths are like)
   if replaceExt is not None: # either replace or append an extension
     if not extension:
       extension = ".txt"
@@ -590,7 +658,7 @@ def urlToFile(url:str) -> Optional[str]:
   :param url: A string representing a URL 
   :return: A path string equivalent to *url*; it may or may not actually exist.
   '''
-  ret:Optional[str] = urlparse(unquote(url)).path
+  ret:Optional[str] = urlPath(url) if urlparse(url).scheme in ("file", "") else urlparse(unquote(url)).path
   if ret == "": ret = None
   return ret
 
@@ -641,8 +709,7 @@ def openUrl(url: str) -> bytes:
   parsedUrl: ParseResult = urlparse(url)
 
   if parsedUrl.scheme == "file":
-    localPath: str = parsedUrl.netloc + parsedUrl.path
-    absolutePath: str = os.path.abspath(localPath)
+    absolutePath: str = os.path.abspath(urlPath(url) or "")
     with open(absolutePath, "rb") as fileHandle:
       return fileHandle.read()
 
@@ -1226,16 +1293,32 @@ class ExtendedFlag(Flag, metaclass=ExtendedEnumMeta):
 
 def play(soundFile:Optional[str]=None) -> None:
   """
-  Plays a sound file. So far, this is only implemented for mac.
+  Plays a sound file: with *afplay* on macOS, *winsound* on Windows (a .wav
+  file), and *paplay* or *aplay* on Linux (if there's one).
   
   :param soundFile: May have the following values:
   
-    - None: plays "/System/Library/Sounds/Sosumi.aiff" (an error beep).
-    - Just a file name: (not containing any slashes ("/")) looks in /System/Library/Sounds/
-        for the file.
+    - None: plays an error beep (on macOS, "/System/Library/Sounds/Sosumi.aiff").
+    - Just a file name: (not containing any slashes ("/")) on macOS, looks in
+        /System/Library/Sounds/ for the file.
     - A path: (containing slashes ("/")) just tries to play that file.
     
   """
+  import shutil
+  if sys.platform == "win32":
+    import winsound # @UnresolvedImport
+    if soundFile:
+      winsound.PlaySound(soundFile, winsound.SND_FILENAME | winsound.SND_ASYNC)
+    else:
+      winsound.MessageBeep(winsound.MB_ICONHAND)
+    return
+  if sys.platform != "darwin":
+    player = shutil.which("paplay") or shutil.which("aplay")
+    if soundFile and player is not None:
+      subprocess.Popen([player, soundFile], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    else:
+      print("\a", end="", flush=True)
+    return
   if soundFile is None or len(soundFile)==0:
     soundFile = '/System/Library/Sounds/Sosumi.aiff'
   elif soundFile.find('/') < 0:
@@ -1708,6 +1791,33 @@ def _separate(menu:tk.Menu, label:str, separatorBefore:bool) -> None:
   if index > 0 and menu.type(index - 1) != "separator":
     menu.insert_separator(index)
 
+_lastItems:set[tuple[str, str]] = set()
+"(menu, label) of the items kept at the end of their menus (see *keepLast()*)."
+
+def keepLast(menu:tk.Menu, *labels:str) -> None:
+  '''
+  Keep the items labelled *labels* in *menu* at its end: items *addToMenuBar()*
+  and *addCheckToMenuBar()* add later go above them (and above the separator
+  just above them, if there is one) -- eg: "Quit" at the end of a File menu.
+
+  :param menu: The menu.
+  :param labels: Its items' labels.
+  '''
+  _lastItems.update((str(menu), label) for label in labels)
+
+def _endIndex(menu:tk.Menu) -> int|str:
+  '''
+  :returns: Where a new item goes at the end of *menu*: *tk.END*, or above the
+    items kept last (see *keepLast()*).
+  '''
+  last = menu.index(tk.END)
+  if last is None:
+    return tk.END
+  for i in range(last + 1):
+    if menu.type(i) not in ("separator", "tearoff") and (str(menu), menu.entrycget(i, "label")) in _lastItems:
+      return i - 1 if i > 0 and menu.type(i - 1) == "separator" else i
+  return tk.END
+
 def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.Menu]=None,
     accelerator:Optional[str]=None, cascadePositions:Optional[dict[str, int]]=None,
     separatorBefore:bool=False) -> None:
@@ -1757,7 +1867,7 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
   found, existingType = _findEntry(target, label)
   if found is not None and existingType != wantType:
     target.delete(found)  # entry exists but as the other kind -- replace it in place
-  index:int|str = tk.END if found is None else found
+  index:int|str = _endIndex(target) if found is None else found
   if command is not None:
     if existingType == wantType:
       target.entryconfig(index, command=command, state=tk.NORMAL, **kwargs)
@@ -1799,7 +1909,7 @@ def addCheckToMenuBar(path:str, variable:tk.Variable, command:Optional[Callable]
   found, _existingType = _findEntry(target, label)
   if found is not None:
     target.delete(found) # (rebuilt: a check item's variable can't be rebound by entryconfig on every platform)
-  index:int|str = tk.END if found is None else found
+  index:int|str = _endIndex(target) if found is None else found
   target.insert_checkbutton(index, label=label, variable=variable, onvalue=True, offvalue=False,
                             command=command, state=tk.NORMAL) # type: ignore[arg-type] # (command=None: tkinter leaves it out)
   _separate(target, label, separatorBefore)
@@ -2011,6 +2121,38 @@ class VerticalScrolledFrame(ttk.Frame):
                 # Update the inner frame's width to fill the canvas.
                 canvas.itemconfigure(interior_id, width=canvas.winfo_width())
         canvas.bind('<Configure>', _configure_canvas)
+
+def wheelSteps(event:tk.Event) -> int:
+  '''
+  :param event: A mouse wheel event (see *wheelEvents()*).
+  :returns: How far it goes, in the wheel's steps: positive up (away from the
+    user), negative down. On macOS, Tk's *delta* (a trackpad's small steps); on
+    Windows and X11, *delta* / 120 (a notch), at least 1 either way; for X11's
+    buttons 4 and 5 (Tk before 8.7), 1 and -1.
+  '''
+  num = getattr(event, "num", None)
+  if num == 4:
+    return 1
+  if num == 5:
+    return -1
+  delta = int(event.delta)
+  if _MAC or delta == 0:
+    return delta
+  steps = max(1, abs(delta) // 120)
+  return steps if delta > 0 else -steps
+
+def wheelEvents(shift:bool=False) -> list[str]:
+  '''
+  :param shift: The events with Shift held (on most systems, a sideways scroll).
+  :returns: The event sequences a mouse wheel makes, to bind: "<MouseWheel>";
+    and with Tk before 8.7 on X11, where the wheel is buttons 4 and 5,
+    "<Button-4>" and "<Button-5>" too. (See *wheelSteps()*.)
+  '''
+  prefix = "Shift-" if shift else ""
+  ret = [f"<{prefix}MouseWheel>"]
+  if tk.TkVersion < 8.7 and not _MAC and sys.platform != "win32":
+    ret += [f"<{prefix}Button-4>", f"<{prefix}Button-5>"]
+  return ret
 
 def bindRightMouse(window, func):
   '''

@@ -32,6 +32,7 @@ from util.persistence.serialize import Serializable, InstantiationInfo, ParamInf
 
 from typing import override
 import os
+from util.utils import pathURL
 
 strategies = SerializationStrategy.getAvailableStrategies()
 
@@ -155,7 +156,7 @@ class Test(unittest.TestCase):
   
   def _test_writeReadback[T:type](self, Strategy:T):
     stratName = Strategy.__name__
-    url = "file://"+os.getcwd()+"/temp3"
+    url = pathURL(os.path.join(os.getcwd(), "temp3"), quoted=False)
     strategy = Strategy()
     
     # ints
@@ -271,7 +272,7 @@ class Test(unittest.TestCase):
     # print(strategy.tostring(obj2, indent="**"))
     
   def test_classMethods(self):
-    url = "file://"+os.getcwd()+"/temp4"
+    url = pathURL(os.path.join(os.getcwd(), "temp4"), quoted=False)
     obj = SamplePObject2(6, 6.1, [3,4,5,6])
     SerializationStrategy.writex(url, obj, strategy="XML")
     x = SerializationStrategy.readx(url+".xml")
@@ -343,12 +344,12 @@ class TestDocuments(unittest.TestCase):
     path = os.path.join(self.dir, "doc.xml")
     strat = SerializationStrategy.findStrategy("XML3")
     self.assertIsInstance(strat, XML3SerializationStrategy)
-    strat.write("file://" + path, Linked("beta"), replaceExt=None)
+    strat.write(pathURL(path, quoted=False), Linked("beta"), replaceExt=None)
     with open(path) as f:
       text = f.read()
     with open(path, "w") as f:
       f.write(text[:text.index("</head>") + len("</head>")] + "\n  <object type=\"broken")
-    head = SerializationStrategy.readHeadx("file://" + path)
+    head = SerializationStrategy.readHeadx(pathURL(path, quoted=False))
     self.assertEqual((head["name"], head["type"]), ("beta", "test_serialize.Linked"))
 
   def test0300oldDocuments(self):
@@ -361,15 +362,15 @@ class TestDocuments(unittest.TestCase):
       path = os.path.join(self.dir, f"old{name}.xml")
       with open(path, "w") as f:
         f.write(old)
-      obj = SerializationStrategy.readx("file://" + path, replaceExt=None)
+      obj = SerializationStrategy.readx(pathURL(path, quoted=False), replaceExt=None)
       self.assertEqual((obj.name, obj.size), ("gamma", 5), name)
-      self.assertEqual(SerializationStrategy.peekStringx("file://" + path, "header", "url"), "file:///x", name)
+      self.assertEqual(SerializationStrategy.peekStringx(pathURL(path, quoted=False), "header", "url"), "file:///x", name)
 
   def test0400sniff(self):
     'A file is tried with the strategies surest they wrote it first: a JSON document in a ".xml" file is read.'
     path = os.path.join(self.dir, "really.xml")
-    SerializationStrategy.findStrategy("JSON").write("file://" + path, Linked("delta"), replaceExt=None)
-    self.assertEqual(SerializationStrategy.readx("file://" + path, replaceExt=None).name, "delta")
+    SerializationStrategy.findStrategy("JSON").write(pathURL(path, quoted=False), Linked("delta"), replaceExt=None)
+    self.assertEqual(SerializationStrategy.readx(pathURL(path, quoted=False), replaceExt=None).name, "delta")
 
   def test0500plainHead(self):
     'Only plain values can be in a head.'

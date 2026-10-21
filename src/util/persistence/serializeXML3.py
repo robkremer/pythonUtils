@@ -55,7 +55,7 @@ from typing import Any, IO, override
 from urllib.parse import unquote
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element
-from util.utils import fixURL
+from util.utils import fixURL, urlPath
 from util.persistence.serialize import HEAD, BODY, HeadValue, TAG_KVPAIR, ATTR_TYPE
 from util.persistence.serializeXML import ATTR_VALUE, TAG_KEY
 from util.persistence.serializeXML2 import XML2SerializationStrategy
@@ -173,7 +173,7 @@ class XML3SerializationStrategy(XML2SerializationStrategy):
     url, parsedUrl = fixURL(url, replaceExt=None, mode=mode, extension=self.defaultExtension())
     stream:IO[bytes]
     if parsedUrl.scheme == "file":
-      stream = open(unquote(parsedUrl.path), "rb")
+      stream = open(urlPath(url) or "", "rb")
     else:
       from urllib.request import urlopen
       from urllib.error import HTTPError, URLError

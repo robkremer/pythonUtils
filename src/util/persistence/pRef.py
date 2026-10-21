@@ -34,7 +34,7 @@ from typing import Iterator, ItemsView, KeysView, ValuesView, Optional, Union,\
   override, cast, Callable, Self, ClassVar, Any
 from abc import abstractmethod
 from weakref import ref, ReferenceType
-from util.utils import openUrl, urlExists, isValidURL, fixURL
+from util.utils import openUrl, urlExists, isValidURL, fixURL, isWindowsPath
 from urllib.parse import unquote, quote, urlparse, urljoin
 from contextlib import contextmanager
 #import xml.etree.ElementTree as ET
@@ -540,7 +540,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     :returns:
     :rtype: bool
     '''
-    return bool(url) and urlparse(url).scheme == "" and not url.startswith(("/", "$", "~", "#", "?"))
+    return bool(url) and urlparse(url).scheme == "" and not url.startswith(("/", "$", "~", "#", "?")) and not isWindowsPath(url)
 
   @classmethod
   def absoluteURL(cls, url:str, base:str|None=None) -> str:
@@ -645,7 +645,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
       actual = cls.namedURLs[url]()
       cls._namesOf[actual] = url
       return actual
-    if urlparse(url).scheme.lower() not in cls.FILE_SCHEMES:
+    if urlparse(url).scheme.lower() not in cls.FILE_SCHEMES and not isWindowsPath(url): # (a Windows path, eg: "C:\\x.snm", isn't a "c:" URL)
       return url
     url = cls._relocate(fixURL(cls._relocate(cls.absoluteURL(url)), extension=".xml", replaceExt=None, mode=mode)[0])
     return cls._alias(url)

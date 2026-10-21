@@ -120,7 +120,8 @@ def setupLogger(loggerClass:type|None=None, logFileName:str|None=None):
   :param logFileName: The name of the file to log to.  By default it will
     be the stem (filename only) of current executable, and it will be in
     the current directory.  If it doesn't have a file extension, ".log" will be
-    appended. A relative name is put in *~/Library/Logs/<program>/* instead when
+    appended. A relative name is put in the user's log folder instead (eg:
+    *~/Library/Logs/<program>/*: see *util.platformSupport.logFolder()*) when
     the program is packaged (eg: a .app) or the current directory can't be
     written.
   :type logFileName: str|None
@@ -139,8 +140,10 @@ def setupLogger(loggerClass:type|None=None, logFileName:str|None=None):
   if not os.path.isabs(logFileName) and (getattr(sys, "frozen", False) or not os.access(os.getcwd(), os.W_OK)):
     # A packaged app (eg: a .app started from the Finder, whose current
     # directory is "/") -- or anywhere the current directory can't be written:
-    # log in the user's log folder instead, eg: ~/Library/Logs/Semantic Nets/.
-    folder = os.path.join(os.path.expanduser("~"), "Library", "Logs", Path(sys.argv[0]).stem)
+    # log in the user's log folder instead, eg: ~/Library/Logs/Semantic Nets/
+    # (see util.platformSupport.logFolder()).
+    from util.platformSupport import logFolder
+    folder = logFolder(Path(sys.argv[0]).stem)
     os.makedirs(folder, exist_ok=True)
     logFileName = os.path.join(folder, logFileName)
   global _loggingSetUp
