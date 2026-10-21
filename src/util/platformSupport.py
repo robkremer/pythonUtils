@@ -167,7 +167,7 @@ def _trashWindows(path:str) -> None:
   FO_DELETE, FOF_SILENT, FOF_NOCONFIRMATION, FOF_ALLOWUNDO, FOF_NOERRORUI = 3, 0x4, 0x10, 0x40, 0x400
   op = SHFILEOPSTRUCTW(None, FO_DELETE, path + "\0", None, # (a list of paths, ending in an empty one)
                        FOF_SILENT | FOF_NOCONFIRMATION | FOF_ALLOWUNDO | FOF_NOERRORUI, False, None, None)
-  result = ctypes.windll.shell32.SHFileOperationW(ctypes.byref(op)) # type: ignore[attr-defined]
+  result = ctypes.windll.shell32.SHFileOperationW(ctypes.byref(op)) # type: ignore[attr-defined] # @undefinedVariable
   if result != 0 or op.fAnyOperationsAborted:
     raise OSError(f'Couldn\'t move "{path}" to the Recycle Bin (error {result:#x}).')
 
@@ -226,7 +226,7 @@ def documentsFolder() -> str:
       from ctypes import wintypes
       buf = ctypes.create_unicode_buffer(wintypes.MAX_PATH)
       CSIDL_PERSONAL = 5 # (My Documents)
-      if ctypes.windll.shell32.SHGetFolderPathW(None, CSIDL_PERSONAL, None, 0, buf) == 0 and buf.value: # type: ignore[attr-defined]
+      if ctypes.windll.shell32.SHGetFolderPathW(None, CSIDL_PERSONAL, None, 0, buf) == 0 and buf.value: # type: ignore[attr-defined] # @undefinedVariable
         return buf.value
     except Exception:
       pass
@@ -255,7 +255,7 @@ def pdfToPNG(pdfPath:str, pngPath:str, dpi:int) -> None:
     subprocess.run(["sips", "-s", "dpiWidth", str(dpi), "-s", "dpiHeight", str(dpi), pngPath], check=True, capture_output=True)
     return
   try:
-    import pypdfium2 # @UnresolvedImport
+    import pypdfium2 # type: ignore[import-not-found] # @UnresolvedImport
   except ImportError as ex:
     raise RuntimeError("making a picture needs the pypdfium2 and pillow packages (pip install pypdfium2 pillow).") from ex
   pdf = pypdfium2.PdfDocument(pdfPath)
@@ -299,7 +299,7 @@ def _copyPNGWindows(pngPath:str) -> None:
   with open(pngPath, "rb") as f:
     png = f.read()
   formats:list[tuple[int, bytes]] = []
-  user32, kernel32 = ctypes.windll.user32, ctypes.windll.kernel32 # type: ignore[attr-defined]
+  user32, kernel32 = ctypes.windll.user32, ctypes.windll.kernel32 # type: ignore[attr-defined] # @undefinedVariable
   user32.RegisterClipboardFormatW.argtypes = [wintypes.LPCWSTR]
   formats.append((user32.RegisterClipboardFormatW("PNG"), png))
   try:
@@ -350,10 +350,10 @@ def setDPIAware() -> None:
     return
   import ctypes
   try:
-    ctypes.windll.shcore.SetProcessDpiAwareness(1) # type: ignore[attr-defined] # (system DPI aware)
+    ctypes.windll.shcore.SetProcessDpiAwareness(1) # type: ignore[attr-defined] # (system DPI aware) # @undefinedVariable
   except (AttributeError, OSError):
     try:
-      ctypes.windll.user32.SetProcessDPIAware() # type: ignore[attr-defined] # (before Windows 8.1)
+      ctypes.windll.user32.SetProcessDPIAware() # type: ignore[attr-defined] # (before Windows 8.1) # @undefinedVariable 
     except (AttributeError, OSError):
       pass
 
