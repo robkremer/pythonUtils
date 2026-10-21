@@ -124,9 +124,9 @@ class TestAliases(unittest.TestCase):
     from util.persistence.pRef import PRDb
     saved = dict(PRDb.aliases)
     try:
-      PRDb.aliases.update({"http://old.org/onto/": "https://new.org/ontologies/", "x:/a": "x:/b"})
+      PRDb.aliases.update({"http://old.org/onto/": "https://new.org/ontologies/", "sn:/a": "sn:/b"}) # (not "x:/a": on Windows, that's a drive's path)
       self.assertEqual(PRDb.resolveURL("http://old.org/onto/family.snm"), "https://new.org/ontologies/family.snm")
       self.assertEqual(PRDb.resolveURL("http://old.org/other.snm"), "http://old.org/other.snm")
-      self.assertEqual(PRDb.resolveURL("x:/a"), "x:/b")
+      self.assertEqual(PRDb.resolveURL("sn:/a"), "sn:/b")
     finally:
       PRDb.aliases.clear(); PRDb.aliases.update(saved)
