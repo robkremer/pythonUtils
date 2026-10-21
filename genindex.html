@@ -228,8 +228,10 @@
 <li class="toctree-l2"><a class="reference internal" href="dev/util.dirtyable.html">util.dirtyable module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dev/util.errorReportingObject.html">util.errorReportingObject module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dev/util.observer.html">util.observer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev/util.platformSupport.html">util.platformSupport module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dev/util.prefs.html">util.prefs module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dev/util.rtValuesDialog.html">util.rtValuesDialog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev/util.singleInstance.html">util.singleInstance module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dev/util.terminal.html">util.terminal module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dev/util.tooltip.html">util.tooltip module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dev/util.urlDialog.html">util.urlDialog module</a></li>
@@ -397,6 +399,8 @@
 </li>
           <li><a href="dev/util.rtValuesDialog.html#util.rtValuesDialog.SliderInfo.__init__">(util.rtValuesDialog.SliderInfo method)</a>
 </li>
+          <li><a href="dev/util.singleInstance.html#util.singleInstance.SingleInstance.__init__">(util.singleInstance.SingleInstance method)</a>
+</li>
           <li><a href="dev/util.terminal.html#util.terminal.AbstractTerminal.__init__">(util.terminal.AbstractTerminal method)</a>
 </li>
           <li><a href="dev/util.terminal.html#util.terminal.LineBufferedRoutingStream.__init__">(util.terminal.LineBufferedRoutingStream method)</a>
@@ -532,6 +536,8 @@
           <li><a href="dev/util.utils.html#util.utils.ExtendedFlag._all_bits_">(util.utils.ExtendedFlag attribute)</a>
 </li>
         </ul></li>
+        <li><a href="dev/util.utils.html#util.utils._ALT_MASK">_ALT_MASK (in module util.utils)</a>
+</li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy._appendItem">_appendItem() (util.persistence.serialize.SerializationStrategy method)</a>
 
         <ul>
@@ -576,11 +582,15 @@
 </li>
         <li><a href="dev/util.actionDialog.html#util.actionDialog.ActionDialog._closeOnAction">_closeOnAction (util.actionDialog.ActionDialog attribute)</a>
 </li>
+        <li><a href="dev/util.utils.html#util.utils._CMD_MASK">_CMD_MASK (in module util.utils)</a>
+</li>
         <li><a href="dev/util.commandParser.html#util.commandParser.TopCommandParser._comListToStr">_comListToStr() (util.commandParser.TopCommandParser static method)</a>
 </li>
         <li><a href="dev/util.observer.html#util.observer.Subject._confirmedCount">_confirmedCount (util.observer.Subject attribute)</a>
 </li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor._convertValue">_convertValue() (in module util.attributeEditor)</a>
+</li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport._copyPNGWindows">_copyPNGWindows() (in module util.platformSupport)</a>
 </li>
         <li><a href="dev/util.terminal.html#util.terminal.TerminalWidget._currentLine">_currentLine() (util.terminal.TerminalWidget method)</a>
 </li>
@@ -672,14 +682,14 @@
           <li><a href="dev/util.terminal.html#util.terminal.LineBufferedRoutingStream._emit">(util.terminal.LineBufferedRoutingStream method)</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="dev/util.terminal.html#util.terminal.LineBufferedStream._emitLine">_emitLine() (util.terminal.LineBufferedStream method)</a>
 
         <ul>
           <li><a href="dev/util.terminal.html#util.terminal.LineFilteringStream._emitLine">(util.terminal.LineFilteringStream method)</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy._encode_">_encode_() (util.persistence.serialize.SerializationStrategy method)</a>
 </li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy._encodeBool">_encodeBool() (util.persistence.serialize.SerializationStrategy method)</a>
@@ -732,6 +742,8 @@
         </ul></li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy._encodeTuple">_encodeTuple() (util.persistence.serialize.SerializationStrategy method)</a>
 </li>
+        <li><a href="dev/util.utils.html#util.utils._endIndex">_endIndex() (in module util.utils)</a>
+</li>
         <li><a href="dev/util.terminal.html#util.terminal._EofSentinel">_EofSentinel (class in util.terminal)</a>
 </li>
         <li><a href="dev/util.commandParser.html#util.commandParser.GenFromFunction._execute">_execute() (util.commandParser.GenFromFunction method)</a>
@@ -742,6 +754,8 @@
           <li><a href="dev/util.commandParser.html#util.commandParser.RedoCommand._execute">(util.commandParser.RedoCommand method)</a>
 </li>
         </ul></li>
+        <li><a href="dev/util.terminal.html#util.terminal._exists">_exists() (in module util.terminal)</a>
+</li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy._fetchContents">_fetchContents() (util.persistence.serialize.SerializationStrategy method)</a>
 </li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy.Strategy._field_defaults">_field_defaults (util.persistence.serialize.SerializationStrategy.Strategy attribute)</a>
@@ -767,6 +781,8 @@
         <li><a href="dev/util.terminal.html#util.terminal.TerminalWidget._flashTick">_flashTick() (util.terminal.TerminalWidget method)</a>
 </li>
         <li><a href="dev/util.terminal.html#util.terminal.TerminalRegistry._focusedMainThreadTarget">_focusedMainThreadTarget (util.terminal.TerminalRegistry attribute)</a>
+</li>
+        <li><a href="dev/util.html#util._freshLogFile">_freshLogFile() (in module util)</a>
 </li>
         <li><a href="dev/util.persistence.serializeXML3.html#util.persistence.serializeXML3.XML3SerializationStrategy._fromHeadValue">_fromHeadValue() (util.persistence.serializeXML3.XML3SerializationStrategy class method)</a>
 </li>
@@ -882,6 +898,10 @@
 </li>
         <li><a href="dev/util.terminal.html#util.terminal.TerminalWidget._lastErrorTime">_lastErrorTime (util.terminal.TerminalWidget attribute)</a>
 </li>
+        <li><a href="dev/util.utils.html#util.utils._lastItems">_lastItems (in module util.utils)</a>
+</li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport._launch">_launch() (in module util.platformSupport)</a>
+</li>
         <li><a href="dev/util.actionDialog.html#util.actionDialog._RichTextParser._linkId">_linkId (util.actionDialog._RichTextParser attribute)</a>
 </li>
         <li><a href="dev/util.actionDialog.html#util.actionDialog.ActionDialog._linkTagCount">_linkTagCount (util.actionDialog.ActionDialog attribute)</a>
@@ -889,8 +909,6 @@
         <li><a href="dev/util.actionDialog.html#util.actionDialog._RichTextParser._listStack">_listStack (util.actionDialog._RichTextParser attribute)</a>
 </li>
         <li><a href="dev/util.html#util._loggingSetUp">_loggingSetUp (in module util)</a>
-</li>
-        <li><a href="dev/util.utils.html#util.utils._MAC">_MAC (in module util.utils)</a>
 </li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy.Strategy._make">_make() (util.persistence.serialize.SerializationStrategy.Strategy class method)</a>
 </li>
@@ -992,6 +1010,8 @@
 </li>
         <li><a href="dev/util.utils.html#util.utils._separatedItems">_separatedItems (in module util.utils)</a>
 </li>
+        <li><a href="dev/util.singleInstance.html#util.singleInstance.SingleInstance._serve">_serve() (util.singleInstance.SingleInstance method)</a>
+</li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy._setAttr">_setAttr() (util.persistence.serialize.SerializationStrategy method)</a>
 
         <ul>
@@ -1056,6 +1076,12 @@
           <li><a href="dev/util.persistence.serializeXML3.html#util.persistence.serializeXML3.XML3SerializationStrategy._tostringDocument">(util.persistence.serializeXML3.XML3SerializationStrategy method)</a>
 </li>
         </ul></li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport._trashFreedesktop">_trashFreedesktop() (in module util.platformSupport)</a>
+</li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport._trashMac">_trashMac() (in module util.platformSupport)</a>
+</li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport._trashWindows">_trashWindows() (in module util.platformSupport)</a>
+</li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy._tryInOrder">_tryInOrder() (util.persistence.serialize.SerializationStrategy class method)</a>
 </li>
         <li><a href="dev/util.attribute.html#util.attribute.Attribute._type">_type (util.attribute.Attribute attribute)</a>
@@ -1142,8 +1168,14 @@
 </li>
         <li><a href="dev/util.persistence.pRef.html#util.persistence.pRef.PRDb.allSuperDBs">allSuperDBs() (util.persistence.pRef.PRDb method)</a>
 </li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.ALT">ALT (in module util.platformSupport)</a>
+</li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.ALT_LABEL">ALT_LABEL (in module util.platformSupport)</a>
+</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.altKey">altKey() (in module util.platformSupport)</a>
+</li>
         <li><a href="dev/util.observer.html#util.observer.alwaysLater">alwaysLater (in module util.observer)</a>
 </li>
         <li><a href="dev/util.tooltip.html#util.tooltip.CreateToolTip.appActive">appActive() (util.tooltip.CreateToolTip method)</a>
@@ -1274,6 +1306,8 @@
 </li>
         <li><a href="dev/util.errorReportingObject.html#util.errorReportingObject.ErrorReportingObject.clearStatusReport">clearStatusReport() (util.errorReportingObject.ErrorReportingObject method)</a>
 </li>
+        <li><a href="dev/util.singleInstance.html#util.singleInstance.SingleInstance.close">close() (util.singleInstance.SingleInstance method)</a>
+</li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy._MemStrategy.cls">cls (util.persistence.serialize.SerializationStrategy._MemStrategy attribute)</a>
 
         <ul>
@@ -1358,6 +1392,8 @@
 </li>
         <li><a href="dev/util.commandParser.html#util.commandParser.CompositeCommandMgr.context">context (util.commandParser.CompositeCommandMgr attribute)</a>
 </li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.copyPNG">copyPNG() (in module util.platformSupport)</a>
+</li>
         <li><a href="dev/util.tooltip.html#util.tooltip.CreateToolTip">CreateToolTip (class in util.tooltip)</a>
 </li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.AttrEditor.cspan">cspan (util.attributeEditor.AttrEditor attribute)</a>
@@ -1436,10 +1472,10 @@
         </ul></li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.AttrEditor.deleteAttr">deleteAttr() (util.attributeEditor.AttrEditor method)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="dev/util.utils.html#util.utils.Categories.deleteCategory">deleteCategory() (util.utils.Categories method)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="dev/util.utils.html#util.utils.delOne">delOne() (in module util.utils)</a>
 </li>
         <li><a href="dev/util.commandParser.html#util.commandParser.TopCommandParser.description">description (util.commandParser.TopCommandParser attribute)</a>
@@ -1480,6 +1516,8 @@
           <li><a href="dev/util.commandParser.html#util.commandParser.NonMutatingCommandGenerator.do">(util.commandParser.NonMutatingCommandGenerator method)</a>
 </li>
         </ul></li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.documentsFolder">documentsFolder() (in module util.platformSupport)</a>
+</li>
         <li><a href="dev/util.command.html#util.command.DoList">DoList (class in util.command)</a>
 </li>
         <li><a href="dev/util.commandParser.html#util.commandParser.CommandContext.doList">doList (util.commandParser.CommandContext attribute)</a>
@@ -1740,6 +1778,8 @@
 </li>
         <li><a href="dev/util.actionDialog.html#util.actionDialog._RichTextParser.handle_starttag">handle_starttag() (util.actionDialog._RichTextParser method)</a>
 </li>
+        <li><a href="dev/util.singleInstance.html#util.singleInstance.SingleInstance.handOff">handOff() (util.singleInstance.SingleInstance method)</a>
+</li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.AttrEditor.hasChanged">hasChanged() (util.attributeEditor.AttrEditor method)</a>
 
         <ul>
@@ -1758,10 +1798,10 @@
 </li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.HEAD_SAVED">HEAD_SAVED (in module util.persistence.serialize)</a>
 </li>
-        <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.HEAD_SERIALIZATION_VERSION">HEAD_SERIALIZATION_VERSION (in module util.persistence.serialize)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.HEAD_SERIALIZATION_VERSION">HEAD_SERIALIZATION_VERSION (in module util.persistence.serialize)</a>
+</li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.HEAD_TYPE">HEAD_TYPE (in module util.persistence.serialize)</a>
 </li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy.header">header (util.persistence.serialize.SerializationStrategy attribute)</a>
@@ -1842,10 +1882,10 @@
 </li>
         <li><a href="dev/util.commandParser.html#util.commandParser.IntermediateCommandWord">IntermediateCommandWord (class in util.commandParser)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="dev/util.utils.html#util.utils.Categories.isCategory">isCategory() (util.utils.Categories method)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="dev/util.attribute.html#util.attribute.Attribute.isComplete">isComplete() (util.attribute.Attribute method)</a>
 </li>
         <li><a href="dev/util.attribute.html#util.attribute.AttributedObject.isDirty">isDirty() (util.attribute.AttributedObject method)</a>
@@ -1882,6 +1922,8 @@
 </li>
         <li><a href="dev/util.attribute.html#util.attribute.AttributedObject.isValueEditable">isValueEditable() (util.attribute.AttributedObject method)</a>
 </li>
+        <li><a href="dev/util.utils.html#util.utils.isWindowsPath">isWindowsPath() (in module util.utils)</a>
+</li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.ItemMaker">ItemMaker (in module util.attributeEditor)</a>
 </li>
         <li><a href="dev/util.attribute.html#util.attribute.AttributedObject.items">items() (util.attribute.AttributedObject method)</a>
@@ -1910,6 +1952,8 @@
   <h2>K</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="dev/util.utils.html#util.utils.keepLast">keepLast() (in module util.utils)</a>
+</li>
         <li><a href="dev/util.attribute.html#util.attribute.AttributedObject.keys">keys() (util.attribute.AttributedObject method)</a>
 
         <ul>
@@ -1946,11 +1990,15 @@
 </li>
         <li><a href="dev/util.terminal.html#util.terminal.LineBufferedStream">LineBufferedStream (class in util.terminal)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="dev/util.terminal.html#util.terminal.LineFilteringStream">LineFilteringStream (class in util.terminal)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.LINUX">LINUX (in module util.platformSupport)</a>
+</li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.ListEditor">ListEditor (class in util.attributeEditor)</a>
+</li>
+        <li><a href="dev/util.singleInstance.html#util.singleInstance.SingleInstance.listen">listen() (util.singleInstance.SingleInstance method)</a>
 </li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.AttrEditor.listItemMakers">listItemMakers (util.attributeEditor.AttrEditor attribute)</a>
 </li>
@@ -1964,6 +2012,8 @@
           <li><a href="dev/util.rtValuesDialog.html#util.rtValuesDialog.SliderInfo.log">(util.rtValuesDialog.SliderInfo attribute)</a>
 </li>
         </ul></li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.logFolder">logFolder() (in module util.platformSupport)</a>
+</li>
         <li><a href="dev/util.html#util.Logger">Logger (class in util)</a>
 </li>
     </ul></td>
@@ -1974,6 +2024,8 @@
   <h2>M</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.MAC">MAC (in module util.platformSupport)</a>
+</li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.AttrEditor.makeButton">makeButton() (util.attributeEditor.AttrEditor method)</a>
 </li>
         <li><a href="dev/util.utils.html#util.utils.makeConcrete">makeConcrete() (in module util.utils)</a>
@@ -2064,9 +2116,13 @@
 </li>
           <li><a href="dev/util.persistence.serializeXML3.html#module-util.persistence.serializeXML3">util.persistence.serializeXML3</a>
 </li>
+          <li><a href="dev/util.platformSupport.html#module-util.platformSupport">util.platformSupport</a>
+</li>
           <li><a href="dev/util.prefs.html#module-util.prefs">util.prefs</a>
 </li>
           <li><a href="dev/util.rtValuesDialog.html#module-util.rtValuesDialog">util.rtValuesDialog</a>
+</li>
+          <li><a href="dev/util.singleInstance.html#module-util.singleInstance">util.singleInstance</a>
 </li>
           <li><a href="dev/util.terminal.html#module-util.terminal">util.terminal</a>
 </li>
@@ -2084,6 +2140,8 @@
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.ListEditor.move">move() (util.attributeEditor.ListEditor method)</a>
 </li>
         <li><a href="dev/util.utils.html#util.utils.Point.moveBy">moveBy() (util.utils.Point method)</a>
+</li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.moveToTrash">moveToTrash() (in module util.platformSupport)</a>
 </li>
         <li><a href="dev/util.commandParser.html#util.commandParser.MutatingCommandGenerator">MutatingCommandGenerator (class in util.commandParser)</a>
 </li>
@@ -2179,10 +2237,10 @@
 </li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.PropertyInfo.omitIfNone">omitIfNone (util.persistence.serialize.PropertyInfo attribute)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="dev/util.rtValuesDialog.html#util.rtValuesDialog.RTValueDialog.on_dismiss">on_dismiss() (util.rtValuesDialog.RTValueDialog method)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="dev/util.terminal.html#util.terminal.TerminalRegistry.onFocusIn">onFocusIn() (util.terminal.TerminalRegistry method)</a>
 </li>
         <li><a href="dev/util.terminal.html#util.terminal.TerminalRegistry.onFocusOut">onFocusOut() (util.terminal.TerminalRegistry method)</a>
@@ -2191,6 +2249,12 @@
 </li>
         <li><a href="dev/util.terminal.html#util.terminal.OnLineType">OnLineType (in module util.terminal)</a>
 </li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.openFile">openFile() (in module util.platformSupport)</a>
+
+        <ul>
+          <li><a href="dev/util.utils.html#util.utils.openFile">(in module util.utils)</a>
+</li>
+        </ul></li>
         <li><a href="dev/util.utils.html#util.utils.openUrl">openUrl() (in module util.utils)</a>
 </li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.ParamInfo.optional">optional (util.persistence.serialize.ParamInfo attribute)</a>
@@ -2237,6 +2301,10 @@
           <li><a href="dev/util.commandParser.html#util.commandParser.Parsable.parser">(util.commandParser.Parsable attribute)</a>
 </li>
         </ul></li>
+        <li><a href="dev/util.utils.html#util.utils.pathURL">pathURL() (in module util.utils)</a>
+</li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.pdfToPNG">pdfToPNG() (in module util.platformSupport)</a>
+</li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy.peekString">peekString() (util.persistence.serialize.SerializationStrategy method)</a>
 </li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy.peekStringx">peekStringx() (util.persistence.serialize.SerializationStrategy class method)</a>
@@ -2261,18 +2329,20 @@
 </li>
         <li><a href="dev/util.utils.html#util.utils.pointInRect">pointInRect() (in module util.utils)</a>
 </li>
+        <li><a href="dev/util.singleInstance.html#util.singleInstance.SingleInstance.POLL_MS">POLL_MS (util.singleInstance.SingleInstance attribute)</a>
+</li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo.postconSetters">postconSetters (util.persistence.serialize.InstantiationInfo attribute)</a>
 </li>
         <li><a href="dev/util.persistence.pRef.html#util.persistence.pRef.PRContainer">PRContainer (class in util.persistence.pRef)</a>
 </li>
         <li><a href="dev/util.persistence.pRef.html#util.persistence.pRef.PRDb">PRDb (class in util.persistence.pRef)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="dev/util.persistence.pRef.html#util.persistence.pRef.PRDbContainer">PRDbContainer (class in util.persistence.pRef)</a>
 </li>
         <li><a href="dev/util.persistence.pRef.html#util.persistence.pRef.PReference">PReference (class in util.persistence.pRef)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy.preferred">preferred (util.persistence.serialize.SerializationStrategy attribute)</a>
 
         <ul>
@@ -2457,6 +2527,8 @@
 </li>
         <li><a href="dev/util.terminal.html#util.terminal.ResultToStringFunType">ResultToStringFunType (in module util.terminal)</a>
 </li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.reveal">reveal() (in module util.platformSupport)</a>
+</li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.AttrEditor.rMessage">rMessage (util.attributeEditor.AttrEditor attribute)</a>
 </li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.AttrEditor.rows">rows (util.attributeEditor.AttrEditor attribute)</a>
@@ -2527,6 +2599,8 @@
           <li><a href="dev/util.persistence.pRef.html#util.persistence.pRef.PRDb.setDirty">(util.persistence.pRef.PRDb method)</a>
 </li>
         </ul></li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.setDPIAware">setDPIAware() (in module util.platformSupport)</a>
+</li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.ListEditor.setList">setList() (util.attributeEditor.ListEditor method)</a>
 </li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.AttrEditor.setMessage">setMessage() (util.attributeEditor.AttrEditor method)</a>
@@ -2545,11 +2619,19 @@
 </li>
         <li><a href="dev/util.html#util.setupLogger">setupLogger() (in module util)</a>
 </li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.setUpLook">setUpLook() (in module util.platformSupport)</a>
+</li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.ChangeDescr.setValue">setValue() (util.attributeEditor.ChangeDescr method)</a>
+</li>
+        <li><a href="dev/util.utils.html#util.utils.shiftRectToPoint">shiftRectToPoint() (in module util.utils)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="dev/util.utils.html#util.utils.shiftRectToPoint">shiftRectToPoint() (in module util.utils)</a>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.SHORTCUT">SHORTCUT (in module util.platformSupport)</a>
+</li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.shortcut">shortcut() (in module util.platformSupport)</a>
+</li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.SHORTCUT_LABEL">SHORTCUT_LABEL (in module util.platformSupport)</a>
 </li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.AttrEditor.show">show() (util.attributeEditor.AttrEditor method)</a>
 
@@ -2564,6 +2646,8 @@
         <li><a href="dev/util.utils.html#util.utils.showExceptionDialog">showExceptionDialog() (in module util.utils)</a>
 </li>
         <li><a href="dev/util.tooltip.html#util.tooltip.CreateToolTip.showtip">showtip() (util.tooltip.CreateToolTip method)</a>
+</li>
+        <li><a href="dev/util.singleInstance.html#util.singleInstance.SingleInstance">SingleInstance (class in util.singleInstance)</a>
 </li>
         <li><a href="dev/util.rtValuesDialog.html#util.rtValuesDialog.SliderInfo.slider">slider (util.rtValuesDialog.SliderInfo attribute)</a>
 </li>
@@ -2649,6 +2733,8 @@
 </li>
         <li><a href="dev/util.terminal.html#util.terminal.TerminalWidget">TerminalWidget (class in util.terminal)</a>
 </li>
+        <li><a href="dev/util.singleInstance.html#util.singleInstance.SingleInstance.TIMEOUT">TIMEOUT (util.singleInstance.SingleInstance attribute)</a>
+</li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.ChangeDescr.tkVar">tkVar (util.attributeEditor.ChangeDescr attribute)</a>
 </li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.AttrEditor.toggleGroup">toggleGroup() (util.attributeEditor.AttrEditor method)</a>
@@ -2680,6 +2766,8 @@
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy.tostringx">tostringx() (util.persistence.serialize.SerializationStrategy class method)</a>
+</li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.TRASH_NAME">TRASH_NAME (in module util.platformSupport)</a>
 </li>
         <li><a href="dev/util.attributeEditor.html#util.attributeEditor.TREE_INDENT">TREE_INDENT (in module util.attributeEditor)</a>
 </li>
@@ -2772,6 +2860,8 @@
         <li><a href="dev/util.urlDialog.html#util.urlDialog.URLDialog">URLDialog (class in util.urlDialog)</a>
 </li>
         <li><a href="dev/util.utils.html#util.utils.urlExists">urlExists() (in module util.utils)</a>
+</li>
+        <li><a href="dev/util.utils.html#util.utils.urlPath">urlPath() (in module util.utils)</a>
 </li>
         <li><a href="dev/util.urlDialog.html#util.urlDialog.urlProblem">urlProblem() (in module util.urlDialog)</a>
 </li>
@@ -2908,6 +2998,13 @@
 </li>
         </ul></li>
         <li>
+    util.platformSupport
+
+        <ul>
+          <li><a href="dev/util.platformSupport.html#module-util.platformSupport">module</a>
+</li>
+        </ul></li>
+        <li>
     util.prefs
 
         <ul>
@@ -2919,6 +3016,13 @@
 
         <ul>
           <li><a href="dev/util.rtValuesDialog.html#module-util.rtValuesDialog">module</a>
+</li>
+        </ul></li>
+        <li>
+    util.singleInstance
+
+        <ul>
+          <li><a href="dev/util.singleInstance.html#module-util.singleInstance">module</a>
 </li>
         </ul></li>
         <li>
@@ -3006,10 +3110,22 @@
 </li>
         <li><a href="dev/util.utils.html#util.utils.webCacheFolder">webCacheFolder (in module util.utils)</a>
 </li>
-        <li><a href="dev/util.terminal.html#util.terminal.TerminalWidget.wrap">wrap() (util.terminal.TerminalWidget method)</a>
+        <li><a href="dev/util.utils.html#util.utils.wheelEvents">wheelEvents() (in module util.utils)</a>
 </li>
+        <li><a href="dev/util.utils.html#util.utils.wheelSteps">wheelSteps() (in module util.utils)</a>
+</li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.WINDOW_BACKGROUND">WINDOW_BACKGROUND (in module util.platformSupport)</a>
+</li>
+        <li><a href="dev/util.platformSupport.html#util.platformSupport.WINDOWS">WINDOWS (in module util.platformSupport)</a>
+
+        <ul>
+          <li><a href="dev/util.utils.html#util.utils.WINDOWS">(in module util.utils)</a>
+</li>
+        </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="dev/util.terminal.html#util.terminal.TerminalWidget.wrap">wrap() (util.terminal.TerminalWidget method)</a>
+</li>
         <li><a href="dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy.write">write() (util.persistence.serialize.SerializationStrategy method)</a>
 
         <ul>

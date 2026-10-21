@@ -230,8 +230,10 @@
 <li class="toctree-l2"><a class="reference internal" href="util.dirtyable.html">util.dirtyable module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.errorReportingObject.html">util.errorReportingObject module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.observer.html">util.observer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html">util.platformSupport module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.prefs.html">util.prefs module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.rtValuesDialog.html">util.rtValuesDialog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.singleInstance.html">util.singleInstance module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.terminal.html">util.terminal module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.tooltip.html">util.tooltip module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.urlDialog.html">util.urlDialog module</a></li>
@@ -340,10 +342,24 @@ and multiple destinations if necessary.</p>
 <li><p><strong>logFileName</strong> (<em>str</em><em>|</em><em>None</em>) – The name of the file to log to.  By default it will
 be the stem (filename only) of current executable, and it will be in
 the current directory.  If it doesn’t have a file extension, “.log” will be
-appended. A relative name is put in <em>~/Library/Logs/&lt;program&gt;/</em> instead when
+appended. A relative name is put in the user’s log folder instead (eg:
+<em>~/Library/Logs/&lt;program&gt;/</em>: see <em>util.platformSupport.logFolder()</em>) when
 the program is packaged (eg: a .app) or the current directory can’t be
 written.</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util._freshLogFile">
+<span class="sig-prename descclassname"><span class="pre">util.</span></span><span class="sig-name descname"><span class="pre">_freshLogFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logFileName</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util._freshLogFile" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>logFileName</em>, emptied (the last run’s log is removed); or, if it
+can’t be removed because another copy of the program has it open (as on
+Windows, where an open file can’t be removed), the first of “&lt;name&gt;-2.log”,
+“&lt;name&gt;-3.log”, … that can.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1061,6 +1077,34 @@ This may be either created of just returned, depending on if it exists already.<
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="util.platformSupport.html">util.platformSupport module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.MAC"><code class="docutils literal notranslate"><span class="pre">MAC</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.WINDOWS"><code class="docutils literal notranslate"><span class="pre">WINDOWS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.LINUX"><code class="docutils literal notranslate"><span class="pre">LINUX</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.SHORTCUT"><code class="docutils literal notranslate"><span class="pre">SHORTCUT</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.SHORTCUT_LABEL"><code class="docutils literal notranslate"><span class="pre">SHORTCUT_LABEL</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.ALT"><code class="docutils literal notranslate"><span class="pre">ALT</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.ALT_LABEL"><code class="docutils literal notranslate"><span class="pre">ALT_LABEL</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.shortcut"><code class="docutils literal notranslate"><span class="pre">shortcut()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.altKey"><code class="docutils literal notranslate"><span class="pre">altKey()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport._launch"><code class="docutils literal notranslate"><span class="pre">_launch()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.openFile"><code class="docutils literal notranslate"><span class="pre">openFile()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.reveal"><code class="docutils literal notranslate"><span class="pre">reveal()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.TRASH_NAME"><code class="docutils literal notranslate"><span class="pre">TRASH_NAME</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.moveToTrash"><code class="docutils literal notranslate"><span class="pre">moveToTrash()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport._trashMac"><code class="docutils literal notranslate"><span class="pre">_trashMac()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport._trashWindows"><code class="docutils literal notranslate"><span class="pre">_trashWindows()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport._trashFreedesktop"><code class="docutils literal notranslate"><span class="pre">_trashFreedesktop()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.logFolder"><code class="docutils literal notranslate"><span class="pre">logFolder()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.documentsFolder"><code class="docutils literal notranslate"><span class="pre">documentsFolder()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.pdfToPNG"><code class="docutils literal notranslate"><span class="pre">pdfToPNG()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.copyPNG"><code class="docutils literal notranslate"><span class="pre">copyPNG()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport._copyPNGWindows"><code class="docutils literal notranslate"><span class="pre">_copyPNGWindows()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.WINDOW_BACKGROUND"><code class="docutils literal notranslate"><span class="pre">WINDOW_BACKGROUND</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.setDPIAware"><code class="docutils literal notranslate"><span class="pre">setDPIAware()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html#util.platformSupport.setUpLook"><code class="docutils literal notranslate"><span class="pre">setUpLook()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="util.prefs.html">util.prefs module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="util.prefs.html#util.prefs.Prefs"><code class="docutils literal notranslate"><span class="pre">Prefs</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="util.prefs.html#util.prefs.Prefs.__init__"><code class="docutils literal notranslate"><span class="pre">Prefs.__init__()</span></code></a></li>
@@ -1106,6 +1150,19 @@ This may be either created of just returned, depending on if it exists already.<
 <li class="toctree-l3"><a class="reference internal" href="util.rtValuesDialog.html#util.rtValuesDialog.RTValueDialog.sliderCallbackHandler"><code class="docutils literal notranslate"><span class="pre">RTValueDialog.sliderCallbackHandler()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="util.rtValuesDialog.html#util.rtValuesDialog.RTValueDialog.__setitem__"><code class="docutils literal notranslate"><span class="pre">RTValueDialog.__setitem__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="util.rtValuesDialog.html#util.rtValuesDialog.RTValueDialog.__getitem__"><code class="docutils literal notranslate"><span class="pre">RTValueDialog.__getitem__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="util.singleInstance.html">util.singleInstance module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="util.singleInstance.html#util.singleInstance.SingleInstance"><code class="docutils literal notranslate"><span class="pre">SingleInstance</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="util.singleInstance.html#util.singleInstance.SingleInstance.TIMEOUT"><code class="docutils literal notranslate"><span class="pre">SingleInstance.TIMEOUT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.singleInstance.html#util.singleInstance.SingleInstance.POLL_MS"><code class="docutils literal notranslate"><span class="pre">SingleInstance.POLL_MS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.singleInstance.html#util.singleInstance.SingleInstance.__init__"><code class="docutils literal notranslate"><span class="pre">SingleInstance.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.singleInstance.html#util.singleInstance.SingleInstance.handOff"><code class="docutils literal notranslate"><span class="pre">SingleInstance.handOff()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.singleInstance.html#util.singleInstance.SingleInstance.listen"><code class="docutils literal notranslate"><span class="pre">SingleInstance.listen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.singleInstance.html#util.singleInstance.SingleInstance._serve"><code class="docutils literal notranslate"><span class="pre">SingleInstance._serve()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.singleInstance.html#util.singleInstance.SingleInstance.close"><code class="docutils literal notranslate"><span class="pre">SingleInstance.close()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -1168,6 +1225,7 @@ This may be either created of just returned, depending on if it exists already.<
 <li class="toctree-l3"><a class="reference internal" href="util.terminal.html#util.terminal.TerminalRegistry.onFocusOut"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry.onFocusOut()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="util.terminal.html#util.terminal._exists"><code class="docutils literal notranslate"><span class="pre">_exists()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.terminal.html#util.terminal.LineBufferedRoutingStream"><code class="docutils literal notranslate"><span class="pre">LineBufferedRoutingStream</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="util.terminal.html#util.terminal.LineBufferedRoutingStream.__init__"><code class="docutils literal notranslate"><span class="pre">LineBufferedRoutingStream.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="util.terminal.html#util.terminal.LineBufferedRoutingStream.write"><code class="docutils literal notranslate"><span class="pre">LineBufferedRoutingStream.write()</span></code></a></li>
@@ -1264,13 +1322,19 @@ This may be either created of just returned, depending on if it exists already.<
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.resolveAliases"><code class="docutils literal notranslate"><span class="pre">resolveAliases()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.splitOnSeparator"><code class="docutils literal notranslate"><span class="pre">splitOnSeparator()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.quoteIfNecessary"><code class="docutils literal notranslate"><span class="pre">quoteIfNecessary()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils._MAC"><code class="docutils literal notranslate"><span class="pre">_MAC</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils._CMD_MASK"><code class="docutils literal notranslate"><span class="pre">_CMD_MASK</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils._ALT_MASK"><code class="docutils literal notranslate"><span class="pre">_ALT_MASK</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.s_CMD"><code class="docutils literal notranslate"><span class="pre">s_CMD()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.s_SHIFT"><code class="docutils literal notranslate"><span class="pre">s_SHIFT()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.s_CTL"><code class="docutils literal notranslate"><span class="pre">s_CTL()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.s_ALT"><code class="docutils literal notranslate"><span class="pre">s_ALT()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.s_OPT"><code class="docutils literal notranslate"><span class="pre">s_OPT()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.strToBool"><code class="docutils literal notranslate"><span class="pre">strToBool()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.WINDOWS"><code class="docutils literal notranslate"><span class="pre">WINDOWS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.isWindowsPath"><code class="docutils literal notranslate"><span class="pre">isWindowsPath()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.openFile"><code class="docutils literal notranslate"><span class="pre">openFile()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.urlPath"><code class="docutils literal notranslate"><span class="pre">urlPath()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.pathURL"><code class="docutils literal notranslate"><span class="pre">pathURL()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.isValidURL"><code class="docutils literal notranslate"><span class="pre">isValidURL()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.REMOTE_TIMEOUT"><code class="docutils literal notranslate"><span class="pre">REMOTE_TIMEOUT</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.webCacheFolder"><code class="docutils literal notranslate"><span class="pre">webCacheFolder</span></code></a></li>
@@ -1354,6 +1418,9 @@ This may be either created of just returned, depending on if it exists already.<
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils._findEntry"><code class="docutils literal notranslate"><span class="pre">_findEntry()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils._separatedItems"><code class="docutils literal notranslate"><span class="pre">_separatedItems</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils._separate"><code class="docutils literal notranslate"><span class="pre">_separate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils._lastItems"><code class="docutils literal notranslate"><span class="pre">_lastItems</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.keepLast"><code class="docutils literal notranslate"><span class="pre">keepLast()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils._endIndex"><code class="docutils literal notranslate"><span class="pre">_endIndex()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.addToMenuBar"><code class="docutils literal notranslate"><span class="pre">addToMenuBar()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.addCheckToMenuBar"><code class="docutils literal notranslate"><span class="pre">addCheckToMenuBar()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.removeFromMenuBar"><code class="docutils literal notranslate"><span class="pre">removeFromMenuBar()</span></code></a></li>
@@ -1366,6 +1433,8 @@ This may be either created of just returned, depending on if it exists already.<
 <li class="toctree-l3"><a class="reference internal" href="util.utils.html#util.utils.VerticalScrolledFrame.__init__"><code class="docutils literal notranslate"><span class="pre">VerticalScrolledFrame.__init__()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.wheelSteps"><code class="docutils literal notranslate"><span class="pre">wheelSteps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.wheelEvents"><code class="docutils literal notranslate"><span class="pre">wheelEvents()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.bindRightMouse"><code class="docutils literal notranslate"><span class="pre">bindRightMouse()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.tag_bindRightMouse"><code class="docutils literal notranslate"><span class="pre">tag_bindRightMouse()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.utils.html#util.utils.tag_unbindRightMouse"><code class="docutils literal notranslate"><span class="pre">tag_unbindRightMouse()</span></code></a></li>
@@ -1467,6 +1536,7 @@ This may be either created of just returned, depending on if it exists already.<
 </li>
 <li><a class="reference internal" href="#util.getLogger"><code class="docutils literal notranslate"><span class="pre">getLogger()</span></code></a></li>
 <li><a class="reference internal" href="#util.setupLogger"><code class="docutils literal notranslate"><span class="pre">setupLogger()</span></code></a></li>
+<li><a class="reference internal" href="#util._freshLogFile"><code class="docutils literal notranslate"><span class="pre">_freshLogFile()</span></code></a></li>
 <li><a class="reference internal" href="#util.DynamicStderrHandler"><code class="docutils literal notranslate"><span class="pre">DynamicStderrHandler</span></code></a><ul>
 <li><a class="reference internal" href="#util.DynamicStderrHandler.__init__"><code class="docutils literal notranslate"><span class="pre">DynamicStderrHandler.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#util.DynamicStderrHandler.stream"><code class="docutils literal notranslate"><span class="pre">DynamicStderrHandler.stream</span></code></a></li>

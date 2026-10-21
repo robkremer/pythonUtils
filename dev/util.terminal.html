@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="util.tooltip module" href="util.tooltip.html"><link rel="prev" title="util.rtValuesDialog module" href="util.rtValuesDialog.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="util.tooltip module" href="util.tooltip.html"><link rel="prev" title="util.singleInstance module" href="util.singleInstance.html">
         <link rel="prefetch" href="../_static/pu-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/pu-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
@@ -230,8 +230,10 @@
 <li class="toctree-l2"><a class="reference internal" href="util.dirtyable.html">util.dirtyable module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.errorReportingObject.html">util.errorReportingObject module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.observer.html">util.observer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.platformSupport.html">util.platformSupport module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.prefs.html">util.prefs module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.rtValuesDialog.html">util.rtValuesDialog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.singleInstance.html">util.singleInstance module</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">util.terminal module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.tooltip.html">util.tooltip module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="util.urlDialog.html">util.urlDialog module</a></li>
@@ -857,6 +859,16 @@ each Toplevel’s Python-level .master.</p>
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.terminal._exists">
+<span class="sig-prename descclassname"><span class="pre">util.terminal.</span></span><span class="sig-name descname"><span class="pre">_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">widget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Misc</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#util.terminal._exists" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Whether <em>widget</em> hasn’t been destroyed.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -1613,14 +1625,14 @@ distinguishable from any real string a user could type.</p>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="util.rtValuesDialog.html">
+          <a class="prev-page" href="util.singleInstance.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">util.rtValuesDialog module</div>
+                <div class="title">util.singleInstance module</div>
                 
               </div>
             </a>
@@ -1712,6 +1724,7 @@ distinguishable from any real string a user could type.</p>
 <li><a class="reference internal" href="#util.terminal.TerminalRegistry.onFocusOut"><code class="docutils literal notranslate"><span class="pre">TerminalRegistry.onFocusOut()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#util.terminal._exists"><code class="docutils literal notranslate"><span class="pre">_exists()</span></code></a></li>
 <li><a class="reference internal" href="#util.terminal.LineBufferedRoutingStream"><code class="docutils literal notranslate"><span class="pre">LineBufferedRoutingStream</span></code></a><ul>
 <li><a class="reference internal" href="#util.terminal.LineBufferedRoutingStream.__init__"><code class="docutils literal notranslate"><span class="pre">LineBufferedRoutingStream.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#util.terminal.LineBufferedRoutingStream.write"><code class="docutils literal notranslate"><span class="pre">LineBufferedRoutingStream.write()</span></code></a></li>

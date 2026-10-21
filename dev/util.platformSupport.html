@@ -1,0 +1,608 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="util.prefs module" href="util.prefs.html"><link rel="prev" title="util.observer module" href="util.observer.html">
+        <link rel="prefetch" href="../_static/pu-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/pu-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>util.platformSupport module - pythonUtils 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">pythonUtils 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/pu-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">pythonUtils 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/persistence.html">Persistence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/attributes.html">Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/commands.html">Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/observer.html">Observers and Changes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/widgets.html">Tk Widgets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/utilities.html">Preferences, Graphs and Utilities</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="util.html">util package</a><input aria-label="Toggle navigation of util package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="util.persistence.html">util.persistence package</a><input aria-label="Toggle navigation of util.persistence package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.pRef.html">util.persistence.pRef module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serialize.html">util.persistence.serialize module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeJSON.html">util.persistence.serializeJSON module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializePlist.html">util.persistence.serializePlist module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeXML.html">util.persistence.serializeXML module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeXML2.html">util.persistence.serializeXML2 module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="util.persistence.serializeXML3.html">util.persistence.serializeXML3 module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="util.abstractGraph.html">util.abstractGraph module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.actionDialog.html">util.actionDialog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.attribute.html">util.attribute module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.attributeEditor.html">util.attributeEditor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.command.html">util.command module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.commandParser.html">util.commandParser module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.dirtyable.html">util.dirtyable module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.errorReportingObject.html">util.errorReportingObject module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.observer.html">util.observer module</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">util.platformSupport module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.prefs.html">util.prefs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.rtValuesDialog.html">util.rtValuesDialog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.singleInstance.html">util.singleInstance module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.terminal.html">util.terminal module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.tooltip.html">util.tooltip module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.urlDialog.html">util.urlDialog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.utils.html">util.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="util.validatedList.html">util.validatedList module</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-util.platformSupport">
+<span id="util-platformsupport-module"></span><h1>util.platformSupport module<a class="headerlink" href="#module-util.platformSupport" title="Link to this heading">¶</a></h1>
+<p>What’s done differently on macOS, Windows and Linux: the key shortcuts are made
+with (Command on the Mac, Control elsewhere), showing a file in the Finder (or
+Explorer, or the file manager), moving a file to the Trash (or Recycle Bin),
+putting a picture on the clipboard, where logs go, and the like. A program asks
+this module, rather than testing <em>sys.platform</em> itself.</p>
+<p>Nothing here imports the rest of <em>util</em>, so anything in it can use this.</p>
+<p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<dl class="py data">
+<dt class="sig sig-object py" id="util.platformSupport.MAC">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">MAC</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#util.platformSupport.MAC" title="Link to this definition">¶</a></dt>
+<dd><p>Whether this is macOS.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.platformSupport.WINDOWS">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">WINDOWS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#util.platformSupport.WINDOWS" title="Link to this definition">¶</a></dt>
+<dd><p>Whether this is Windows.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.platformSupport.LINUX">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">LINUX</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#util.platformSupport.LINUX" title="Link to this definition">¶</a></dt>
+<dd><p>Whether this is Linux (or another Unix with X11 or Wayland).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.platformSupport.SHORTCUT">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">SHORTCUT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Command'</span></span><a class="headerlink" href="#util.platformSupport.SHORTCUT" title="Link to this definition">¶</a></dt>
+<dd><p>The Tk modifier key shortcuts are made with: eg, <code class="docutils literal notranslate"><span class="pre">f&quot;&lt;{SHORTCUT}-KeyPress-z&gt;&quot;</span></code>.
+(Tk accepts “Command” off the Mac too, but no key there makes it.)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.platformSupport.SHORTCUT_LABEL">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">SHORTCUT_LABEL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Command'</span></span><a class="headerlink" href="#util.platformSupport.SHORTCUT_LABEL" title="Link to this definition">¶</a></dt>
+<dd><p><em>SHORTCUT</em>’s name in a menu item’s accelerator (Tk on the Mac shows “Command” as ⌘).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.platformSupport.ALT">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">ALT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Option'</span></span><a class="headerlink" href="#util.platformSupport.ALT" title="Link to this definition">¶</a></dt>
+<dd><p>The Tk modifier for the Option key (on the Mac) or Alt (elsewhere).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.platformSupport.ALT_LABEL">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">ALT_LABEL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Option'</span></span><a class="headerlink" href="#util.platformSupport.ALT_LABEL" title="Link to this definition">¶</a></dt>
+<dd><p><em>ALT</em>’s name in a menu item’s accelerator.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport.shortcut">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">shortcut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.platformSupport.shortcut" title="Link to this definition">¶</a></dt>
+<dd><p>A key shortcut: <em>key</em> with Command (on the Mac) or Control (elsewhere).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> – The key’s Tk keysym, eg: “z”, “equal”, “0”. With <em>shift</em>, give
+the shifted keysym (eg: “Z”).</p></li>
+<li><p><strong>shift</strong> – Whether it’s with Shift too.</p></li>
+<li><p><strong>alt</strong> – Whether it’s with Option (Alt) too.</p></li>
+<li><p><strong>label</strong> – How the key’s shown in the accelerator (by default: <em>key</em>,
+upper-cased, or eg “+” for “equal”).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(the Tk event sequence to bind, the menu accelerator): eg, for “z”,
+(“&lt;Command-KeyPress-z&gt;”, “Command-Z”) on the Mac and (“&lt;Control-KeyPress-z&gt;”,
+“Ctrl+Z”) elsewhere.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport.altKey">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">altKey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#util.platformSupport.altKey" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(the Tk event sequence, the menu accelerator) for <em>key</em> with Option
+(on the Mac) or Alt (elsewhere): eg, (“&lt;Alt-KeyPress-v&gt;”, “Alt+V”).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport._launch">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">_launch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cmd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.platformSupport._launch" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport.openFile">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">openFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.platformSupport.openFile" title="Link to this definition">¶</a></dt>
+<dd><p>Open <em>path</em> (a file or folder) as if it were double-clicked: a folder in the
+Finder (Explorer, the file manager), a file in its application.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>OSError</strong> – If it can’t be.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport.reveal">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">reveal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.platformSupport.reveal" title="Link to this definition">¶</a></dt>
+<dd><p>Show <em>path</em> in the Finder (Explorer, the file manager): a file selected in its
+folder (on Linux, its folder is opened), a folder opened.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>OSError</strong> – If it can’t be.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.platformSupport.TRASH_NAME">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">TRASH_NAME</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Trash'</span></span><a class="headerlink" href="#util.platformSupport.TRASH_NAME" title="Link to this definition">¶</a></dt>
+<dd><p>What the place deleted files go is called here.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport.moveToTrash">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">moveToTrash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.platformSupport.moveToTrash" title="Link to this definition">¶</a></dt>
+<dd><p>Move a file (or folder) to the Trash – the Recycle Bin, on Windows – where it
+can be put back from.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>OSError</strong> – If it can’t be moved there (nothing’s deleted then).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport._trashMac">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">_trashMac</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.platformSupport._trashMac" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport._trashWindows">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">_trashWindows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.platformSupport._trashWindows" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport._trashFreedesktop">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">_trashFreedesktop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.platformSupport._trashFreedesktop" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport.logFolder">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">logFolder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">program</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.platformSupport.logFolder" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>program</strong> – The program’s name, eg: “Semantic Nets”.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The folder the program’s logs belong in (not made): eg,
+“~/Library/Logs/&lt;program&gt;” on the Mac, “%LOCALAPPDATA%&lt;program&gt;Logs” on
+Windows, “~/.local/state/&lt;program&gt;” on Linux.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport.documentsFolder">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">documentsFolder</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#util.platformSupport.documentsFolder" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The user’s Documents folder: on Windows, wherever it really is (eg:
+in OneDrive); on Linux, XDG’s (eg: from <code class="docutils literal notranslate"><span class="pre">xdg-user-dir</span> <span class="pre">DOCUMENTS</span></code>), if it’s
+set up; else ~/Documents.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport.pdfToPNG">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">pdfToPNG</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdfPath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pngPath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.platformSupport.pdfToPNG" title="Link to this definition">¶</a></dt>
+<dd><p>Make a PNG of a PDF’s first page, at <em>dpi</em> dots per inch: with <em>sips</em> on the
+Mac; elsewhere with the <em>pypdfium2</em> and <em>Pillow</em> packages.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If it can’t be made (eg: they aren’t installed).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport.copyPNG">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">copyPNG</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pngPath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.platformSupport.copyPNG" title="Link to this definition">¶</a></dt>
+<dd><p>Put a PNG on the clipboard: with <em>osascript</em> on the Mac; on Windows as a PNG
+and a bitmap (for programs that don’t take PNGs: that needs <em>Pillow</em>); on
+Linux with <em>wl-copy</em> (Wayland) or <em>xclip</em> (X11).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If it can’t be done.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport._copyPNGWindows">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">_copyPNGWindows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pngPath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.platformSupport._copyPNGWindows" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="util.platformSupport.WINDOW_BACKGROUND">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">WINDOW_BACKGROUND</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'systemWindowBackgroundColor'</span></span><a class="headerlink" href="#util.platformSupport.WINDOW_BACKGROUND" title="Link to this definition">¶</a></dt>
+<dd><p>The Tk color of a window’s background (the Mac’s and Windows’ system colors only exist there).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport.setDPIAware">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">setDPIAware</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.platformSupport.setDPIAware" title="Link to this definition">¶</a></dt>
+<dd><p>On Windows, say the program draws for the screen’s resolution itself, so
+Windows doesn’t scale its windows up (blurred) on a high-resolution screen.
+Call it before the first Tk window is made. Elsewhere it does nothing.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="util.platformSupport.setUpLook">
+<span class="sig-prename descclassname"><span class="pre">util.platformSupport.</span></span><span class="sig-name descname"><span class="pre">setUpLook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#util.platformSupport.setUpLook" title="Link to this definition">¶</a></dt>
+<dd><p>Choose a ttk theme that fits in: on Linux, “clam” (Tk’s “default” there looks
+dated); the Mac’s and Windows’ own native themes are left as they are.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>root</strong> – The Tk root (or any widget).</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="util.prefs.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">util.prefs module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="util.observer.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">util.observer module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">util.platformSupport module</a><ul>
+<li><a class="reference internal" href="#util.platformSupport.MAC"><code class="docutils literal notranslate"><span class="pre">MAC</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.WINDOWS"><code class="docutils literal notranslate"><span class="pre">WINDOWS</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.LINUX"><code class="docutils literal notranslate"><span class="pre">LINUX</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.SHORTCUT"><code class="docutils literal notranslate"><span class="pre">SHORTCUT</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.SHORTCUT_LABEL"><code class="docutils literal notranslate"><span class="pre">SHORTCUT_LABEL</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.ALT"><code class="docutils literal notranslate"><span class="pre">ALT</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.ALT_LABEL"><code class="docutils literal notranslate"><span class="pre">ALT_LABEL</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.shortcut"><code class="docutils literal notranslate"><span class="pre">shortcut()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.altKey"><code class="docutils literal notranslate"><span class="pre">altKey()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport._launch"><code class="docutils literal notranslate"><span class="pre">_launch()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.openFile"><code class="docutils literal notranslate"><span class="pre">openFile()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.reveal"><code class="docutils literal notranslate"><span class="pre">reveal()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.TRASH_NAME"><code class="docutils literal notranslate"><span class="pre">TRASH_NAME</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.moveToTrash"><code class="docutils literal notranslate"><span class="pre">moveToTrash()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport._trashMac"><code class="docutils literal notranslate"><span class="pre">_trashMac()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport._trashWindows"><code class="docutils literal notranslate"><span class="pre">_trashWindows()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport._trashFreedesktop"><code class="docutils literal notranslate"><span class="pre">_trashFreedesktop()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.logFolder"><code class="docutils literal notranslate"><span class="pre">logFolder()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.documentsFolder"><code class="docutils literal notranslate"><span class="pre">documentsFolder()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.pdfToPNG"><code class="docutils literal notranslate"><span class="pre">pdfToPNG()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.copyPNG"><code class="docutils literal notranslate"><span class="pre">copyPNG()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport._copyPNGWindows"><code class="docutils literal notranslate"><span class="pre">_copyPNGWindows()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.WINDOW_BACKGROUND"><code class="docutils literal notranslate"><span class="pre">WINDOW_BACKGROUND</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.setDPIAware"><code class="docutils literal notranslate"><span class="pre">setDPIAware()</span></code></a></li>
+<li><a class="reference internal" href="#util.platformSupport.setUpLook"><code class="docutils literal notranslate"><span class="pre">setUpLook()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>
