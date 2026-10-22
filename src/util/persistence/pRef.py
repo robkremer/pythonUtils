@@ -466,6 +466,8 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     :returns:
     :rtype: Any
     '''
+    if not isValidURL(url): # (a plain path, eg: from a file dialog: as the URL it's stored and kept under)
+      url = fixURL(url, None, replaceExt=None, mode=mode)[0]
     try:
       stored = SerializationStrategy.peekStringx(url, "root", "url", mode=mode)
       previous = SerializationStrategy.peekStringx(url, "header", "previousURL", mode=mode)

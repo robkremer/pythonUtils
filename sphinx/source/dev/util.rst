@@ -30,8 +30,10 @@ Submodules
    util.dirtyable
    util.errorReportingObject
    util.observer
+   util.platformSupport
    util.prefs
    util.rtValuesDialog
+   util.singleInstance
    util.terminal
    util.tooltip
    util.urlDialog
