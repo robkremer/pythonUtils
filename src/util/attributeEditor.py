@@ -627,6 +627,11 @@ class AttrEditor(tk.Toplevel):
     '''
     super().__init__(parent)
     self.parent = parent
+    # Over its parent's window -- first thing, before anything can show it
+    # (show()'s _placeOverParent() runs update_idletasks(), which maps it): on
+    # macOS, a window shown first and made transient afterwards opens full
+    # screen when the app is (see util.utils.ownDialog()).
+    ownDialog(self, self.parent)
     self.listItemMakers:dict[str, ItemMaker] = dict(listItemMakers or {})
     unknown = set(hideColumns) - set(self.HIDEABLE_COLUMNS)
     assert not unknown, f'AttrEditor: unknown columns to hide: {sorted(unknown)} (expected some of {list(self.HIDEABLE_COLUMNS)}).'
@@ -783,11 +788,7 @@ class AttrEditor(tk.Toplevel):
     self.bind("<Return>", self._onReturn)            # the default button: Save Changes (Dismiss, if it can't be edited)
     self.bind("<KP_Enter>", self._onReturn)
     #self.overrideredirect(1) # deletes the title bar
-    self._placeOverParent()
-    # Over its parent's window -- before it's shown: on macOS, a window shown
-    # first and made transient afterwards opens full screen when the app is
-    # (see util.utils.ownDialog(): only ever over a window that's on screen).
-    ownDialog(self, self.parent)
+    self._placeOverParent() # (transient for it since __init__())
 
     # make this window modal
     # Force the widget tree built above to actually be laid out and drawn
