@@ -2094,8 +2094,12 @@ class VerticalScrolledFrame(ttk.Frame):
     A pure Tkinter scrollable frame that actually works!
     * Use the 'interior' attribute to place widgets inside the scrollable frame.
     * Construct and pack/place/grid normally.
-    * This frame only allows vertical scrolling.
+    * This frame only allows vertical scrolling: with its scroll bar, the
+      mouse wheel, or a shift-drag, anywhere over its interior.
     """
+    SCROLL_TAG = "VerticalScrolledFrame.scroll"
+    "The bindtag that makes the wheel and shift-drag scroll, put on everything in an interior (see *_scrollable()*)."
+
     def __init__(self, parent, *args, **kw):
         '''
         A frame that scrolls vertically: put widgets in its *interior*.
@@ -2106,7 +2110,8 @@ class VerticalScrolledFrame(ttk.Frame):
         vscrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL)
         vscrollbar.pack(fill=tk.Y, side=tk.RIGHT, expand=tk.FALSE)
         canvas = tk.Canvas(self, bd=0, highlightthickness=0,
-                           yscrollcommand=vscrollbar.set)
+                           yscrollcommand=vscrollbar.set, yscrollincrement=20)
+        self.canvas = canvas
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=tk.TRUE)
         vscrollbar.config(command=canvas.yview)
 
@@ -2135,6 +2140,63 @@ class VerticalScrolledFrame(ttk.Frame):
                 # Update the inner frame's width to fill the canvas.
                 canvas.itemconfigure(interior_id, width=canvas.winfo_width())
         canvas.bind('<Configure>', _configure_canvas)
+
+        # The wheel and shift-drag scroll it over anything in it: widgets added
+        # since are tagged when the interior grows, or the mouse comes in.
+        if not self.bind_class(self.SCROLL_TAG):
+            for sequence in wheelEvents():
+                self.bind_class(self.SCROLL_TAG, sequence, VerticalScrolledFrame._onWheel)
+            self.bind_class(self.SCROLL_TAG, "<Shift-Button-1>", VerticalScrolledFrame._onShiftPress)
+            self.bind_class(self.SCROLL_TAG, "<Shift-B1-Motion>", VerticalScrolledFrame._onShiftDrag)
+        interior.bind('<Configure>', lambda _e: self._scrollable(canvas), add="+")
+        canvas.bind('<Enter>', lambda _e: self._scrollable(canvas), add="+")
+        self._scrollable(canvas)
+
+    def _scrollable(self, widget:tk.Misc) -> None:
+        '''
+        Let the wheel and shift-drag scroll this frame over *widget* and
+        everything in it (see *SCROLL_TAG*).
+        '''
+        tags = widget.bindtags()
+        if self.SCROLL_TAG not in tags:
+            widget.bindtags((self.SCROLL_TAG, *tags))
+        for child in widget.winfo_children():
+            self._scrollable(child)
+
+    @staticmethod
+    def _frameOf(event:tk.Event) -> "VerticalScrolledFrame|None":
+        ''':returns: The *VerticalScrolledFrame* *event*'s widget is in, if any.'''
+        w = event.widget
+        while w is not None and not isinstance(w, VerticalScrolledFrame):
+            w = getattr(w, "master", None)
+        return w
+
+    @staticmethod
+    def _onWheel(event:tk.Event) -> str|None:
+        '''The mouse wheel, over the interior: scroll it.'''
+        frame = VerticalScrolledFrame._frameOf(event)
+        if frame is None:
+            return None
+        frame.canvas.yview_scroll(-wheelSteps(event), "units")
+        return "break" # (not a combobox's or a spinbox's change too)
+
+    @staticmethod
+    def _onShiftPress(event:tk.Event) -> str|None:
+        '''Shift-press, over the interior: start dragging it (see *_onShiftDrag()*).'''
+        frame = VerticalScrolledFrame._frameOf(event)
+        if frame is None:
+            return None
+        frame.canvas.scan_mark(0, event.y_root)
+        return "break" # (not extending a text selection too)
+
+    @staticmethod
+    def _onShiftDrag(event:tk.Event) -> str|None:
+        '''Shift-drag, over the interior: it follows the mouse.'''
+        frame = VerticalScrolledFrame._frameOf(event)
+        if frame is None:
+            return None
+        frame.canvas.scan_dragto(0, event.y_root, gain=1)
+        return "break"
 
 def wheelSteps(event:tk.Event) -> int:
   '''
