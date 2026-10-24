@@ -2302,7 +2302,7 @@ def dialogOwner(parent:Any) -> tk.Misc|None:
   except tk.TclError:
     return None
 
-def ownDialog(dialog:tk.Toplevel, parent:Any) -> None:
+def ownDialog(dialog:tk.Toplevel, parent:Any, keep:bool=True) -> None:
   """
   Make *dialog* transient for the window it belongs over (see
   *dialogOwner()*): it's then shown over that window, at its own size. Call
@@ -2313,17 +2313,38 @@ def ownDialog(dialog:tk.Toplevel, parent:Any) -> None:
   macOS/Aqua that can leave the dialog blank, or never shown: see
   *showExceptionDialog()*.)
 
+  A window that stays open while the user works in others (eg: a tool's
+  window, not a modal dialog) is better let go of once it's shown
+  (not *keep*): on macOS a transient window is its owner's child window --
+  dragged to another display, it can be left hidden, and it's never in the
+  Command-` window cycle -- and if its owner's closed it's left with none.
+
   :param dialog: A dialog: a new window, not shown yet.
   :type dialog: tk.Toplevel
   :param parent: What it's opened from, if anything.
   :type parent: tk.Misc | tk.Wm | None
+  :param keep: Whether it stays transient for that window; else only until it's first shown.
+  :type keep: bool
   """
   owner = dialogOwner(parent)
   if owner is not None and owner is not dialog:
     try:
       dialog.transient(owner) #type: ignore[call-overload]
     except tk.TclError:
-      pass
+      return
+    if not keep:
+      def letGo(event:tk.Event) -> None:
+        if event.widget is not dialog:
+          return
+        dialog.unbind("<Map>", bound)
+        def free() -> None:
+          try:
+            if dialog.winfo_exists():
+              dialog.transient("") #type: ignore[call-overload]
+          except tk.TclError:
+            pass
+        dialog.after_idle(free)
+      bound = dialog.bind("<Map>", letGo, add="+")
 
 def showExceptionDialog(parent: tk.Toplevel|tk.Tk|None = None, title: str = "Error", text:str|None=None) -> None:
   """Display the currently-handled exception's traceback (as returned by
