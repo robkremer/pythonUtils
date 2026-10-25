@@ -25,6 +25,7 @@ Submodules
    util.actionDialog
    util.attribute
    util.attributeEditor
+   util.choiceDialog
    util.command
    util.commandParser
    util.dirtyable
