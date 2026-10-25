@@ -130,3 +130,39 @@ class TestAliases(unittest.TestCase):
       self.assertEqual(PRDb.resolveURL("sn:/a"), "sn:/b")
     finally:
       PRDb.aliases.clear(); PRDb.aliases.update(saved)
+
+class TestOwnDialog(unittest.TestCase):
+  'util.utils.ownDialog(): transient for the window it\'s opened over -- for good, or (not keep) only until it\'s shown.'
+
+  @classmethod
+  def setUpClass(cls):
+    import tkinter as tk
+    try:
+      cls.root = tk.Tk()
+    except tk.TclError as ex:
+      raise unittest.SkipTest(f"no display: {ex}")
+    cls.root.geometry("200x100")
+
+  @classmethod
+  def tearDownClass(cls):
+    cls.root.destroy()
+
+  def shown(self, keep:bool) -> str:
+    'A dialog over the root, shown: what it\'s transient for, then.'
+    import tkinter as tk
+    from util.utils import ownDialog
+    self.root.update()
+    d = tk.Toplevel(self.root)
+    ownDialog(d, self.root, keep=keep)
+    self.assertEqual(str(d.transient()), str(self.root)) # (until it's shown)
+    d.wait_visibility()
+    self.root.update()
+    ret = str(d.transient())
+    d.destroy()
+    return ret
+
+  def test_keep(self):
+    self.assertEqual(self.shown(keep=True), str(self.root))
+
+  def test_letGo(self):
+    self.assertEqual(self.shown(keep=False), "")
