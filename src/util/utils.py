@@ -1832,6 +1832,29 @@ def _endIndex(menu:tk.Menu) -> int|str:
       return i - 1 if i > 0 and menu.type(i - 1) == "separator" else i
   return tk.END
 
+def afterMenu(command:Callable[[], Any]) -> Callable[[], None]:
+  """
+  *command*, to run as a menu item's command: on macOS, once the menu's done
+  with -- from the event loop, not from inside AppKit's menu action. A
+  command that waits there (eg: a modal dialog's *wait_window()*) hangs the
+  app, with the spinning beachball, on recent macOS versions: the menu bar's
+  action never finishes. Elsewhere, *command* itself.
+
+  :param command: What the menu item does.
+  :type command: Callable[[], Any]
+  :return: The menu item's command.
+  :rtype: Callable[[], None]
+  """
+  if not _MAC:
+    return command
+  def deferred() -> None:
+    root = tk._default_root # type: ignore[attr-defined]
+    if root is None:
+      command()
+    else:
+      root.after_idle(command)
+  return deferred
+
 def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.Menu]=None,
     accelerator:Optional[str]=None, cascadePositions:Optional[dict[str, int]]=None,
     separatorBefore:bool=False) -> None:
@@ -1850,6 +1873,7 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
       already exist; the last segment is the item's own label.
   :param command: The callable to invoke when the item is chosen. Give this
       to add/replace a plain command item; mutually exclusive with *menu*.
+      On macOS it's run once the menu's done with (see *afterMenu()*).
   :param menu: The submenu to show as a cascade. Give this to add/replace a
       cascade item; mutually exclusive with *command*.
   :param accelerator: Optional accelerator string to display (e.g. "Cmd+S").
@@ -1883,6 +1907,7 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
     target.delete(found)  # entry exists but as the other kind -- replace it in place
   index:int|str = _endIndex(target) if found is None else found
   if command is not None:
+    command = afterMenu(command) # (on macOS, not from inside the menu's action)
     if existingType == wantType:
       target.entryconfig(index, command=command, state=tk.NORMAL, **kwargs)
     else:
