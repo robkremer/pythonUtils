@@ -2230,35 +2230,36 @@ def wheelEvents(shift:bool=False) -> list[str]:
     ret += [f"<{prefix}Button-4>", f"<{prefix}Button-5>"]
   return ret
 
+def _rightMouseEvents(window) -> list[str]:
+  '''
+  :returns: The event sequences of a right click in *window*. On macOS, Tk 8.6 calls the right
+    button 2 and Tk 9 calls it 3 (as X11 and Windows do), and a trackpad's secondary click
+    comes as whichever the running Tk uses, so both are bound, and Control-click too.
+  '''
+  if window.tk.call("tk", "windowingsystem") == 'aqua':
+    return ["<2>", "<3>", "<Control-1>"]
+  return ["<3>"]
+
 def bindRightMouse(window, func):
   '''
   Bind *func* to a right click in *window*: also Control-click, on macOS.
   '''
-  if window.winfo_toplevel().tk.call("tk", "windowingsystem") == 'aqua':
-    window.bind("<2>", func)
-    window.bind("<Control-1>", func)
-  else:
-    window.bind("<3>", func)
+  for seq in _rightMouseEvents(window):
+    window.bind(seq, func)
 
 def tag_bindRightMouse(window, id_, func):
   '''
   Bind *func* to a right click on canvas item *id_* (see *bindRightMouse()*).
   '''
-  if window.tk.call("tk", "windowingsystem") == 'aqua':
-    window.tag_bind(id_, "<2>", func)
-    window.tag_bind(id_, "<Control-1>", func)
-  else:
-    window.tag_bind(id_, "<3>", func)
+  for seq in _rightMouseEvents(window):
+    window.tag_bind(id_, seq, func)
 
 def tag_unbindRightMouse(window, id_):
   '''
   Unbind a right click on canvas item *id_* (see *tag_bindRightMouse()*).
   '''
-  if window.tk.call("tk", "windowingsystem") == 'aqua':
-    window.tag_unbind(id_, "<2>")
-    window.tag_unbind(id_, "<Control-1>")
-  else:
-    window.tag_unbind(id_, "<3>")
+  for seq in _rightMouseEvents(window):
+    window.tag_unbind(id_, seq)
 
 def eventEqual(e1, e2):
   '''
