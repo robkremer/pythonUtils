@@ -205,3 +205,36 @@ class TestRightMouse(unittest.TestCase):
     tag_unbindRightMouse(c, i)
     self.assertEqual(c.tag_bind(i), ())
     c.destroy()
+
+class TestAfterMenu(unittest.TestCase):
+  'util.utils.afterMenu(): on macOS, a menu command runs from the event loop, once the menu\'s action is over.'
+
+  @classmethod
+  def setUpClass(cls):
+    import tkinter as tk
+    try:
+      cls.root = tk.Tk()
+    except tk.TclError as ex:
+      raise unittest.SkipTest(f"no display: {ex}")
+
+  @classmethod
+  def tearDownClass(cls):
+    cls.root.destroy()
+
+  def test_mac(self):
+    from unittest import mock
+    from util import utils
+    calls:list[str] = []
+    with mock.patch.object(utils, "_MAC", True):
+      command = utils.afterMenu(lambda: calls.append("run"))
+    command()
+    self.assertEqual(calls, []) # (not yet: from inside the menu's action)
+    self.root.update()
+    self.assertEqual(calls, ["run"])
+
+  def test_elsewhere(self):
+    from unittest import mock
+    from util import utils
+    f = lambda: None
+    with mock.patch.object(utils, "_MAC", False):
+      self.assertIs(utils.afterMenu(f), f)
