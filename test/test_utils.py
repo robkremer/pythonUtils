@@ -167,6 +167,45 @@ class TestOwnDialog(unittest.TestCase):
   def test_letGo(self):
     self.assertEqual(self.shown(keep=False), "")
 
+class TestRightMouse(unittest.TestCase):
+  'util.utils.bindRightMouse() and friends: the right button\'s events, which on macOS depend on the Tk version.'
+
+  @classmethod
+  def setUpClass(cls):
+    import tkinter as tk
+    try:
+      cls.root = tk.Tk()
+    except tk.TclError as ex:
+      raise unittest.SkipTest(f"no display: {ex}")
+
+  @classmethod
+  def tearDownClass(cls):
+    cls.root.destroy()
+
+  def expected(self) -> set[str]:
+    if self.root.tk.call("tk", "windowingsystem") == 'aqua':
+      return {"<Button-2>", "<Button-3>", "<Control-Button-1>"}
+    return {"<Button-3>"}
+
+  def test_bind(self):
+    import tkinter as tk
+    from util.utils import bindRightMouse
+    c = tk.Canvas(self.root)
+    bindRightMouse(c, lambda _e: None)
+    self.assertEqual(set(c.bind()), self.expected())
+    c.destroy()
+
+  def test_tagBind(self):
+    import tkinter as tk
+    from util.utils import tag_bindRightMouse, tag_unbindRightMouse
+    c = tk.Canvas(self.root)
+    i = c.create_rectangle(0, 0, 10, 10)
+    tag_bindRightMouse(c, i, lambda _e: None)
+    self.assertEqual(set(c.tag_bind(i)), self.expected())
+    tag_unbindRightMouse(c, i)
+    self.assertEqual(c.tag_bind(i), ())
+    c.destroy()
+
 class TestAfterMenu(unittest.TestCase):
   'util.utils.afterMenu(): on macOS, a menu command runs from the event loop, once the menu\'s action is over.'
 
