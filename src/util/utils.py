@@ -479,6 +479,41 @@ webCacheFolder:str|None = None
 '''Where copies of the files read from the web are kept, if anywhere (see
 *fetchURL()*): set by an application (eg: Semantic Nets: *~/.sn/cache*).'''
 
+_sslContext = None
+
+def sslContext():
+  '''
+  :returns: The SSL context to check web servers' certificates with: the
+    system's certificate authorities plus *certifi*'s (if it's installed: it
+    comes with *requests*).
+  :rtype: ssl.SSLContext
+
+  Python's own context only has the system's, and the python.org macOS
+  Python has none until its "Install Certificates.command" is run: every
+  "https:" URL fails with CERTIFICATE_VERIFY_FAILED.
+  '''
+  global _sslContext
+  if _sslContext is None:
+    import ssl
+    context = ssl.create_default_context()
+    try:
+      import certifi
+      context.load_verify_locations(certifi.where())
+    except (ImportError, OSError):
+      logging.getLogger(__name__).debug("No certifi certificates: using only the system's.", exc_info=True)
+    _sslContext = context
+  return _sslContext
+
+def openWebURL(url, timeout:float|None=REMOTE_TIMEOUT, **kwargs):
+  '''
+  :param url: A URL or a *urllib.request.Request*.
+  :param timeout: How long (seconds) to wait for the server.
+  :returns: *urllib.request.urlopen(url, ...)*, checking certificates with
+    *sslContext()*.
+  '''
+  import urllib.request
+  return urllib.request.urlopen(url, timeout=timeout, context=sslContext(), **kwargs)
+
 def cachePath(url:str) -> str|None:
   '''
   :param url: A web URL ("http:" or "https:").
@@ -520,7 +555,7 @@ def fetchURL(url:str) -> bytes:
   '''
   import urllib.request, urllib.error, datetime
   try:
-    with urllib.request.urlopen(url, timeout=REMOTE_TIMEOUT) as response:
+    with openWebURL(url) as response:
       data:bytes = response.read()
   except urllib.error.HTTPError as e:
     e.close()
@@ -727,7 +762,7 @@ def openUrl(url: str) -> bytes:
     with open(absolutePath, "rb") as fileHandle:
       return fileHandle.read()
 
-  with urllib.request.urlopen(url) as response:
+  with openWebURL(url) as response:
     return response.read()
   
 def addDefaultExtToURL(url:str, ext:str=".xml"):
