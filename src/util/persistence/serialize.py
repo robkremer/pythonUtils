@@ -1034,7 +1034,8 @@ class SerializationStrategy[T](ABC):
       method="PUT",
       headers={"Content-Type": "application/xml; charset=utf-8"},
     )
-    with urllib.request.urlopen(request):
+    from util.utils import openWebURL
+    with openWebURL(request):
       pass
     
   def read(self, url:str, replaceExt:bool|None=True, mode="w", **kwargs) -> SerializableType:

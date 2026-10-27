@@ -117,6 +117,47 @@ class TestWebCache(unittest.TestCase):
         U.webCacheFolder = saved
 
 
+class TestWebCertificates(unittest.TestCase):
+  '''util.utils.openWebURL(): certifi's certificate authorities are used (the python.org macOS Python has none of its own).'''
+
+  def test0100certifi(self):
+    import os, ssl, shutil, subprocess, tempfile, threading, functools, unittest.mock, urllib.request, urllib.error
+    from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+    import util.utils as U
+    try:
+      import certifi
+    except ImportError:
+      self.skipTest("no certifi")
+    if shutil.which("openssl") is None:
+      self.skipTest("no openssl (to make a certificate)")
+    with tempfile.TemporaryDirectory() as folder:
+      cert, key = os.path.join(folder, "cert.pem"), os.path.join(folder, "key.pem")
+      subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1", "-subj", "/CN=localhost",
+                      "-addext", "subjectAltName=IP:127.0.0.1", "-keyout", key, "-out", cert], check=True, capture_output=True)
+      os.makedirs(os.path.join(folder, "site"))
+      with open(os.path.join(folder, "site", "a.xml"), "w") as f:
+        f.write("<a/>")
+      class Quiet(SimpleHTTPRequestHandler):
+        def log_message(self, *args): pass
+      server = ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=os.path.join(folder, "site")))
+      serverContext = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+      serverContext.load_cert_chain(cert, key)
+      server.socket = serverContext.wrap_socket(server.socket, server_side=True)
+      threading.Thread(target=server.serve_forever, daemon=True).start()
+      url = f"https://127.0.0.1:{server.server_address[1]}/a.xml"
+      saved = U._sslContext
+      try:
+        with self.assertRaises(urllib.error.URLError):          # (Python's own: it isn't one of the system's)
+          urllib.request.urlopen(url, timeout=5).close()
+        U._sslContext = None
+        with unittest.mock.patch.object(certifi, "where", return_value=cert):  # (as if certifi had it)
+          with U.openWebURL(url, timeout=5) as response:
+            self.assertEqual(response.read(), b"<a/>")
+      finally:
+        U._sslContext = saved
+        server.shutdown(); server.server_close()
+
+
 class TestAliases(unittest.TestCase):
   '''PRDb.aliases: exact, and for everything under a URL ending in "/".'''
 

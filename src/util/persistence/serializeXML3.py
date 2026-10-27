@@ -175,11 +175,10 @@ class XML3SerializationStrategy(XML2SerializationStrategy):
     if parsedUrl.scheme == "file":
       stream = openFile(urlPath(url) or "", "rb")
     else:
-      from urllib.request import urlopen
       from urllib.error import HTTPError, URLError
-      from util.utils import cachedCopy, REMOTE_TIMEOUT
+      from util.utils import cachedCopy, openWebURL
       try:
-        stream = urlopen(url, timeout=REMOTE_TIMEOUT) # (just its head: not kept -- see fetchURL())
+        stream = openWebURL(url) # (just its head: not kept -- see fetchURL())
       except HTTPError as e:
         e.close()
         if e.code in (404, 410):
