@@ -37,7 +37,7 @@ from types import SimpleNamespace
 from unittest import mock
 from util import platformSupport
 from util.platformSupport import shortcut, altKey, MAC, WINDOWS, LINUX
-from util.utils import urlPath, pathURL, isWindowsPath, isValidURL, wheelSteps, s_CMD, s_ALT, openFile
+from util.utils import urlPath, pathURL, displayURL, isWindowsPath, isValidURL, wheelSteps, s_CMD, s_ALT, openFile
 
 
 class TestURLs(unittest.TestCase):
@@ -68,6 +68,17 @@ class TestURLs(unittest.TestCase):
     self.assertTrue(isWindowsPath("c:/a", windows=True))
     self.assertFalse(isWindowsPath("file:///C:/a", windows=True))
     self.assertFalse(isWindowsPath("https://a", windows=True))
+
+  def test0250displayURL(self):
+    self.assertEqual(displayURL("file:///Users/me/My%20Models/a.snm", home="/Users/me", windows=False), "~/My Models/a.snm")
+    self.assertEqual(displayURL("file:///Users/meg/a.snm", home="/Users/me", windows=False), "/Users/meg/a.snm")
+    self.assertEqual(displayURL("/tmp/a.snm", home="/Users/me", windows=False), "/tmp/a.snm")
+    self.assertEqual(displayURL("https://example.org/m/a.snm", home="/Users/me", windows=False), "https://example.org/m/a.snm")
+    self.assertEqual(displayURL("file:///C:/Users/me/a.snm", home="C:\\Users\\me", windows=True), r"C:\Users\me\a.snm")
+    long = displayURL("file:///" + "x" * 100 + "/family.snv", maxLength=40, home="", windows=False)
+    self.assertEqual(len(long), 40)
+    self.assertTrue(long.startswith("/xxx") and long.endswith("x/family.snv") and "\u2026" in long)
+    self.assertEqual(displayURL("file:///a/b.snm", maxLength=40, home="", windows=False), "/a/b.snm")
 
   def test0300thisComputer(self):
     path = os.path.abspath(os.path.join("some folder", "a b.snm"))
