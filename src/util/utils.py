@@ -450,6 +450,30 @@ def pathURL(path:str, quoted:bool=True, windows:bool=WINDOWS) -> str:
     return "file:" + q(path) if path.startswith("//") else "file:///" + path[:2] + q(path[2:]) # (the drive's "C:" as it is)
   return "file://" + q(path)
 
+def displayURL(url:str, maxLength:int|None=None, home:str|None=None, windows:bool=WINDOWS) -> str:
+  '''
+  :param url: A URL or a path.
+  :param maxLength: If given, the most characters the result may have: a longer
+    one loses characters from its middle (shown as "\u2026"), keeping its start
+    and its end (the file's name).
+  :param home: The user's home folder (by default: this computer's), shown as
+    "~" at the start of a path (but not on Windows).
+  :param windows: Whether to make a Windows path (by default: on Windows).
+  :returns: How to show *url* to the user (eg: in a menu): a "file:" URL's whole
+    path (eg: "~/My Models/family.snm"), else the whole URL as it is.
+  '''
+  path = urlPath(url, windows)
+  text = url if path is None else path
+  if path is not None and not windows:
+    home = (home if home is not None else os.path.expanduser("~")).rstrip("/")
+    if home and (path == home or path.startswith(home + "/")):
+      text = "~" + path[len(home):]
+  if maxLength is not None and len(text) > maxLength:
+    tail = (maxLength - 1) * 2 // 3 # (more of the end, which names the file)
+    head = maxLength - 1 - tail
+    text = text[:head] + "\u2026" + text[len(text) - tail:] if tail > 0 else text[:maxLength]
+  return text
+
 def isValidURL(url:str) -> bool:
   '''
   :param url: A string to determine if it's a proper URL
