@@ -30,6 +30,7 @@ Submodules
    util.commandParser
    util.dirtyable
    util.errorReportingObject
+   util.folderServer
    util.observer
    util.platformSupport
    util.prefs
