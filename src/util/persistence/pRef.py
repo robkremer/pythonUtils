@@ -31,7 +31,7 @@
 from __future__ import annotations
 
 from typing import Iterator, ItemsView, KeysView, ValuesView, Optional, Union,\
-  override, cast, Callable, Self, ClassVar, Any
+  override, cast, Callable, Self, ClassVar, Any, Collection
 from abc import abstractmethod
 from weakref import ref, ReferenceType
 from util.utils import openUrl, urlExists, isValidURL, fixURL, isWindowsPath
@@ -512,25 +512,33 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
   The URLs of the files being read or written just now, innermost last: relative
   URLs in a file are relative to the file (see *relativeURL()*, *absoluteURL()*).
   '''
+  _keptRelative:list[Collection[str]] = []
+  '''For each of *_bases*: the URLs to write relative to it however far from it
+  they are (see *relativeURL()*): eg, a DB's *relativeSuperDBs* while it's written.'''
 
   @classmethod
   @contextmanager
-  def basedOn(cls, url:str|None):
+  def basedOn(cls, url:str|None, keepRelative:Collection[str]=()):
     '''
     Within this context, relative URLs are relative to *url* (eg: the file being
     read or written) -- unless *url* is None.
 
     :param url:
     :type url: str | None
+    :param keepRelative: URLs to write relative to *url* however far from it they
+      are (see *relativeURL()*).
+    :type keepRelative: Collection[str]
     '''
     if url is None:
       yield
       return
     cls._bases.append(url)
+    cls._keptRelative.append(keepRelative)
     try:
       yield
     finally:
       cls._bases.pop()
+      cls._keptRelative.pop()
 
   @staticmethod
   def isRelativeURL(url:str) -> bool:
@@ -581,8 +589,11 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
   MAX_UP:int = 2
   "The most folders up (\"../\") a relative URL goes (see *relativeURL()*): further than that, URLs stay absolute."
 
+  RELATIVE_SCHEMES:ClassVar[tuple[str, ...]] = ("file", "http", "https")
+  "The schemes of URLs that can be relative to one another (see *relativeURL()*): on the same computer or web site."
+
   @classmethod
-  def relativeURL(cls, url:str, base:str|None=None) -> str:
+  def relativeURL(cls, url:str, base:str|None=None, keep:Collection[str]|None=None) -> str:
     '''
     *url* relative to *base* -- by default the file being read or written (see
     *basedOn()*) -- if it's a file in the same folder, below it, or at most
@@ -590,29 +601,38 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     "../animals.snm"; otherwise *url* as is (eg: a file in an unrelated folder,
     or anything not a file). So a block of files copied together keeps referring
     to one another. (A file copied on its own still finds what it referred to:
-    see *absoluteURL()*.)
+    see *absoluteURL()*.) Files on the same web site (http, https) are the
+    same. A URL in *keep* is relative however far from *base* it is (on the same
+    computer or web site), eg: "../../../ontologies/animals.snm".
 
     :param url:
     :type url: str
     :param base:
     :type base: str | None
+    :param keep: URLs to make relative however far from *base* they are: by
+      default, those given with *base* to *basedOn()* (when *base* isn't given).
+    :type keep: Collection[str] | None
     :returns:
     :rtype: str
     '''
     if url in cls._namesOf: # (a named DB: by its name -- see namedURLs)
       return cls._namesOf[url]
-    base = base if base is not None else (cls._bases[-1] if cls._bases else None)
+    if base is None:
+      base = cls._bases[-1] if cls._bases else None
+      if keep is None and cls._keptRelative:
+        keep = cls._keptRelative[-1]
     if base is None or not url:
       return url
     u, b = urlparse(url), urlparse(base)
-    if u.scheme != "file" or b.scheme != "file" or u.netloc != b.netloc:
+    if u.scheme not in cls.RELATIVE_SCHEMES or u.scheme != b.scheme or u.netloc != b.netloc:
       return url
+    anyDistance = keep is not None and url.partition("#")[0].partition("?")[0] in keep
     target, folder = u.path.split("/"), b.path.split("/")[:-1] # (the target's path; the base's folder)
     common = 0
     while common < min(len(target) - 1, len(folder)) and target[common] == folder[common]:
       common += 1
     up = len(folder) - common
-    if up > cls.MAX_UP or common <= 1: # (too far up, or nothing in common but the root)
+    if not anyDistance and (up > cls.MAX_UP or common <= 1): # (too far up, or nothing in common but the root)
       return url
     rel = "/".join([".."] * up + target[common:])
     return rel + (f"?{u.query}" if u.query else "") + (f"#{u.fragment}" if u.fragment else "")
@@ -797,6 +817,10 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     self._missingSuperDBs:list[str] = []
     '''The (saved) URLs of super-DBs that couldn't be read when this was: kept,
     and saved again, so that they're used once they're there again.'''
+    self.relativeSuperDBs:set[str] = set()
+    '''The URLs of super-DBs this one refers to relative to its own file however
+    far from it they are (see *relativeURL()*): eg, "../../ontologies/animals.snm",
+    as it was read, or as the user gave it. (Those near it are relative anyway.)'''
     
     url = self.resolveURL(url, mode) # (as in __new__())
     if not isValidURL(url):
@@ -845,7 +869,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     def superDBURLs(slf:Serializable) -> list[str]:
       # (relative to this one's file where they're near it -- see relativeURL() -- so a folder of them can be moved together)
       assert isinstance(slf, PRDb)
-      return [PRDb.relativeURL(db.url) for db in slf.superDBs] + list(slf._missingSuperDBs)
+      return [PRDb.relativeURL(db.url) for db in slf.superDBs] + list(slf._missingSuperDBs) # (keeping relativeSuperDBs relative: see save())
     def readSuperDBs(slf:Serializable, urls:SerializableType):
       assert isinstance(slf, PRDb)
       for u in cast(list, urls) or []:
@@ -858,6 +882,8 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
           continue
         try:
           slf.addSuperDB(db)
+          if PRDb.isRelativeURL(str(u)) and PRDb._bases and db.url == urljoin(PRDb._bases[-1], str(u)): # (not relocated: see absoluteURL())
+            slf.relativeSuperDBs.add(db.url)
         except ValueError as ex:
           logger.error(f'"{slf.url}": not using "{u}" as a super-DB: {ex}')
     return InstantiationInfo(
@@ -915,7 +941,18 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     '''
     if db in self.superDBs:
       self.superDBs.remove(db) #type: ignore[arg-type]
+      self.relativeSuperDBs.discard(db.url)
       self.setDirty()
+
+  def superDBRef(self, db:PRDb) -> str:
+    '''
+    :param db: One of this one's super-DBs (see *superDBs*).
+    :type db: PRDb
+    :returns: *db*'s URL as this one's file has it: relative to it where it's
+      near it, or is one of *relativeSuperDBs*; else absolute (see *relativeURL()*).
+    :rtype: str
+    '''
+    return PRDb.relativeURL(db.url, base=self.url, keep=self.relativeSuperDBs)
 
   #- ---- Properities ----------------------------------------------------------
   
@@ -950,11 +987,11 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
         raise FileExistsError(f'PRDb.save(): URL already exists. Did you mean to use the *overwrite* option?')
       oldURL = self.url 
       self.url = url
-      with PRDb.basedOn(url): # (references to files next to it are written relative to it)
+      with PRDb.basedOn(url, self.relativeSuperDBs): # (references to files next to it are written relative to it)
         SerializationStrategy.writex(url, self, format, replaceExt=None)
       self.url = oldURL
     else:
-      with PRDb.basedOn(self.url):
+      with PRDb.basedOn(self.url, self.relativeSuperDBs):
         SerializationStrategy.writex(self.url, self, format, replaceExt=None)
       
     
