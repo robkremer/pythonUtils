@@ -1485,7 +1485,7 @@ class PReference[T:PRObject]:
     
     Splits the id into a URL part and an ID part. Validates the existence of
     the URL but makes no attempt to validate the ID. The ID may be either an int
-    or a string name.
+    or a string name. Grammar::
     
       <validID> := <absoluteURL> | <relativeURL>
       
