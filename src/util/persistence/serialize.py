@@ -1234,6 +1234,13 @@ class SerializationStrategy[T](ABC):
     :type kwargs:
     """
     self.writeDB:dict[int, Optional[T]] = dict()
+    self._written:list[Any] = list(assume)
+    """The objects *writeDB*'s keys are the ids of, kept alive until the
+    document's written: an id is only an object's while that object exists,
+    and a getter's object that's been written and then dropped (eg: a strdict
+    made just to write) could otherwise have its id taken by another object
+    written later -- which would then be written as a reference to it (eg: a
+    model's prefs written as a reference to its objects)."""
     for o in assume:
       self.writeDB[id(o)] = None
     try:
@@ -1255,6 +1262,7 @@ class SerializationStrategy[T](ABC):
     finally:
       self._writingHead = None
       self.writeDB = dict()
+      self._written = []
 
   def makeHead(self, obj:SerializableType) -> dict[str, HeadValue]:
     '''
@@ -1853,6 +1861,7 @@ class SerializationStrategy[T](ABC):
     def registerMaybe(obj:SerializableType, elem:T, unique:bool):
       if not unique:
         self.writeDB[id(obj)] = elem
+        self.__dict__.setdefault("_written", []).append(obj) # (so its id stays its: see tostring())
     #------     
     # interned types: we don't have to worry about multiple references... 
     if obj is None:
@@ -1869,7 +1878,7 @@ class SerializationStrategy[T](ABC):
     # non-interned types: There might be multiple references to these, 
     # so we need to keep track and subsitute a reference if necessary
     id_ = id(obj)
-    value = self.writeDB.get(id_, 0)
+    value = 0 if unique else self.writeDB.get(id_, 0) # (a unique object is never referred to: it's always written out)
     elem:T
     if value == 0:
       # there is no entry, so record its id and make the T object,
