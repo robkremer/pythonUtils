@@ -380,3 +380,34 @@ class TestDocuments(unittest.TestCase):
     obj = Linked("epsilon"); obj.links = [Linked("not plain")]
     with self.assertRaises(TypeError):
       SerializationStrategy.findStrategy("XML3").tostring(obj, wrap=True)
+
+class Transients(Serializable):
+  '''Written by getters that each make a new strdict, written and then dropped:
+  "made" (like a model's objects, referred to) and "own" (like an attributed
+  object's attributes: unique, never referred to).'''
+  def __init__(self):
+    self.made:dict = {}
+    self.own:dict = {}
+
+  @override
+  @classmethod
+  def getInstantiationInfo(cls) -> InstantiationInfo:
+    from util.persistence.serialize import strdict
+    return InstantiationInfo(cls,
+      postconSetters=[PropertyInfo("made", strdict, lambda slf: strdict({"a": [1]}),
+                                   lambda slf, v: setattr(slf, "made", dict(v))), #type: ignore[arg-type]
+                      PropertyInfo("gap", int, lambda slf: 0, lambda slf, v: None),
+                      PropertyInfo("own", strdict, lambda slf: strdict({"b": [2]}),
+                                   lambda slf, v: setattr(slf, "own", dict(v)), unique=True)]) #type: ignore[arg-type]
+
+class TestTransients(unittest.TestCase):
+
+  def test_noAliasing(self):
+    'An object a getter made just to be written, once dropped, doesn\'t make another written after it (in the place its memory was) a reference to it.'
+    for name in ("XML3", "JSON"):
+      strategy = SerializationStrategy.findStrategy(name)
+      for _ in range(20): # (an id is taken again only some of the time: try a few)
+        text = strategy.tostring(Transients(), wrap=True)
+        obj = strategy.fromstring(text)
+        self.assertEqual(obj.own, {"b": [2]}, f"{name}: {text}")
+        self.assertEqual(obj.made, {"a": [1]}, name)
