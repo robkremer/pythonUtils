@@ -1916,7 +1916,7 @@ def afterMenu(command:Callable[[], Any]) -> Callable[[], None]:
 
 def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.Menu]=None,
     accelerator:Optional[str]=None, cascadePositions:Optional[dict[str, int]]=None,
-    separatorBefore:bool=False) -> None:
+    separatorBefore:bool=False, enabled:bool=True) -> None:
   """
   Add -- or, if already present, replace -- an entry in the app's menu bar.
 
@@ -1941,6 +1941,8 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
   :param separatorBefore: Put a separator just above the item (unless it's
       the first, or there's one there already): it starts a group of items.
       *removeFromMenuBar()* removes the separator with the item.
+  :param enabled: Whether the item can be chosen; if not, it's greyed out
+      (see *enableMenuBarItem()*, to change that later).
   :note: Safe to call repeatedly with the same *path* -- e.g. every time a
       window gains focus -- since an existing entry with the same final
       label is reconfigured in place rather than duplicated (and, if it was
@@ -1965,18 +1967,19 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
   if found is not None and existingType != wantType:
     target.delete(found)  # entry exists but as the other kind -- replace it in place
   index:int|str = _endIndex(target) if found is None else found
+  state = tk.NORMAL if enabled else tk.DISABLED
   if command is not None:
     command = afterMenu(command) # (on macOS, not from inside the menu's action)
     if existingType == wantType:
-      target.entryconfig(index, command=command, state=tk.NORMAL, **kwargs)
+      target.entryconfig(index, command=command, state=state, **kwargs)
     else:
-      target.insert_command(index, label=label, command=command, state=tk.NORMAL, **kwargs)
+      target.insert_command(index, label=label, command=command, state=state, **kwargs)
   else:
     assert menu is not None
     if existingType == wantType:
-      target.entryconfig(index, menu=menu, state=tk.NORMAL, **kwargs)
+      target.entryconfig(index, menu=menu, state=state, **kwargs)
     else:
-      target.insert_cascade(index, label=label, menu=menu, state=tk.NORMAL, **kwargs)
+      target.insert_cascade(index, label=label, menu=menu, state=state, **kwargs)
   _separate(target, label, separatorBefore)
 
 def addCheckToMenuBar(path:str, variable:tk.Variable, command:Optional[Callable]=None, *,
@@ -2011,6 +2014,27 @@ def addCheckToMenuBar(path:str, variable:tk.Variable, command:Optional[Callable]
   target.insert_checkbutton(index, label=label, variable=variable, onvalue=True, offvalue=False,
                             command=command, state=tk.NORMAL) # type: ignore[arg-type] # (command=None: tkinter leaves it out)
   _separate(target, label, separatorBefore)
+
+def enableMenuBarItem(path:str, enabled:bool=True) -> None:
+  """
+  Let an entry (as added by *addToMenuBar()* or *addCheckToMenuBar()*) in the
+  app's menu bar be chosen -- or grey it out, so it can't be, eg: while what
+  it does can't be done. Safe to call even when the item isn't there (a
+  no-op), as *removeFromMenuBar()* is.
+
+  :param path: Same ``"|"``-separated path as passed to *addToMenuBar()*.
+  :param enabled: Whether it can be chosen.
+  """
+  target = getMenuBar()
+  for seg in path.split("|")[:-1]:
+    if target is None:
+      return
+    target = getSubMenu(target, seg, makeIfNone=None)
+  if target is None:
+    return
+  index, _ = _findEntry(target, path.split("|")[-1])
+  if index is not None:
+    target.entryconfig(index, state=tk.NORMAL if enabled else tk.DISABLED)
 
 def removeFromMenuBar(path:str) -> None:
   """
