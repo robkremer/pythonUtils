@@ -1983,7 +1983,8 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
   _separate(target, label, separatorBefore)
 
 def addCheckToMenuBar(path:str, variable:tk.Variable, command:Optional[Callable]=None, *,
-                      cascadePositions:Optional[dict[str, int]]=None, separatorBefore:bool=False) -> None:
+                      cascadePositions:Optional[dict[str, int]]=None, separatorBefore:bool=False,
+                      enabled:bool=True) -> None:
   """
   Add -- or, if already present, replace -- a check item in the app's menu
   bar: it shows (and sets) the boolean *variable*, and calls *command* when
@@ -1998,6 +1999,7 @@ def addCheckToMenuBar(path:str, variable:tk.Variable, command:Optional[Callable]
   :param cascadePositions: Where to put any cascade that has to be made, by
       label, eg: ``{"View": 1}`` (just after "File"); by default, at the end.
   :param separatorBefore: As for *addToMenuBar()*.
+  :param enabled: As for *addToMenuBar()*.
   """
   segments = path.split("|")
   target = getMenuBar()
@@ -2012,7 +2014,7 @@ def addCheckToMenuBar(path:str, variable:tk.Variable, command:Optional[Callable]
     target.delete(found) # (rebuilt: a check item's variable can't be rebound by entryconfig on every platform)
   index:int|str = _endIndex(target) if found is None else found
   target.insert_checkbutton(index, label=label, variable=variable, onvalue=True, offvalue=False,
-                            command=command, state=tk.NORMAL) # type: ignore[arg-type] # (command=None: tkinter leaves it out)
+                            command=command, state=tk.NORMAL if enabled else tk.DISABLED) # type: ignore[arg-type] # (command=None: tkinter leaves it out)
   _separate(target, label, separatorBefore)
 
 def enableMenuBarItem(path:str, enabled:bool=True) -> None:
