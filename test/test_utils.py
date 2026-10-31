@@ -314,4 +314,11 @@ class TestMenuBarEnabled(unittest.TestCase):
     self.assertEqual(self.state("Thing..."), "normal")
     removeFromMenuBar("Edit|Thing...")
     enableMenuBarItem("Edit|Thing...") # (not there: nothing done)
+    import tkinter as tk
+    from util.utils import addCheckToMenuBar
+    addCheckToMenuBar("Edit|Check", tk.BooleanVar(self.root), enabled=False)
+    self.assertEqual(self.state("Check"), "disabled")
+    enableMenuBarItem("Edit|Check")
+    self.assertEqual(self.state("Check"), "normal")
+    removeFromMenuBar("Edit|Check")
     enableMenuBarItem("Nowhere|Thing...")
