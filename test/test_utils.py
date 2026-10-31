@@ -279,3 +279,39 @@ class TestAfterMenu(unittest.TestCase):
     f = lambda: None
     with mock.patch.object(utils, "_MAC", False):
       self.assertIs(utils.afterMenu(f), f)
+
+class TestMenuBarEnabled(unittest.TestCase):
+  'util.utils.addToMenuBar(enabled=) and enableMenuBarItem(): a menu bar item greyed out, and back.'
+
+  @classmethod
+  def setUpClass(cls):
+    import tkinter as tk
+    try:
+      cls.root = tk.Tk()
+    except tk.TclError as ex:
+      raise unittest.SkipTest(f"no display: {ex}")
+    cls.root.configure(menu=tk.Menu(cls.root))
+
+  @classmethod
+  def tearDownClass(cls):
+    cls.root.destroy()
+
+  def state(self, label:str) -> str:
+    from util.utils import getMenuBar, getSubMenu
+    menu = getSubMenu(getMenuBar(), "Edit", makeIfNone=None) # type: ignore[arg-type]
+    assert menu is not None
+    return str(menu.entrycget(label, "state"))
+
+  def test_enabled(self):
+    from util.utils import addToMenuBar, enableMenuBarItem, removeFromMenuBar
+    addToMenuBar("Edit|Thing...", lambda: None, enabled=False)
+    self.assertEqual(self.state("Thing..."), "disabled")
+    enableMenuBarItem("Edit|Thing...")
+    self.assertEqual(self.state("Thing..."), "normal")
+    enableMenuBarItem("Edit|Thing...", False)
+    self.assertEqual(self.state("Thing..."), "disabled")
+    addToMenuBar("Edit|Thing...", lambda: None) # (replaced: enabled again)
+    self.assertEqual(self.state("Thing..."), "normal")
+    removeFromMenuBar("Edit|Thing...")
+    enableMenuBarItem("Edit|Thing...") # (not there: nothing done)
+    enableMenuBarItem("Nowhere|Thing...")
