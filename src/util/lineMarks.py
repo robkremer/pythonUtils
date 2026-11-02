@@ -608,7 +608,7 @@ class _Pen:
       if itemType(canvas, i) == typ:
         try:
           canvas.coords(i, coords)
-          canvas.itemconfigure(i, tags=tags, **opts)
+          configureItem(canvas, i, tags, opts)
           self.ids.append(i)
           return i
         except Exception: # (gone)
@@ -617,6 +617,7 @@ class _Pen:
       deleteItem(canvas, i)
     i = getattr(canvas, "create_" + typ)(coords, tags=tags, **opts)
     _rememberedTypes(canvas)[i] = typ
+    _rememberedOptions(canvas)[i] = _optionsKey(tags, opts)
     self.ids.append(i)
     return i
 
@@ -694,9 +695,51 @@ def itemType(canvas, i:int) -> Optional[str]:
 
 def forgetItem(canvas, i:int) -> None:
   '''
-  Forget item *i*'s type (it's gone).
+  Forget item *i*'s type and options (it's gone).
   '''
   _rememberedTypes(canvas).pop(i, None)
+  _rememberedOptions(canvas).pop(i, None)
+
+# Likewise the options an item was last configured with here: a redraw in place
+# sets every item's colours, width and tags again, every frame, though they
+# seldom change -- a round-trip to Tk each. An item configured with the same
+# options as last time is left alone. Anything that configures an item behind
+# this module's back (eg: recolorMarks(), here) forgets its options, so the next
+# draw sets them again.
+
+_OPTIONS_ATTR = "_lineMarksItemOptions"
+
+def _rememberedOptions(canvas) -> dict[int, tuple]:
+  '''
+  :returns: The options (see _optionsKey()) *canvas*'s items were last configured with here, by id.
+  '''
+  options = canvas.__dict__.get(_OPTIONS_ATTR)
+  if options is None:
+    options = {}
+    setattr(canvas, _OPTIONS_ATTR, options)
+  elif len(options) > 200_000: # (as _rememberedTypes())
+    options.clear()
+  return options
+
+def _optionsKey(tags:Sequence[str], opts:dict[str, Any]) -> tuple:
+  '''
+  :returns: *tags* and *opts*, as something to compare with next time's.
+  '''
+  return (tuple(tags), tuple(sorted((k, repr(v)) for k, v in opts.items())))
+
+def configureItem(canvas, i:int, tags:Sequence[str], opts:dict[str, Any]) -> None:
+  '''
+  Configure canvas item *i* with *tags* and *opts* -- unless it was last
+  configured with the same, here (see *forgetItem()*).
+
+  :raises Exception: As the canvas does, if there's no such item.
+  '''
+  key = _optionsKey(tags, opts)
+  remembered = _rememberedOptions(canvas)
+  if remembered.get(i) == key:
+    return
+  canvas.itemconfigure(i, tags=list(tags), **opts)
+  remembered[i] = key
 
 def deleteItem(canvas, i:int) -> None:
   '''
@@ -750,6 +793,7 @@ def recolorMarks(canvas, ids:Sequence[int], lineColor:str, fillColor:str, backCo
       if role == HOLLOW and backColor is None:
         backColor = backgroundColor(canvas) # (once, when it's needed)
       canvas.itemconfigure(i, **_roleOptions(role, lineColor, fillColor, typ, backColor or ""))
+    _rememberedOptions(canvas).pop(i, None) # (not as drawn: the next draw sets its options again)
 
 def _identity(coords:list[float]) -> list[float]:
   return coords
@@ -943,7 +987,7 @@ def drawMarkedPath(canvas, path:Sequence[Point], startMarks:Sequence[Mark]|str|N
     if ids.line is not None and itemType(canvas, ids.line) == "line":
       try:
         canvas.coords(ids.line, coords)
-        canvas.itemconfigure(ids.line, tags=list(tags), **opts)
+        configureItem(canvas, ids.line, tags, opts)
         ret.line = ids.line
       except Exception: # (gone)
         forgetItem(canvas, ids.line)
@@ -952,6 +996,7 @@ def drawMarkedPath(canvas, path:Sequence[Point], startMarks:Sequence[Mark]|str|N
         deleteItem(canvas, ids.line)
       ret.line = canvas.create_line(coords, tags=list(tags), **opts)
       _rememberedTypes(canvas)[ret.line] = "line"
+      _rememberedOptions(canvas)[ret.line] = _optionsKey(tags, opts)
   elif ids.line is not None:
     deleteItem(canvas, ids.line)
   common:dict[str, Any] = dict(width=width, strokeWidth=sw, lineColor=lineColor, fillColor=fillColor,
