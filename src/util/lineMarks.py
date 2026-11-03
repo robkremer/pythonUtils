@@ -12,15 +12,26 @@ toward its end (so, with the line running left to right, as it looks):
                     line it's at (toward the end, in the middle of a line)
 ``o``, ``circle``   a circle, filled with the fill colour
 ``*``, ``dot``      a solid circle, in the line's colour
+``@``, ``ring``     a hollow circle: outlined in the line's colour, filled
+                    with the canvas's background (see *HOLLOW*)
 ``|``, ``bar``      a bar across the line (the line runs through it)
+``diamond``         a hollow diamond, its tip on the line's end (UML's
+                    aggregation); ``fdiamond``, a filled one (composition)
+``{``, ``}``        a crow's foot, its toes spread toward the line's end,
+``crow``            or its start (ER's "many"), the brace opening toward
+                    them as in text ER notations (``|{`` at the end: one
+                    or many); ``crow``: toward the end it's at, like
+                    ``arrow``
 ==================  ========================================================
 
 Any mark may be followed by its sizes in parentheses: ``arrow(8,10,3)`` (as
 Tk's "arrowshape": tip to neck, tip to trailing points, and how far the
-trailing points stand out from the line's edge), ``circle(6)`` and ``dot(6)``
-(the diameter), ``bar(12)`` (its length across the line); ``>(8,10,3)`` too.
+trailing points stand out from the line's edge), ``circle(6)``, ``dot(6)`` and
+``ring(6)`` (the diameter), ``bar(12)`` (its length across the line),
+``diamond(12,7)`` (along the line, and across it), ``crow(10,10)`` (likewise);
+``>(8,10,3)`` too.
 Marks may be separated by spaces or commas, or run together: ``o>``, ``>>``,
-``|||``, ``<|>``, ``circle(6) arrow(8,10,3)``.
+``|||``, ``<|>``, ``@{`` (ER's "zero or many"), ``circle(6) arrow(8,10,3)``.
 
 A sequence goes at a line's start (*START*: ``<o`` gives ``<o----``), at its end
 (*END*: ``o>`` gives ``----o>``), or in its middle (*MIDDLE*: ``|||`` gives
@@ -86,7 +97,10 @@ DOT = "lm:dot"
 "A drawn item's role: filled and outlined with the line colour."
 OPEN = "lm:open"
 "A drawn item's role: outlined with the line colour, filled with the fill colour."
-ROLES = (STROKE, SOLID, DOT, OPEN)
+HOLLOW = "lm:hollow"
+"""A drawn item's role: outlined with the line colour, filled with the background colour (the canvas's,
+unless *drawMarks()* is told another) -- so it looks empty, and hides the line under it."""
+ROLES = (STROKE, SOLID, DOT, OPEN, HOLLOW)
 
 
 class MarkSpecError(ValueError):
@@ -261,6 +275,77 @@ class DotKind(CircleKind):
   role = DOT
 
 
+class RingKind(CircleKind):
+  '''
+  A hollow circle (``ring``, ``@``): outlined in the line's colour, filled with the
+  background colour (see *HOLLOW*), so it reads as empty whatever the fill colour
+  is. Its size is its diameter.
+  '''
+  name = "ring"
+  shorthands = {"@": OUTWARD}
+  role = HOLLOW
+
+
+class DiamondKind(MarkKind):
+  '''
+  A hollow diamond (``diamond``) -- UML's aggregation -- its tip on the end of
+  the line it's at: sizes (along the line, across it); one size *a* is (a, 0.6a).
+  '''
+  name = "diamond"
+  defaultSizes = (12.0, 7.0)
+  role = HOLLOW
+
+  def normalize(self, sizes):
+    if len(sizes) == 1:
+      return (sizes[0], sizes[0] * 0.6)
+    return super().normalize(sizes)
+
+  def length(self, sizes, width):
+    return sizes[0]
+
+  def breadth(self, sizes, width):
+    return sizes[1]
+
+  def draw(self, pen, x0, x1, sizes, width, forward):
+    xm, h = (x0 + x1) / 2, sizes[1] / 2
+    pen.polygon([pen.pt(x0), pen.pt(xm, -h), pen.pt(x1), pen.pt(xm, h)], self.role)
+
+
+class FilledDiamondKind(DiamondKind):
+  '''
+  A filled diamond (``fdiamond``), in the line's colour -- UML's composition.
+  '''
+  name = "fdiamond"
+  role = DOT
+
+
+class CrowFootKind(MarkKind):
+  '''
+  A crow's foot (``crow``, ``{``, ``}``) -- ER's "many": three toes fanning
+  out from a point on the line to the end it's at (``{``: toward the line's
+  end; ``}``: toward its start -- the brace opens toward the toes, as text ER
+  notations write it: ``|{`` at a line's end, ``}|`` at its start; ``crow``:
+  outward, like ``arrow``). Sizes:
+  (along the line, across it at the toes). The line runs through it (it is
+  the middle toe).
+  '''
+  name = "crow"
+  shorthands = {"{": FORWARD, "}": BACKWARD}
+  defaultSizes = (10.0, 10.0)
+  solid = False
+
+  def length(self, sizes, width):
+    return sizes[0]
+
+  def breadth(self, sizes, width):
+    return sizes[1]
+
+  def draw(self, pen, x0, x1, sizes, width, forward):
+    heel, toes = (x0, x1) if forward else (x1, x0)
+    h = sizes[1] / 2
+    pen.line([pen.pt(toes, -h), pen.pt(heel), pen.pt(toes, h)], STROKE, dash="")
+
+
 class BarKind(MarkKind):
   '''
   A bar across the line (``bar``, ``|``): its size is its length. The line runs through it.
@@ -306,7 +391,7 @@ def registerMarkKind(kind:MarkKind) -> MarkKind:
     parseMarks.cache_clear()
   return kind
 
-for _k in (ArrowKind(), CircleKind(), DotKind(), BarKind()):
+for _k in (ArrowKind(), CircleKind(), DotKind(), RingKind(), DiamondKind(), FilledDiamondKind(), CrowFootKind(), BarKind()):
   registerMarkKind(_k)
 
 
@@ -488,7 +573,8 @@ class _Pen:
   type (see *finish()*).
   '''
   def __init__(self, canvas, origin:Point, direction:Point, existing:Sequence[int], tags:Sequence[str],
-               toWindow:Callable[[list[float]], list[float]], lineColor:str, fillColor:str, strokeWidth:float):
+               toWindow:Callable[[list[float]], list[float]], lineColor:str, fillColor:str, strokeWidth:float,
+               backColor:Optional[str]=None):
     n = math.hypot(direction[0], direction[1]) or 1.0
     self.ux, self.uy = direction[0] / n, direction[1] / n
     self.ox, self.oy = origin
@@ -497,8 +583,19 @@ class _Pen:
     self.tags = list(tags)
     self.toWindow = toWindow
     self.lineColor, self.fillColor = lineColor, fillColor
+    self._backColor = backColor
     self.strokeWidth = strokeWidth
     self.ids:list[int] = []
+
+  @property
+  def backColor(self) -> str:
+    '''
+    What *HOLLOW* items are filled with: the canvas's background, unless told
+    another -- asked for only when one is drawn (a round-trip to Tk).
+    '''
+    if self._backColor is None:
+      self._backColor = backgroundColor(self.canvas)
+    return self._backColor
 
   def pt(self, x:float, y:float=0.0) -> Point:
     '''
@@ -509,18 +606,22 @@ class _Pen:
   def _item(self, typ:str, points:Sequence[Point], role:str, opts:dict[str, Any]) -> int:
     coords = self.toWindow([c for p in points for c in p])
     tags = self.tags + [role]
+    canvas = self.canvas
     while self.existing:
       i = self.existing.pop(0)
-      try:
-        if self.canvas.type(i) == typ:
-          self.canvas.coords(i, coords)
-          self.canvas.itemconfigure(i, tags=tags, **opts)
+      if itemType(canvas, i) == typ:
+        try:
+          canvas.coords(i, coords)
+          configureItem(canvas, i, tags, opts)
           self.ids.append(i)
           return i
-      except Exception: # (gone)
-        continue
-      self.canvas.delete(i)
-    i = getattr(self.canvas, "create_" + typ)(coords, tags=tags, **opts)
+        except Exception: # (gone)
+          forgetItem(canvas, i)
+          continue
+      deleteItem(canvas, i)
+    i = getattr(canvas, "create_" + typ)(coords, tags=tags, **opts)
+    _rememberedTypes(canvas)[i] = typ
+    _rememberedOptions(canvas)[i] = _optionsKey(tags, opts)
     self.ids.append(i)
     return i
 
@@ -528,14 +629,17 @@ class _Pen:
     '''
     A polygon through *points* (view coordinates), coloured as *role* says.
     '''
-    return self._item("polygon", points, role, _roleOptions(role, self.lineColor, self.fillColor, "polygon"))
+    return self._item("polygon", points, role, self._colors(role, "polygon"))
+
+  def _colors(self, role:str, typ:str) -> dict[str, Any]:
+    return _roleOptions(role, self.lineColor, self.fillColor, typ, self.backColor if role == HOLLOW else "")
 
   def oval(self, centre:Point, r:float, role:str=OPEN) -> int:
     '''
     A circle at *centre*, of radius *r*, coloured as *role* says.
     '''
     return self._item("oval", [(centre[0] - r, centre[1] - r), (centre[0] + r, centre[1] + r)], role,
-                      _roleOptions(role, self.lineColor, self.fillColor, "oval"))
+                      self._colors(role, "oval"))
 
   def line(self, points:Sequence[Point], role:str=STROKE, **opts) -> int:
     '''
@@ -552,14 +656,115 @@ class _Pen:
     :returns: The items it drew, in order.
     '''
     for i in self.existing:
-      try:
-        self.canvas.delete(i)
-      except Exception:
-        pass
+      deleteItem(self.canvas, i)
     self.existing = []
     return self.ids
 
-def _roleOptions(role:str, lineColor:str, fillColor:str, typ:str) -> dict[str, Any]:
+
+# Canvas items' types, remembered: a redraw in place reuses an item only if it's
+# of the right type, and asking the canvas (canvas.type()) is a round-trip to
+# Tk for every mark, every frame. Tk never reuses an item's id, so a remembered
+# type is right for as long as the item exists; one that's gone is forgotten
+# when that's found out (see _Pen._item()), or when it's deleted here.
+
+_TYPES_ATTR = "_lineMarksItemTypes"
+
+def _rememberedTypes(canvas) -> dict[int, str]:
+  '''
+  :returns: The types of *canvas*'s items made (or asked about) here, by id.
+  '''
+  types = canvas.__dict__.get(_TYPES_ATTR)
+  if types is None:
+    types = {}
+    setattr(canvas, _TYPES_ATTR, types)
+  elif len(types) > 200_000: # (items deleted behind our back aren't forgotten: start over, rather than grow for ever)
+    types.clear()
+  return types
+
+def itemType(canvas, i:int) -> Optional[str]:
+  '''
+  :returns: Canvas item *i*'s type (eg: "line"), as remembered, or as the
+    canvas says if it isn't; None if there's no such item.
+  '''
+  types = _rememberedTypes(canvas)
+  typ = types.get(i)
+  if typ is None:
+    try:
+      typ = canvas.type(i) or None
+    except Exception:
+      typ = None
+    if typ is not None:
+      types[i] = typ
+  return typ
+
+def forgetItem(canvas, i:int) -> None:
+  '''
+  Forget item *i*'s type and options (it's gone).
+  '''
+  _rememberedTypes(canvas).pop(i, None)
+  _rememberedOptions(canvas).pop(i, None)
+
+# Likewise the options an item was last configured with here: a redraw in place
+# sets every item's colours, width and tags again, every frame, though they
+# seldom change -- a round-trip to Tk each. An item configured with the same
+# options as last time is left alone. Anything that configures an item behind
+# this module's back (eg: recolorMarks(), here) forgets its options, so the next
+# draw sets them again.
+
+_OPTIONS_ATTR = "_lineMarksItemOptions"
+
+def _rememberedOptions(canvas) -> dict[int, tuple]:
+  '''
+  :returns: The options (see _optionsKey()) *canvas*'s items were last configured with here, by id.
+  '''
+  options = canvas.__dict__.get(_OPTIONS_ATTR)
+  if options is None:
+    options = {}
+    setattr(canvas, _OPTIONS_ATTR, options)
+  elif len(options) > 200_000: # (as _rememberedTypes())
+    options.clear()
+  return options
+
+def _optionsKey(tags:Sequence[str], opts:dict[str, Any]) -> tuple:
+  '''
+  :returns: *tags* and *opts*, as something to compare with next time's.
+  '''
+  return (tuple(tags), tuple(sorted((k, repr(v)) for k, v in opts.items())))
+
+def configureItem(canvas, i:int, tags:Sequence[str], opts:dict[str, Any]) -> None:
+  '''
+  Configure canvas item *i* with *tags* and *opts* -- unless it was last
+  configured with the same, here (see *forgetItem()*).
+
+  :raises Exception: As the canvas does, if there's no such item.
+  '''
+  key = _optionsKey(tags, opts)
+  remembered = _rememberedOptions(canvas)
+  if remembered.get(i) == key:
+    return
+  canvas.itemconfigure(i, tags=list(tags), **opts)
+  remembered[i] = key
+
+def deleteItem(canvas, i:int) -> None:
+  '''
+  Delete canvas item *i* (if it's still there), and forget it.
+  '''
+  forgetItem(canvas, i)
+  try:
+    canvas.delete(i)
+  except Exception:
+    pass
+
+def backgroundColor(canvas) -> str:
+  '''
+  :returns: *canvas*'s background colour (what a *HOLLOW* mark is filled with) -- "" if it can't say.
+  '''
+  try:
+    return str(canvas.cget("background") or "")
+  except Exception:
+    return ""
+
+def _roleOptions(role:str, lineColor:str, fillColor:str, typ:str, backColor:str="") -> dict[str, Any]:
   '''
   The colour options of a polygon or oval of *role*.
   '''
@@ -569,11 +774,15 @@ def _roleOptions(role:str, lineColor:str, fillColor:str, typ:str) -> dict[str, A
     return dict(fill=lineColor, outline=lineColor)
   if role == OPEN:
     return dict(fill=fillColor, outline=lineColor)
+  if role == HOLLOW:
+    return dict(fill=backColor, outline=lineColor)
   return dict(fill=lineColor)
 
-def recolorMarks(canvas, ids:Sequence[int], lineColor:str, fillColor:str) -> None:
+def recolorMarks(canvas, ids:Sequence[int], lineColor:str, fillColor:str, backColor:Optional[str]=None) -> None:
   '''
   Colour items *drawMarks()* drew (or any line items) afresh, each as its role says (see *ROLES*).
+
+  :param backColor: What *HOLLOW* items are filled with (default: the canvas's background).
   '''
   for i in ids:
     try:
@@ -585,14 +794,17 @@ def recolorMarks(canvas, ids:Sequence[int], lineColor:str, fillColor:str) -> Non
     if typ == "line":
       canvas.itemconfigure(i, fill=lineColor)
     else:
-      canvas.itemconfigure(i, **_roleOptions(role, lineColor, fillColor, typ))
+      if role == HOLLOW and backColor is None:
+        backColor = backgroundColor(canvas) # (once, when it's needed)
+      canvas.itemconfigure(i, **_roleOptions(role, lineColor, fillColor, typ, backColor or ""))
+    _rememberedOptions(canvas).pop(i, None) # (not as drawn: the next draw sets its options again)
 
 def _identity(coords:list[float]) -> list[float]:
   return coords
 
 def drawMarks(canvas, layout:MarkLayout, origin:Point, direction:Point, *,
               width:float=1.0, strokeWidth:Optional[float]=None,
-              lineColor:str="black", fillColor:str="", tags:Sequence[str]=(),
+              lineColor:str="black", fillColor:str="", backColor:Optional[str]=None, tags:Sequence[str]=(),
               existing:Sequence[int]=(), toWindow:Optional[Callable[[list[float]], list[float]]]=None,
               lineOptions:Optional[dict[str, Any]]=None) -> list[int]:
   '''
@@ -607,6 +819,7 @@ def drawMarks(canvas, layout:MarkLayout, origin:Point, direction:Point, *,
     (default: *width*).
   :param lineColor: The line's colour.
   :param fillColor: Circles' fill colour.
+  :param backColor: What hollow marks (rings) are filled with: the canvas's background, by default.
   :param tags: Canvas tags for every item (and each gets its role too: see *ROLES*).
   :param existing: The items an earlier call drew for these marks: reused, so a redraw doesn't make new ones.
   :param toWindow: Converts a flat list of coordinates to the canvas's (default: as they are).
@@ -614,7 +827,7 @@ def drawMarks(canvas, layout:MarkLayout, origin:Point, direction:Point, *,
   :returns: The items drawn (pass them back as *existing* next time).
   '''
   pen = _Pen(canvas, origin, direction, existing, tags, toWindow or _identity, lineColor, fillColor,
-             width if strokeWidth is None else strokeWidth)
+             width if strokeWidth is None else strokeWidth, backColor)
   opts = dict(lineOptions or {})
   for a, b in layout.joiners: # (first: under the marks)
     pen.line([pen.pt(a), pen.pt(b)], STROKE, **opts)
@@ -666,8 +879,28 @@ def paramAtDistance(path:Sequence[Point], d:float, fromEnd:bool=False) -> Option
     if total < d:
       return None
     return 1.0 - d / total if fromEnd else d / total
-  # (a quadratic: the first point that far out, by stepping, then bisecting)
-  near, steps = 1.0 - far, 32
+  # A quadratic. The distances asked for are small next to the path (a few
+  # marks' worth), where dist() grows with t and is nearly linear: guess from
+  # the speed at the near end, then correct by secant steps -- a handful of
+  # evaluations, not the 60-odd a scan-and-bisect takes.
+  near = 1.0 - far
+  speed = 2 * math.hypot(path[1][0] - ref[0], path[1][1] - ref[1]) # (|B'| at the near end)
+  if speed > 0:
+    a, fa = near, -d
+    b = near + (far - near) * min(1.0, d / speed)
+    fb = dist(b) - d
+    for _ in range(12):
+      if abs(fb) <= 1e-4:
+        return b
+      if fb == fa:
+        break
+      c = b - fb * (b - a) / (fb - fa)
+      if not (min(near, far) <= c <= max(near, far)) or c == b:
+        break
+      a, fa, b, fb = b, fb, c, dist(c) - d
+  # (not found that way -- eg: the curve bends back toward the end, or all of
+  # it is closer than d: the first point that far out, by stepping, then bisecting)
+  steps = 32
   prev = near
   for k in range(1, steps + 1):
     t = near + (far - near) * k / steps
@@ -721,13 +954,13 @@ class MarkedPathIDs:
     Delete all its items.
     '''
     for i in self.all():
-      canvas.delete(i)
+      deleteItem(canvas, i)
     self.line, self.start, self.end = None, [], []
 
 def drawMarkedPath(canvas, path:Sequence[Point], startMarks:Sequence[Mark]|str|None=None,
                    endMarks:Sequence[Mark]|str|None=None, ids:Optional[MarkedPathIDs]=None, *,
                    width:float=1.0, strokeWidth:Optional[float]=None,
-                   lineColor:str="black", fillColor:str="", tags:Sequence[str]=(),
+                   lineColor:str="black", fillColor:str="", backColor:Optional[str]=None, tags:Sequence[str]=(),
                    toWindow:Optional[Callable[[list[float]], list[float]]]=None,
                    lineOptions:Optional[dict[str, Any]]=None) -> MarkedPathIDs:
   '''
@@ -754,26 +987,27 @@ def drawMarkedPath(canvas, path:Sequence[Point], startMarks:Sequence[Mark]|str|N
     coords = toWindow([c for p in pts for c in p])
     opts:dict[str, Any] = dict(fill=lineColor, width=sw, arrow="none", smooth=len(pts) == 3)
     opts.update(lineOptions or {})
-    if ids.line is not None and _isType(canvas, ids.line, "line"):
-      canvas.coords(ids.line, coords)
-      canvas.itemconfigure(ids.line, tags=list(tags), **opts)
-      ret.line = ids.line
-    else:
+    ret.line = None
+    if ids.line is not None and itemType(canvas, ids.line) == "line":
+      try:
+        canvas.coords(ids.line, coords)
+        configureItem(canvas, ids.line, tags, opts)
+        ret.line = ids.line
+      except Exception: # (gone)
+        forgetItem(canvas, ids.line)
+    if ret.line is None:
       if ids.line is not None:
-        canvas.delete(ids.line)
+        deleteItem(canvas, ids.line)
       ret.line = canvas.create_line(coords, tags=list(tags), **opts)
+      _rememberedTypes(canvas)[ret.line] = "line"
+      _rememberedOptions(canvas)[ret.line] = _optionsKey(tags, opts)
   elif ids.line is not None:
-    canvas.delete(ids.line)
+    deleteItem(canvas, ids.line)
   common:dict[str, Any] = dict(width=width, strokeWidth=sw, lineColor=lineColor, fillColor=fillColor,
-                               tags=tags, toWindow=toWindow, lineOptions=lineOptions)
+                               backColor=backColor, tags=tags, toWindow=toWindow, lineOptions=lineOptions)
   ret.start = drawMarks(canvas, startLayout, path[0], pathDirection(path, False, startLayout.high),
                         existing=ids.start, **common)
   ret.end = drawMarks(canvas, endLayout, path[-1], pathDirection(path, True, -endLayout.low),
                       existing=ids.end, **common)
   return ret
 
-def _isType(canvas, i:int, typ:str) -> bool:
-  try:
-    return canvas.type(i) == typ
-  except Exception:
-    return False
