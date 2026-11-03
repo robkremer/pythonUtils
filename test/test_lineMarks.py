@@ -83,15 +83,15 @@ class TestParse(unittest.TestCase):
     self.assertIsNone(lm.checkMarks("o>"))
 
   def test_diamondsAndCrowsFeet(self):
-    'Diamonds (hollow and filled) and crows\' feet: by name, and the feet by "}" / "{".'
+    'Diamonds (hollow and filled) and crows\' feet: by name, and the feet by "{" / "}" (the brace opening toward the toes).'
     self.assertEqual(parseMarks("diamond"), (Mark("diamond", (12.0, 7.0), OUTWARD),))
     self.assertEqual(parseMarks("diamond(10)"), (Mark("diamond", (10.0, 6.0), OUTWARD),))
     self.assertEqual(parseMarks("fdiamond(12,8)"), (Mark("fdiamond", (12.0, 8.0), OUTWARD),))
-    self.assertEqual([(m.kind, m.direction) for m in parseMarks("}")], [("crow", FORWARD)])
-    self.assertEqual([(m.kind, m.direction) for m in parseMarks("{")], [("crow", BACKWARD)])
+    self.assertEqual([(m.kind, m.direction) for m in parseMarks("{")], [("crow", FORWARD)])
+    self.assertEqual([(m.kind, m.direction) for m in parseMarks("}")], [("crow", BACKWARD)])
     self.assertEqual(parseMarks("crow"), (Mark("crow", (10.0, 10.0), OUTWARD),))
-    self.assertEqual([m.kind for m in parseMarks("@}")], ["ring", "crow"])             # (ER: zero or many)
-    self.assertEqual([m.kind for m in parseMarks("|}")], ["bar", "crow"])              # (one or many)
+    self.assertEqual([m.kind for m in parseMarks("@{")], ["ring", "crow"])             # (ER: zero or many)
+    self.assertEqual([m.kind for m in parseMarks("|{")], ["bar", "crow"])              # (one or many)
     self.assertEqual([(m.kind, m.direction) for m in parseMarks("diamond>")], [("diamond", OUTWARD), ("arrow", FORWARD)])
 
   def test_register(self):
@@ -160,14 +160,14 @@ class TestLayout(unittest.TestCase):
 
   def test_crowsFoot(self):
     'A crow\'s foot is on the end, the line running through it (it is the middle toe); behind a ring, the line runs on from the ring to the end.'
-    lay = layoutMarks("}", END)
+    lay = layoutMarks("{", END)
     p, = lay.marks
     self.assertEqual((p.x0, p.x1, p.forward), (-10.0, 0.0, True))
     self.assertIsNone(lay.lowStop)
     self.assertEqual(lay.joiners, [])
     p, = layoutMarks("crow", START).marks
     self.assertEqual((p.x0, p.x1, p.forward), (0.0, 10.0, False))          # (toes toward the start)
-    lay = layoutMarks("@}", END)
+    lay = layoutMarks("@{", END)
     ring, foot = lay.marks
     self.assertEqual((ring.x0, ring.x1, foot.x0, foot.x1), (-15.0, -10.0, -10.0, 0.0))
     self.assertEqual(lay.lowStop, -15.0)
@@ -345,7 +345,7 @@ class TestDraw(unittest.TestCase):
     self.assertEqual((c.type(filled), c.itemcget(filled, "fill"), c.itemcget(filled, "outline")), ("polygon", "red", "red"))
     self.assertEqual(c.coords(hollow), [0.0, 50.0, 6.0, 46.5, 12.0, 50.0, 6.0, 53.5])   # (tip on the start)
     self.assertEqual(c.coords(filled)[4:6], [100.0, 50.0])                               # (tip on the end)
-    ids = lm.drawMarkedPath(c, [(0.0, 50.0), (100.0, 50.0)], None, "@}", lineColor="blue")
+    ids = lm.drawMarkedPath(c, [(0.0, 50.0), (100.0, 50.0)], None, "@{", lineColor="blue")
     joiner, ring, foot = ids.end
     self.assertEqual((c.type(joiner), c.type(ring), c.type(foot)), ("line", "oval", "line"))
     self.assertEqual(c.coords(joiner), [90.0, 50.0, 100.0, 50.0])                        # (from the ring to the end, under the foot)

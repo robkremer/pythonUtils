@@ -17,9 +17,11 @@ toward its end (so, with the line running left to right, as it looks):
 ``|``, ``bar``      a bar across the line (the line runs through it)
 ``diamond``         a hollow diamond, its tip on the line's end (UML's
                     aggregation); ``fdiamond``, a filled one (composition)
-``}``, ``{``        a crow's foot, its toes spread toward the line's end,
-``crow``            or its start (ER's "many"); ``crow``: toward the end it's
-                    at, like ``arrow``
+``{``, ``}``        a crow's foot, its toes spread toward the line's end,
+``crow``            or its start (ER's "many"), the brace opening toward
+                    them as in text ER notations (``|{`` at the end: one
+                    or many); ``crow``: toward the end it's at, like
+                    ``arrow``
 ==================  ========================================================
 
 Any mark may be followed by its sizes in parentheses: ``arrow(8,10,3)`` (as
@@ -29,7 +31,7 @@ trailing points stand out from the line's edge), ``circle(6)``, ``dot(6)`` and
 ``diamond(12,7)`` (along the line, and across it), ``crow(10,10)`` (likewise);
 ``>(8,10,3)`` too.
 Marks may be separated by spaces or commas, or run together: ``o>``, ``>>``,
-``|||``, ``<|>``, ``@}`` (ER's "zero or many"), ``circle(6) arrow(8,10,3)``.
+``|||``, ``<|>``, ``@{`` (ER's "zero or many"), ``circle(6) arrow(8,10,3)``.
 
 A sequence goes at a line's start (*START*: ``<o`` gives ``<o----``), at its end
 (*END*: ``o>`` gives ``----o>``), or in its middle (*MIDDLE*: ``|||`` gives
@@ -319,14 +321,16 @@ class FilledDiamondKind(DiamondKind):
 
 class CrowFootKind(MarkKind):
   '''
-  A crow's foot (``crow``, ``}``, ``{``) -- ER's "many": three toes fanning
-  out from a point on the line to the end it's at (``}``: toward the line's
-  end; ``{``: toward its start; ``crow``: outward, like ``arrow``). Sizes:
+  A crow's foot (``crow``, ``{``, ``}``) -- ER's "many": three toes fanning
+  out from a point on the line to the end it's at (``{``: toward the line's
+  end; ``}``: toward its start -- the brace opens toward the toes, as text ER
+  notations write it: ``|{`` at a line's end, ``}|`` at its start; ``crow``:
+  outward, like ``arrow``). Sizes:
   (along the line, across it at the toes). The line runs through it (it is
   the middle toe).
   '''
   name = "crow"
-  shorthands = {"}": FORWARD, "{": BACKWARD}
+  shorthands = {"{": FORWARD, "}": BACKWARD}
   defaultSizes = (10.0, 10.0)
   solid = False
 
