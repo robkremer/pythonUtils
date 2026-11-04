@@ -245,7 +245,10 @@ def documentsFolder() -> str:
 
 def pdfToPNG(pdfPath:str, pngPath:str, dpi:int) -> None:
   '''
-  Make a PNG of a PDF's first page, at *dpi* dots per inch: with *sips* on the
+  Make a PNG of a PDF's first page, one pixel per point of the PDF, marked as
+  *dpi* dots per inch (so a program that honours that shows it at 72/*dpi* of
+  the PDF's size: eg, a PDF drawn at twice the size wanted, marked 144 dpi, is
+  shown at the size wanted, and sharp on a Retina screen): with *sips* on the
   Mac; elsewhere with the *pypdfium2* and *Pillow* packages.
 
   :raises RuntimeError: If it can't be made (eg: they aren't installed).
@@ -260,7 +263,7 @@ def pdfToPNG(pdfPath:str, pngPath:str, dpi:int) -> None:
     raise RuntimeError("making a picture needs the pypdfium2 and pillow packages (pip install pypdfium2 pillow).") from ex
   pdf = pypdfium2.PdfDocument(pdfPath)
   try:
-    image = pdf[0].render(scale=dpi / 72).to_pil()
+    image = pdf[0].render(scale=1).to_pil() # (one pixel per point, as sips makes it)
     image.save(pngPath, dpi=(dpi, dpi))
   finally:
     pdf.close()
