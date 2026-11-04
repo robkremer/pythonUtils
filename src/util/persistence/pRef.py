@@ -1196,7 +1196,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
         self._makeDBContainer()
       return self._db.__getitem__(index)
     except KeyError as ex:
-      for sdb in self.superDBs:
+      for sdb in self.superDBs: # (by name, or for an id under 256 -- the ids of a system DB's objects, eg sn's)
         if isinstance(key, str) or isinstance(key, int) and key < 256:
           obj = sdb.get(key, None)
           if obj is not None:
@@ -1214,7 +1214,11 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     '''
     :param key:
     :type key: object
-    :returns:
+    :returns: For a name: whether *self[key]* finds something -- here, or in a
+      super-DB, as *__getitem__()* looks. For an id: whether it's one of this
+      DB's own objects (not a super-DB's, though *self[id]* finds the system
+      objects -- ids under 256 -- in a super-DB): eg, whether an object is
+      still in its DB.
     :rtype: bool
     '''
     if isinstance(key, str):
@@ -1222,7 +1226,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
         self._resolve(key)
         return True
       except KeyError:
-        return False
+        return any(sdb.get(key, None) is not None for sdb in self.superDBs)
     if isinstance(key, int):
       return self._db.__contains__(key)
     return False

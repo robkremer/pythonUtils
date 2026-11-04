@@ -199,6 +199,19 @@ class Test(unittest.TestCase):
     self.assertEqual(path.read_text(), text)
     path.unlink()
 
+  def test_containsLooksInSuperDBs(self):
+    '''"name in db" agrees with db["name"], which finds a super-DB's objects by name; an id is only this DB's own.'''
+    base = PRDb("tempBase.xml") # (not saved)
+    animal = TestObject(base)
+    animal._name = "animal"
+    db = PRDb("tempDerived.xml")
+    db.addSuperDB(base)
+    self.assertIs(db["animal"], animal)
+    self.assertIn("animal", db)
+    self.assertNotIn("plant", db)
+    self.assertNotIn(animal.id, db) # (an id: this DB's own objects only)
+    self.assertIn(animal.id, base)
+
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_Name']

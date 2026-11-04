@@ -311,7 +311,7 @@ class Subject:
     deleteList:list[int] = []
     #i = 0
     tup:tuple[Observer, set[str]]
-    for tup in observers: # NOTE: this is the observers in the parameter, not from self.
+    for tup in list(observers): # NOTE: this is the observers in the parameter, not from self. (A copy: one may detach itself, or another, while it's told.)
       # collect the updates of interest for an Observer
       updates:list[tuple[str, tuple[Any, ...]]] = []
       obsTopics:set[str] = tup[1]
@@ -341,7 +341,7 @@ class Subject:
     deleteList = []
     #i = 0
     tup3:tuple[Callable, set[str], int]
-    for tup3 in callbacks: # NOTE: this is the callbacks in the parameter, not from self.
+    for tup3 in list(callbacks): # NOTE: this is the callbacks in the parameter, not from self. (A copy, as for the observers.)
       updates = []
       if len(tup3[1]) == 0:
         updates = list(topics)
