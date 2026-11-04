@@ -655,6 +655,14 @@ class AttrEditor(tk.Toplevel):
 
     self.noteEdits:dict[str, str] = {}
     "Attributes' notes as edited (see *editNote()*), by key: only those that have been."
+    self.pending:dict[str, Attribute] = {}
+    '''Attributes made here that the object doesn't have yet -- by "Add New
+    Attribute", an inherited one's "override", or to edit *editKey* -- by key:
+    the object isn't changed while the dialog is open (Cancel must leave it as it
+    was), so they're only returned by *save()* (see *updatedKeys*), for the
+    caller to set (eg: as an undoable command).'''
+    self.addedKeys:set[str] = set()
+    "Those of *pending* the user asked for (Add, override): saved even if their values aren't changed."
     self.treeMode:bool = False
     "Whether the attributes are shown grouped by the parts of their names (see *treeOrder()*)."
     self._labels:dict[str, tuple[str, int]] = {}
@@ -897,6 +905,15 @@ class AttrEditor(tk.Toplevel):
     self.grab_release()
     self.destroy()
 
+  def _localAttr(self, k:str) -> Attribute|None:
+    '''
+    :returns: *k*'s own attribute as it is in this dialog: one made here (see
+      *pending*), or the object's own.
+    '''
+    if k in self.pending:
+      return self.pending[k]
+    return self.attrs.getLocalAttr(k) if k in strdict.keys(self.attrs) else None
+
   ### HANDLERS #################################################################
   
   def addNewAttribute(self):
@@ -912,11 +929,12 @@ class AttrEditor(tk.Toplevel):
     self.clearMessage()
     if name is None:
       return
-    if name in list(self.attrs.keys()):
+    if name in list(self.attrs.keys()) or name in self.pending:
       self.setMessage(f'Attribute name "{name}" is already in use.', bg="red", fg="yellow")
       return
     newAttr = Attribute("", str, VAR_DEFAULTED)
-    self.attrs[name] = newAttr
+    self.pending[name] = newAttr # (not the object's until it's saved: see pending)
+    self.addedKeys.add(name)
     self.makeNewEntry(name, newAttr, self.rows+self.EntryOffset, False, keyExt="")
     self.rows += self.rowsPerEntry
     self._applyHiddenColumns()
@@ -1013,7 +1031,7 @@ class AttrEditor(tk.Toplevel):
       value = self.vars[key].getValue()
     typeLabel = self.vars[key].typeLabel
     #tempAttr = copy(self.attrs._attrs[key])
-    tempAttr = copy(self.attrs.getLocalAttr(key))
+    tempAttr = copy(self._localAttr(key))
     #tempAttr.owner = None
     assert tempAttr is not None
     tempAttr._type = kind # (not via .type: that checks the new type against the OLD value)
@@ -1087,10 +1105,12 @@ class AttrEditor(tk.Toplevel):
     :returns:
     :rtype: bool
     '''
-    if k not in strdict.keys(self.attrs): # not local definition
+    if k in self.addedKeys: # (made here, at the user's asking: new, whatever its value)
+      return True
+    if k not in strdict.keys(self.attrs) and k not in self.pending: # not local definition
       return False
     try:
-      origAttr:Attribute = self.attrs.getLocalAttr(k) if k in list(strdict.keys(self.attrs)) else None
+      origAttr:Attribute = self._localAttr(k)
       v = self.vars[k]
       if origAttr is None:
         typeStr = "str"
@@ -1188,14 +1208,16 @@ class AttrEditor(tk.Toplevel):
         
       #handle deletion
       if v.delete:
+        if k in self.pending: # (made here, and deleted again: nothing to do)
+          continue
         self.updatedKeys[k] = None
         logger.debug(f'save(): deleting "{k}"')
         continue
         
       #handle changes
-      if k not in self.attrs.keys(): # 
+      if k not in self.attrs.keys() and k not in self.pending: # 
         continue
-      origAttr:Attribute|None = self.attrs.getLocalAttr(k) if k in list(strdict.keys(self.attrs)) else None
+      origAttr:Attribute|None = self._localAttr(k)
       if origAttr is None:
         logger.debug(f'key "{k}" has not changed')
         continue
@@ -2022,11 +2044,11 @@ class HierarchicalAttrEditor(AttrEditor):
     :param inhType:
     :type inhType: str | type | None
     '''
-    localRec = self.attrs.getLocalAttr(k)
+    localRec = self._localAttr(k)
     inhRec = self.attrs.getInhAttr(k)
-    if self.editKey == k and localRec == None:
-      self.attrs.setAttr(k, Attribute(None, None if inhRec is None else inhRec.type, None if inhRec is None else inhRec.restriction))
-      localRec = self.attrs.getLocalAttr(k)
+    if self.editKey == k and localRec == None: # (a place to type it, not the object's until it's saved: see pending)
+      self.pending[k] = Attribute(None, None if inhRec is None else inhRec.type, None if inhRec is None else inhRec.restriction)
+      localRec = self.pending[k]
     if localRec is not None: # (an inherited note is shown for it -- see _noteFor() -- but not copied into it)
       inferred = getattr(localRec, "inferred", False) # (concluded, not given: greyed out, with an "assert" button -- see Attribute.inferred)
       super().makeNewEntry(k, localRec, row+self.EntryOffset, disabled or inferred, keyExt="", inhType=None if inhRec is None else inhRec.type)
@@ -2055,10 +2077,23 @@ class HierarchicalAttrEditor(AttrEditor):
         #self.attrs.setRecord(attr)
         if not disabled:
           self.makeButton(frame, k, inhRec, "override", \
-                          command=lambda b, k=k, inhRec=inhRec, r=row, slf=self: (slf.makeNewEntry(k, slf.attrs.__setitem__(k, inhRec.value), r, disabled=False, keyExt="", inhType=inhRec.type), b.destroy(), slf._applyHiddenColumns()))
+                          command=lambda b, k=k, inhRec=inhRec, r=row: self._override(k, inhRec, r, b))
     ttk.Separator(self.editorsListFrame, orient=tk.HORIZONTAL) \
         .grid(column=0, row=row+self.sepOffset, columnspan=self.cspan, sticky=tk.W+tk.E, padx=0, pady=2)
    
+  def _override(self, k:str, inhRec:Attribute, row:int, button:ttk.Button) -> None:
+    '''
+    The "override" button of an inherited attribute was pressed: show a value
+    of the object's own for it, starting as the inherited one -- a value-only
+    attribute (see *AttributedObject.__setitem__()*), made when it's saved
+    (see *pending*).
+    '''
+    self.pending[k] = Attribute(inhRec.value, None, None)
+    self.addedKeys.add(k)
+    self.makeNewEntry(k, self.pending[k], row, disabled=False, keyExt="", inhType=inhRec.type)
+    button.destroy()
+    self._applyHiddenColumns()
+
   def assertAttr(self, key:str, button:ttk.Button) -> None:
     '''
     The "assert" button of an inferred attribute (see *Attribute.inferred*) was
@@ -2152,7 +2187,7 @@ class HierarchicalAttrEditor(AttrEditor):
     '''
     if AttrEditor.hasChanged(self, k):
       return True
-    origAttr:Attribute|None = self.attrs.getLocalAttr(k) if k in list(strdict.keys(self.attrs)) else None
+    origAttr:Attribute|None = self._localAttr(k)
     if origAttr is None:
       return True
     # origQual:AttributeFlags = origAttr.restriction
