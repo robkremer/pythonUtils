@@ -342,8 +342,10 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
   set before starting a new read so that a document which (directly, or
   through a chain of other documents it references) ends up loading its own
   URL again fails fast with a *CircularReferenceError* instead of recursing
-  until the stack overflows: *AllDBs* alone can't catch this, since a URL is
-  only added there *after* its read completes.'''
+  until the stack overflows. (*AllDBs* alone doesn't do: a DB is added there
+  as it's made, at the start of its read -- see *__init__()* -- so it's
+  there before its objects are; if the read fails, the half-read DB is taken
+  out again: see *_forgetFailedReads()*.)'''
 
   #- ---- Class methods -----------------------------------------------------------
 
@@ -478,9 +480,13 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
       assert stored is not None
       logger.warning(f'"{url}" was copied or moved from "{stored}": it\'s now taken to be "{url}" (and will be saved there).')
       PRDb._readFrames.append((stored, url))
+    before = set(PRDb.AllDBs)
     try:
       with PRDb.basedOn(url): # (relative references in it are relative to where it actually is)
         read = SerializationStrategy.readx(url, replaceExt=None, mode=mode)
+    except BaseException:
+      PRDb._forgetFailedReads(before)
+      raise
     finally:
       if moved:
         PRDb._readFrames.pop()
@@ -496,6 +502,33 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     ret.previousURL = stored if moved else previous
     ret._wasRead(url)
     return ret
+
+  @staticmethod
+  def _forgetFailedReads(before:set[str]) -> None:
+    '''
+    After a read failed: forget the DBs it made that weren't read to the end
+    (still *reading*) -- registered in *AllDBs* as they're made, before their
+    objects are read -- so that the next attempt reads the file again, rather
+    than finding an empty DB in memory (which a save would then write over the
+    file). Those it read completely (eg: its super-DBs) are kept. Each is
+    unloaded (if it can be: see sn's *Model.unload()*) so that nothing else
+    leads to it.
+
+    :param before: The URLs in *AllDBs* before the read started.
+    :type before: set[str]
+    '''
+    for u in [u for u in PRDb.AllDBs if u not in before]:
+      db = PRDb.AllDBs.get(u)
+      if db is None or not getattr(db, "reading", False):
+        continue
+      unload = getattr(db, "unload", None)
+      if callable(unload):
+        try:
+          unload()
+        except Exception as ex:
+          logger.debug(f'PRDb: unloading "{u}" after its read failed: {type(ex).__name__}: {ex}')
+      if PRDb.AllDBs.get(u) is db:
+        del PRDb.AllDBs[u]
 
   def _wasRead(self, url:str) -> None:
     '''

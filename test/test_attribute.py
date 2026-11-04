@@ -366,6 +366,53 @@ class Test(unittest.TestCase):
     animal.notifySupersChanged()                                 # (eg: given another supertype)
     self.assertEqual(sorted(n for n, t in w.heard if t == ("mod supers", ())), ["animal", "dog", "rex", "tom"])
 
+  def test16TypeWithSpacesRoundTrips(self):
+    'A type written with spaces ("choices[yes, no]", as the attribute editor suggests) is saved as written, and read back.'
+    from util.utils import getFullClassName
+    self.assertEqual(getFullClassName("choices[a, b]"), "choices[a, b]")
+    self.assertEqual(getFullClassName(int), "int")
+    for typ in ("choices[yes, no]", "choices[error, warning]", "choices[yes,no]"):
+      thing = TestAttrs("thing", False)
+      thing.setAttr("answer", Attribute("no" if "no" in typ else "warning", typ, VAR_DEFAULTED))
+      string = SerializationStrategy.tostringx(TEST_STRAT, thing)
+      thing2 = SerializationStrategy.fromstringx(TEST_STRAT, string)
+      assert isinstance(thing2, TestAttrs)
+      self.assertEqual(thing2.getAttr("answer").type, typ)
+      self.assertEqual(thing2["answer"], thing["answer"])
+      self.assertFalse(thing2.isDirty())
+
+  def test17UnreadableAttributeLeftOut(self):
+    'An attribute that can\'t be read (eg: a type mangled by an older version) is left out, with a warning: the rest of the object is read.'
+    thing = TestAttrs("thing", False)
+    thing.setAttr("answer", Attribute("no", "choices[yes, no]", VAR_DEFAULTED))
+    string = SerializationStrategy.tostringx(TEST_STRAT, thing)
+    self.assertIn('choices[yes, no]', string)
+    string = string.replace('choices[yes, no]', 'arnin') # (what the old getFullClassName() made of it)
+    with self.assertLogs("util.attribute", level="WARNING") as logs:
+      thing2 = SerializationStrategy.fromstringx(TEST_STRAT, string)
+    assert isinstance(thing2, TestAttrs)
+    self.assertEqual(thing2["name"], "thing")
+    self.assertNotIn("answer", thing2)
+    self.assertFalse(thing2.isDirty())
+    self.assertIn('"answer"', "\n".join(logs.output))
+
+  def test18OrphanedOverride(self):
+    'An overriding value whose inherited attribute has gone (eg: its isa link removed) is the object\'s own value: \'in\' and getAttr() work.'
+    person = TestAttrs("person", False)
+    person.setAttr("hair", Attribute("brown", str, VAR_DEFAULTED))
+    fred = TestAttrs("fred", True, [person])
+    fred["hair"] = "red"                         # (a value-only override)
+    self.assertIsNone(fred.getLocalAttr("hair").type)
+    fred.parents.remove(person)                  # (its type gone)
+    self.assertIn("hair", fred)
+    self.assertEqual(fred["hair"], "red")
+    a = fred.getAttr("hair")
+    self.assertEqual((a.value, a.type, a.restriction), ("red", str, VAR_DEFAULTED))
+    string = SerializationStrategy.tostringx(TEST_STRAT, fred)
+    fred2 = SerializationStrategy.fromstringx(TEST_STRAT, string)
+    self.assertIn("hair", fred2)
+    self.assertEqual(fred2.getAttr("hair").value, "red")
+
 
 if __name__ == "__main__":
   #import sys;sys.argv = ['', 'Test.testName']

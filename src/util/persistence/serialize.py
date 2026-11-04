@@ -886,6 +886,7 @@ class SerializationStrategy[T](ABC):
     if start:
       order.sort(key=lambda s: -cast(type[SerializationStrategy], s.cls).sniff(start)) # (stable: those surest they wrote it first, otherwise as they were)
     tried:str = ""
+    first:Exception|None = None
     for s in order:
       try:
         logger.debug(f'SerializationStrategy.{caller}({url}): Trying strategy {s.name}...')
@@ -895,11 +896,16 @@ class SerializationStrategy[T](ABC):
       except Exception as ex:
         logger.debug(f'SerializationStrategy.{caller}({url}): {s.name}: failed: {ex.__class__.__name__}: {ex}.')
         tried += f'\n  {s.name}: {ex.__class__.__name__}: {ex}'
+        if first is None:
+          first = ex
         continue
       if tried:
         logger.info(f'SerializationStrategy.{caller}({url}): read with {s.name} (after:{tried})')
       return ret
-    raise LookupError(f'SerializationStrategy.{caller}({url}): No strategy succeeded. Tried:{tried}')
+    # (the first strategy's error first, and as the cause: it's the one most likely to have written the
+    # file -- see sniff() -- so its error says what's wrong, where the others' only say it isn't theirs)
+    lead = f' {first}' if first is not None else ""
+    raise LookupError(f'SerializationStrategy.{caller}({url}):{lead}\nNo strategy succeeded. Tried:{tried}') from first
 
   @classmethod
   def _start(cls, url:str) -> bytes:
