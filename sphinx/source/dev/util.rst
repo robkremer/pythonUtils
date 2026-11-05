@@ -32,6 +32,7 @@ Submodules
    util.errorReportingObject
    util.folderServer
    util.lineMarks
+   util.localPython
    util.observer
    util.platformSupport
    util.prefs
