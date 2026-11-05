@@ -95,5 +95,17 @@ class TestFixKwargs(unittest.TestCase):
     self.assertIsNone(kw["others"])
     self.assertEqual(kw["label"], "zed")
 
+  def test_positionalNotDefaultedAgain(self):
+    'A param given positionally isn\'t given a default as well (which would be "multiple values for argument").'
+    def f(a, /, model=None): return (a, model)
+    def g(a, model=None): return (a, model)
+    for fun in (f, g):
+      args, kw = fixKwargs(fun=fun, args=["x", "m"], kwargs={}, defaults={"model": "default"}, decoders={})
+      self.assertEqual(fun(*args, **kw), ("x", "m"))
+      args, kw = fixKwargs(fun=fun, args=["x"], kwargs={"model": "m"}, defaults={"model": "default"}, decoders={})
+      self.assertEqual(fun(*args, **kw), ("x", "m"))
+      args, kw = fixKwargs(fun=fun, args=["x"], kwargs={}, defaults={"model": "default"}, decoders={})
+      self.assertEqual(fun(*args, **kw), ("x", "default"))
+
 if __name__ == "__main__":
   unittest.main()

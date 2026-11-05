@@ -70,6 +70,9 @@ from util.observer import Subject
 from util.persistence.serialize import Serializable, SerializableType, strdict,\
   InstantiationInfo, ParamInfo, PropertyInfo
 from util.dirtyable import Dirtyable
+import util
+
+logger:util.Logger = util.getLogger(__name__)
 
 class RestrictionTypes(Flag):
   '''
@@ -602,7 +605,7 @@ class Attribute(Serializable, Dirtyable):
       cls,
       conArgs=[ParamInfo("value", None), \
                ParamInfo("type", str, \
-                                 lambda slf: getFullClassName(slf.type) if slf.type is not None else "None", #type: ignore[attr-defined]
+                                 lambda slf: (typeAsString(slf.type) or str(slf.type)) if slf.type is not None else "None", #type: ignore[attr-defined]
                                  getType), #type: ignore[arg-type]
                ParamInfo("restriction", str, \
                                         lambda slf: saveRest(slf.restriction) if slf.restriction is not None else "None",  #type: ignore[attr-defined]
@@ -621,6 +624,19 @@ class Attribute(Serializable, Dirtyable):
     '''
     return f'Attribute({self.value}, {self._type}, {self.restriction}, {self.note})'
   
+def _readableAttributes(obj:Any, dic:dict) -> dict:
+  '''
+  *dic* (attributes read from a file), less any that couldn't be read (None),
+  with a warning for each: one bad attribute mustn't make its object, and the
+  file it's in, unreadable.
+  '''
+  bad = [k for k, v in dic.items() if v is None]
+  if not bad:
+    return dic
+  for k in bad:
+    logger.warning(f'Attribute "{k}" of {obj.__class__.__name__} couldn\'t be read, and has been left out.')
+  return {k: v for k, v in dic.items() if v is not None}
+
 class AttributedObject(Serializable, Dirtyable, strdict, Subject):
 
   '''
@@ -644,7 +660,7 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
                 postconSetters=[PropertyInfo("attributes", strdict, # (not inferred ones: see Attribute.inferred)
                                             lambda slf: strdict({k:dict.get(slf,k) for k in dict.keys(slf) #type: ignore[call-overload,arg-type,var-annotated]
                                                                  if not getattr(dict.get(slf,k), "inferred", False)}), #type: ignore[call-overload,arg-type]
-                                            lambda slf, dic: [slf.update(dic), slf.setDirty(False)], #type: ignore[attr-defined,arg-type]
+                                            lambda slf, dic: [slf.update(_readableAttributes(slf, dic)), slf.setDirty(False)], #type: ignore[attr-defined,arg-type]
                                             unique=True)])
 
   def __init__(self):
@@ -841,7 +857,14 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
     else:  
       note = myAttr.note if myAttr.note is not None else (None if superAttr is None else superAttr.note) 
       if not(superAttr is not None and superAttr.isComplete()):
-        raise ValueError(f'Attribute "{key}": Inherited Attribute is not complete.')
+        # An overriding value whose inherited attribute has gone (eg: its type's isa link removed, or a
+        # super-model dropped): it's the object's own value now, of its own type.
+        if myAttr.value is NOVALUE:
+          raise ValueError(f'Attribute "{key}": Inherited Attribute is not complete.')
+        r = myAttr.restriction
+        restriction = VAR_DEFAULTED if r is None else \
+                      Restriction(UNRESTRICTED if r.individual is None else r.individual, UNRESTRICTED if r.type is None else r.type)
+        return Attribute(myAttr.value, myAttr.type if myAttr.type is not None else type(myAttr.value), restriction, note)
       # type is invariant
       assert myAttr.type is None, f'Attribute "{key}": Type is invariant in read/write values, so type cannot be overridden.'
       typ = superAttr.type
@@ -991,7 +1014,10 @@ class AttributedObject(Serializable, Dirtyable, strdict, Subject):
     stored keys, which would disagree with :py:meth:`__iter__`/
     :py:meth:`__getitem__` (both of which account for inheritance).
     '''
-    return self.getAttr(key) is not None
+    try:
+      return self.getAttr(key) is not None
+    except ValueError: # (an attribute that's there, but broken: see getAttr())
+      return dict.__contains__(self, key)
 
   def keys(self) -> KeysView:
     '''

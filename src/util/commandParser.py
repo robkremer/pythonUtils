@@ -1699,10 +1699,18 @@ def fixKwargs(fun:Callable, args:list[Any], kwargs:dict[str,Any],
     if paramName not in sig.parameters:
       del retKwargs[paramName]
   
+  # the params already given positionally (in *args*): not to be given again
+  try:
+    positional:set[str] = set(sig.bind_partial(*args).arguments)
+  except TypeError:
+    positional = set()
+  for paramName in positional:
+    retKwargs.pop(paramName, None)
+
   # fill in defaults
   for paramName, param in sig.parameters.items():
     val = kwargs.get(paramName, None)
-    if val is None and paramName in defaults:
+    if val is None and paramName in defaults and paramName not in positional:
       retKwargs[paramName] = defaults[paramName] # fill in a default
 
   def splitTopLevelUnion(annotation: str) -> list[str]:

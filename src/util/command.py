@@ -156,12 +156,14 @@ class LambdaCommand(Command):
     :type do: Callable[[], NoReturn]
     :param undo:
     :type undo: Callable[[], NoReturn]
-    :param changesState:
+    :param changesState: False if it changes nothing that needs undoing: a *DoList*
+      then doesn't keep it (see *mutatedData*).
     :type changesState: bool
     '''
     super().__init__(name)
     self.myDo = do
     self.myUndo = undo
+    self.changesState = changesState
     
   @override
   def do(self) -> Any:
@@ -170,6 +172,7 @@ class LambdaCommand(Command):
     :rtype: Any
     '''
     super().do()
+    self.mutatedData = self.changesState
     return self.myDo()
     
   @override
@@ -324,9 +327,13 @@ class DoList():
     if self.index+1 == len(self.queue): # at the end of the queue
       logger.error("Cannot redo past the end of the command queue")
       return
+    c = self.queue[self.index+1]
     try:
-      result = self.queue[self.index+1].do()
-    finally: self.index += 1
+      result = c.do()
+    except BaseException:
+      c.done = False # (still to be redone: Command.do() marked it done before it failed)
+      raise
+    self.index += 1 # (only once it's redone: if it failed, redo means it again, and undo the one before it)
     return result
     
   def undo(self) -> Any:
@@ -338,12 +345,25 @@ class DoList():
     if self.index < 0: # at the end of the queue
       logger.error("Cannot undo past the beginning of the command queue")
       return
+    c = self.queue[self.index]
     try:
-      result = self.queue[self.index].undo()
-    finally:
-      self.index -= 1
+      result = c.undo()
+    except BaseException:
+      c.done = True # (still done: Command.undo() marked it undone before it failed)
+      raise
+    self.index -= 1 # (only once it's undone: if it failed, undo means it again, and redo has nothing to redo)
     return result
     
+  def dropRedo(self) -> None:
+    """
+    Forget what's been undone -- what *redo()* would do again: eg, something
+    undone because it was cancelled, which redo mustn't bring back. Each of
+    those commands is deleted (see *Command.delete()*).
+    """
+    for old in self.queue[self.index+1:]:
+      old.delete()
+    del self.queue[self.index+1:]
+
   def getRedoDesc(self) -> str:
     """
     Returns a description of the command that will be executed on a *redo()*, or *None* if nothing to redo.

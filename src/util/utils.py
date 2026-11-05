@@ -909,6 +909,8 @@ def getFullClassName(cls:type) -> str:
   :rtype: str
   """
   #return str(subjectClass)[8:-2]
+  if isinstance(cls, str): # (already a name: eg, a type name such as "choices[yes, no]", which may have spaces)
+    return cls
   splt = str(cls).split()
   if len(splt) == 1: # it was a simple type like "int"
     return splt[0]

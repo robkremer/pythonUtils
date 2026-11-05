@@ -175,8 +175,42 @@ class Test(unittest.TestCase):
     self.assertIn(b, s)
     self.assertEqual(s - {a}, {b, c})
 
-    
-    
+
+  def test_failedReadForgotten(self):
+    '''A file that fails to read leaves nothing in memory: the next open reads it again (and fails again),
+    rather than getting an empty DB that a save would write over the file.'''
+    Path('tempBad.xml').unlink(missing_ok=True)
+    db = PRDb("tempBad.xml")
+    TestObject(db)._name = "animal"
+    db.save()
+    url = db.url
+    self.tearDown()
+    path = Path('tempBad.xml')
+    text = path.read_text().replace("TestObject", "TestObjekt") # (a class that isn't there)
+    path.write_text(text)
+    for _ in range(2):
+      with self.assertRaises(Exception) as cm:
+        PRDb(url)
+      self.assertNotIn(url, PRDb.AllDBs)
+      self.assertIn("TestObjekt", str(cm.exception).split("\n")[0]) # (the likeliest strategy's error, first)
+    with self.assertRaises(Exception):
+      PRDb.getDB(url)
+    self.assertNotIn(url, PRDb.AllDBs)
+    self.assertEqual(path.read_text(), text)
+    path.unlink()
+
+  def test_containsLooksInSuperDBs(self):
+    '''"name in db" agrees with db["name"], which finds a super-DB's objects by name; an id is only this DB's own.'''
+    base = PRDb("tempBase.xml") # (not saved)
+    animal = TestObject(base)
+    animal._name = "animal"
+    db = PRDb("tempDerived.xml")
+    db.addSuperDB(base)
+    self.assertIs(db["animal"], animal)
+    self.assertIn("animal", db)
+    self.assertNotIn("plant", db)
+    self.assertNotIn(animal.id, db) # (an id: this DB's own objects only)
+    self.assertIn(animal.id, base)
 
 
 if __name__ == "__main__":
