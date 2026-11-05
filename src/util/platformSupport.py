@@ -2,8 +2,9 @@
 What's done differently on macOS, Windows and Linux: the key shortcuts are made
 with (Command on the Mac, Control elsewhere), showing a file in the Finder (or
 Explorer, or the file manager), moving a file to the Trash (or Recycle Bin),
-putting a picture on the clipboard, where logs go, and the like. A program asks
-this module, rather than testing *sys.platform* itself.
+putting a picture on the clipboard, where logs go, unlocking a file, telling
+whether the Mac's privacy settings stopped a file being used, and the like. A
+program asks this module, rather than testing *sys.platform* itself.
 
 Nothing here imports the rest of *util*, so anything in it can use this.
 
@@ -13,6 +14,7 @@ from __future__ import annotations
 import os
 import sys
 import shutil
+import stat
 import subprocess
 from typing import Any, Optional
 
@@ -238,6 +240,127 @@ def documentsFolder() -> str:
     except (OSError, subprocess.SubprocessError):
       pass
   return os.path.join(os.path.expanduser("~"), "Documents")
+
+################################################################################
+# ---- Permission to change files ----------------------------------------------
+################################################################################
+
+_UNCHANGEABLE = (stat.UF_IMMUTABLE | stat.UF_APPEND | stat.SF_IMMUTABLE | stat.SF_APPEND
+                 | getattr(stat, "SF_RESTRICTED", 0x00080000))
+"The Mac's (BSD's) file flags that stop a file being changed: locked (the Finder's \"Locked\"), append-only, and protected by the system (SIP)."
+
+def _locked(path:str) -> bool:
+  try:
+    return bool(getattr(os.stat(path), "st_flags", 0) & _UNCHANGEABLE)
+  except OSError:
+    return False
+
+def makeWritable(path:str) -> bool:
+  '''
+  Let *path* (a file or folder) be changed, if it's been locked against it:
+  its owner's write permission turned on (on Windows, its read-only attribute
+  turned off), and, on the Mac, its "Locked" (as the Finder's Get Info sets)
+  and append-only flags turned off.
+
+  :returns: Whether anything was changed: False if it could already be
+    changed, isn't there, or can't be unlocked (eg: it's someone else's).
+  '''
+  try:
+    st = os.stat(path)
+  except OSError:
+    return False
+  changed = False
+  flags = getattr(st, "st_flags", 0)
+  userLocks = stat.UF_IMMUTABLE | stat.UF_APPEND # (the system ones only the administrator can unset)
+  if flags & userLocks and hasattr(os, "chflags"):
+    try:
+      os.chflags(path, flags & ~userLocks) # type: ignore[attr-defined] # @UndefinedVariable
+      changed = True
+    except OSError:
+      pass
+  if not st.st_mode & stat.S_IWUSR:
+    try:
+      os.chmod(path, stat.S_IMODE(st.st_mode) | stat.S_IWUSR)
+      changed = True
+    except OSError:
+      pass
+  return changed
+
+def privacyBlocked(ex:OSError, path:Optional[str]=None) -> bool:
+  '''
+  :param ex: Why a file (or folder) couldn't be read or written.
+  :param path: The file, if *ex* doesn't say (its *filename*).
+  :returns: Whether it's (very likely) the Mac's privacy protection that
+    stopped it: "Operation not permitted" (EPERM) for a file that isn't locked
+    (see *makeWritable()*), in a folder that isn't. The Documents, Desktop and
+    Downloads folders, iCloud Drive, and other disks, can be used only by the
+    apps the user's allowed to (in System Settings' Privacy & Security): see
+    *privacyHelp()*.
+  '''
+  import errno
+  if not MAC or ex.errno != errno.EPERM:
+    return False
+  path = path or (ex.filename if isinstance(ex.filename, str) else None)
+  return not (path and (_locked(path) or _locked(os.path.dirname(path))))
+
+def responsibleApp() -> Optional[str]:
+  '''
+  :returns: On the Mac, the app the privacy settings (in System Settings'
+    Privacy & Security) take this program to be: the outermost app among the
+    processes that started it -- eg: "Terminal" or "Eclipse", for a script run
+    from them; the program itself, if it's an app. None elsewhere, or if it
+    can't be told.
+  '''
+  if not MAC:
+    return None
+  try:
+    out = subprocess.run(["ps", "-axo", "pid=,ppid=,comm="], capture_output=True, text=True, timeout=5).stdout
+  except (OSError, subprocess.SubprocessError):
+    return None
+  procs:dict[int, tuple[int, str]] = {}
+  for line in out.splitlines():
+    parts = line.split(None, 2)
+    if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():
+      procs[int(parts[0])] = (int(parts[1]), parts[2])
+  app, pid, seen = None, os.getpid(), set()
+  while pid in procs and pid > 1 and pid not in seen:
+    seen.add(pid)
+    pid, command = procs[pid][0], procs[pid][1]
+    bundle = next((p for p in command.split("/") if p.endswith(".app")), None) # (the outermost, eg "Visual Studio Code.app" for its "Code Helper.app")
+    if bundle:
+      app = bundle[:-len(".app")]
+  return app
+
+def privacyHelp(path:str, app:Optional[str]=None) -> str:
+  '''
+  :param path: A file (or folder) the Mac's privacy protection won't let this
+    program use (see *privacyBlocked()*).
+  :param app: The app to allow; by default, *responsibleApp()*'s.
+  :returns: What to tell the user: which app to allow, and where (see
+    *openPrivacySettings()*).
+  '''
+  app = app or responsibleApp() or "this program"
+  full, home = os.path.abspath(path), os.path.expanduser("~")
+  folder = next((name for name in ("Documents", "Desktop", "Downloads")
+                 if (full + os.sep).startswith(os.path.join(home, name, ""))), None)
+  where = f"your {folder} folder" if folder else f'"{os.path.dirname(full)}"'
+  setting = f'turn on "{folder} Folder" under {app}' if folder else f"turn on what's listed under {app}"
+  return (f"macOS's privacy protection isn't letting {app} use {where}. To let it, open System Settings, "
+          f"Privacy & Security, Files & Folders, and {setting}. If {app} isn't listed there, add it to "
+          f"Full Disk Access (also in Privacy & Security) instead, and then quit {app} and start it again.")
+
+PRIVACY_FILES_AND_FOLDERS = "Privacy_FilesAndFolders"
+"Privacy & Security's Files & Folders settings (for *openPrivacySettings()*)."
+PRIVACY_FULL_DISK_ACCESS = "Privacy_AllFiles"
+"Privacy & Security's Full Disk Access settings (for *openPrivacySettings()*)."
+
+def openPrivacySettings(pane:str=PRIVACY_FILES_AND_FOLDERS) -> None:
+  '''
+  On the Mac, open System Settings at Privacy & Security's *pane* (eg:
+  *PRIVACY_FILES_AND_FOLDERS*). Nothing's done elsewhere.
+  '''
+  if MAC:
+    _launch(["open", f"x-apple.systempreferences:com.apple.preference.security?{pane}"])
 
 ################################################################################
 # ---- Pictures and the clipboard ----------------------------------------------

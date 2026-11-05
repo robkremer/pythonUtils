@@ -169,6 +169,104 @@ class TestFiles(unittest.TestCase):
       platformSupport.moveToTrash(f)
 
 
+class TestPermissions(unittest.TestCase):
+  'Unlocking files, and telling (and saying) that the Mac\'s privacy protection stopped one being used.'
+
+  def setUp(self):
+    self.folder = tempfile.mkdtemp()
+    self.file = os.path.join(self.folder, "a.txt")
+    with open(self.file, "w") as out:
+      out.write("x")
+
+  def tearDown(self):
+    for path in (self.file, self.folder):
+      if os.path.exists(path):
+        platformSupport.makeWritable(path)
+    shutil.rmtree(self.folder, ignore_errors=True)
+
+  def test0100makeWritableReadOnly(self):
+    import stat
+    os.chmod(self.file, 0o444)
+    self.assertTrue(platformSupport.makeWritable(self.file))
+    self.assertTrue(os.stat(self.file).st_mode & stat.S_IWUSR)
+    self.assertFalse(platformSupport.makeWritable(self.file)) # (nothing more to do)
+    self.assertFalse(platformSupport.makeWritable(os.path.join(self.folder, "none.txt")))
+
+  @unittest.skipUnless(hasattr(os, "chflags"), "file flags are the Mac's (and BSD's)")
+  def test0150makeWritableLocked(self):
+    import stat
+    os.chflags(self.file, stat.UF_IMMUTABLE) # type: ignore[attr-defined] # (as the Finder's Get Info "Locked") @UndefinedVariable
+    self.assertTrue(platformSupport._locked(self.file))
+    with self.assertRaises(PermissionError):
+      open(self.file, "w").close()
+    self.assertTrue(platformSupport.makeWritable(self.file))
+    self.assertFalse(platformSupport._locked(self.file))
+    with open(self.file, "w") as out:
+      out.write("y")
+
+  def test0200privacyBlocked(self):
+    import errno
+    eperm = PermissionError(errno.EPERM, "Operation not permitted", self.file)
+    with mock.patch.object(platformSupport, "MAC", True):
+      self.assertTrue(platformSupport.privacyBlocked(eperm))
+      self.assertTrue(platformSupport.privacyBlocked(PermissionError(errno.EPERM, "Operation not permitted"), self.file))
+      self.assertFalse(platformSupport.privacyBlocked(PermissionError(errno.EACCES, "Permission denied", self.file)))
+      with mock.patch.object(platformSupport, "_locked", lambda path: path == self.file):
+        self.assertFalse(platformSupport.privacyBlocked(eperm)) # (it's locked: that's why)
+      with mock.patch.object(platformSupport, "_locked", lambda path: path == self.folder):
+        self.assertFalse(platformSupport.privacyBlocked(eperm)) # (its folder is)
+    with mock.patch.object(platformSupport, "MAC", False):
+      self.assertFalse(platformSupport.privacyBlocked(eperm))
+
+  def test0300privacyHelp(self):
+    home = os.path.join(self.folder, "home")
+    with mock.patch.dict(os.environ, {"HOME": home, "USERPROFILE": home}):
+      text = platformSupport.privacyHelp(os.path.join(home, "Documents", "Semantic Nets Examples"), app="Eclipse")
+      self.assertIn("isn't letting Eclipse use your Documents folder", text)
+      self.assertIn('turn on "Documents Folder" under Eclipse', text)
+      self.assertIn("Full Disk Access", text)
+      self.assertIn("your Desktop folder", platformSupport.privacyHelp(os.path.join(home, "Desktop"), app="X"))
+      other = os.path.join(self.folder, "elsewhere", "a.snm")
+      text = platformSupport.privacyHelp(other, app="X")
+      self.assertIn(f'"{os.path.dirname(other)}"', text)
+      self.assertNotIn("Documents", text)
+      with mock.patch.object(platformSupport, "responsibleApp", return_value=None):
+        self.assertIn("isn't letting this program use", platformSupport.privacyHelp(other))
+
+  def test0400responsibleApp(self):
+    me = os.getpid()
+    ps = (f"  1     0 /sbin/launchd\n"
+          f"500     1 /Applications/Utilities/Terminal.app/Contents/MacOS/Terminal\n"
+          f"510   500 login\n"
+          f"520   510 -zsh\n"
+          f"{me}   520 /Library/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python\n")
+    run = lambda out: mock.patch.object(platformSupport.subprocess, "run", return_value=SimpleNamespace(stdout=out))
+    with mock.patch.object(platformSupport, "MAC", True):
+      with run(ps):
+        self.assertEqual(platformSupport.responsibleApp(), "Terminal") # (not Python's own app)
+      with run(ps.replace("/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal",
+                          "/Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper")):
+        self.assertEqual(platformSupport.responsibleApp(), "Visual Studio Code")
+      with run(f"  1     0 /sbin/launchd\n{me}     1 /Applications/Semantic Nets.app/Contents/MacOS/Semantic Nets\n"):
+        self.assertEqual(platformSupport.responsibleApp(), "Semantic Nets")
+      with run(""):
+        self.assertIsNone(platformSupport.responsibleApp())
+      with mock.patch.object(platformSupport.subprocess, "run", side_effect=OSError("no ps")):
+        self.assertIsNone(platformSupport.responsibleApp())
+    with mock.patch.object(platformSupport, "MAC", False):
+      self.assertIsNone(platformSupport.responsibleApp())
+    platformSupport.responsibleApp() # (the real one: no error, whatever's running the tests -- maybe no app)
+
+  def test0500openPrivacySettings(self):
+    with mock.patch.object(platformSupport, "_launch") as launch:
+      with mock.patch.object(platformSupport, "MAC", True):
+        platformSupport.openPrivacySettings()
+      launch.assert_called_once_with(["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_FilesAndFolders"])
+      with mock.patch.object(platformSupport, "MAC", False):
+        platformSupport.openPrivacySettings()
+      launch.assert_called_once()
+
+
 class TestTerminalRouting(unittest.TestCase):
 
   def test0100closedWindowsTerminal(self):
