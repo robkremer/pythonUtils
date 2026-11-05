@@ -354,6 +354,16 @@ class DoList():
     self.index -= 1 # (only once it's undone: if it failed, undo means it again, and redo has nothing to redo)
     return result
     
+  def dropRedo(self) -> None:
+    """
+    Forget what's been undone -- what *redo()* would do again: eg, something
+    undone because it was cancelled, which redo mustn't bring back. Each of
+    those commands is deleted (see *Command.delete()*).
+    """
+    for old in self.queue[self.index+1:]:
+      old.delete()
+    del self.queue[self.index+1:]
+
   def getRedoDesc(self) -> str:
     """
     Returns a description of the command that will be executed on a *redo()*, or *None* if nothing to redo.

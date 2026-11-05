@@ -78,5 +78,24 @@ class Test(unittest.TestCase):
     dl.do(LambdaCommand("change", lambda: None, lambda: None))
     self.assertEqual(dl.getUndoDesc(), "change")
 
+  def test_dropRedo(self):
+    'What\'s been undone is forgotten (and deleted): redo has nothing to do, and undo goes on from there.'
+    log:list = []
+    dl = DoList()
+    dl.do(Logged("one", log))
+    two = Logged("two", log)
+    deleted:list = []
+    two.delete = lambda: deleted.append("two") # type: ignore[method-assign]
+    dl.do(two)
+    dl.undo()
+    dl.dropRedo()
+    self.assertEqual(deleted, ["two"])
+    self.assertEqual(dl.getRedoDesc(), "<nothing to redo>")
+    self.assertEqual(dl.getUndoDesc(), "one")
+    dl.dropRedo() # (nothing to drop: nothing happens)
+    self.assertEqual(len(dl.queue), 1)
+    dl.do(Logged("three", log))
+    self.assertEqual(dl.getUndoDesc(), "three")
+
 if __name__ == "__main__":
   unittest.main()
