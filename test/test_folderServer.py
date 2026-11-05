@@ -92,5 +92,11 @@ class TestFolderServer(unittest.TestCase):
     self.assertTrue(url.endswith("/user%20guide/shortcuts.html"))
     self.assertIn("furo.css", self.get(url))
 
+  def test_section(self):
+    'A page\'s section (its #anchor) stays one: not quoted into the file name.'
+    url = folderURL(self.folder, "user guide/shortcuts.html#keys and mouse")
+    self.assertTrue(url.endswith("/user%20guide/shortcuts.html#keys%20and%20mouse"), url)
+    self.assertIn("furo.css", self.get(url))
+
 if __name__ == "__main__":
   unittest.main()
