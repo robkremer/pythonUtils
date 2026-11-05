@@ -24,6 +24,7 @@ The attribute editor doesn't change the object while it's open: an attribute
 added (or an inherited one overridden) there is only returned by Save, for the
 caller to set (eg: as an undoable command); Cancel leaves the object as it was.
 '''
+import gc
 import unittest
 import tkinter as tk
 from typing import Sequence, override
@@ -56,6 +57,8 @@ class TestAttributeEditor(unittest.TestCase):
   @classmethod
   def tearDownClass(cls):
     cls.root.destroy()
+    del cls.root
+    gc.collect() # (the editors' Tk variables go now, in this thread: else a later collection in another thread -- eg: a test's server -- deletes them there, which Tcl can't do)
 
   def setUp(self):
     self.person = Obj("person")
