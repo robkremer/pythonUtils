@@ -74,10 +74,12 @@ def serveFolder(folder:str) -> str:
 def folderURL(folder:str, page:str="") -> str:
   '''
   :param folder: A folder, served by *serveFolder()*.
-  :param page: A file in it, relative to the folder, with "/" separators (eg: "user/index.html").
+  :param page: A file in it, relative to the folder, with "/" separators (eg: "user/index.html"),
+    and perhaps a section of it (eg: "user/index.html#installing").
   :return: The URL that shows *page* from the server for *folder* (starting it if need be).
   '''
-  return serveFolder(folder) + quote(page.lstrip("/"))
+  path, hash_, section = page.lstrip("/").partition("#")
+  return serveFolder(folder) + quote(path) + hash_ + quote(section, safe="")
 
 def openInBrowser(folder:str, page:str="index.html") -> str:
   '''
@@ -85,7 +87,8 @@ def openInBrowser(folder:str, page:str="index.html") -> str:
   *folder* (see *serveFolder()*).
 
   :param folder: The folder (eg: the top of a Sphinx build's html).
-  :param page: The page, relative to the folder, with "/" separators (eg: "user/index.html").
+  :param page: The page, relative to the folder, with "/" separators (eg: "user/index.html"),
+    and perhaps a section of it (eg: "user/index.html#installing").
   :return: The URL opened.
   '''
   url = folderURL(folder, page)
