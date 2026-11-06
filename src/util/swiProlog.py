@@ -81,8 +81,8 @@ def _janusModules() -> list[Path]:
   return [f for folder in spec.submodule_search_locations or [] for f in sorted(Path(folder).glob("_swipl*"))
           if f.suffix in (".so", ".pyd", ".dylib")]
 
-_PATH = re.compile(rb"(?<=\x00)/[\x20-\x7e]+(?=\x00)")
-"A path in a compiled file: a NUL-terminated string, starting with a slash, after another one."
+_PATH = re.compile(rb"(?<=\x00)(?:/|[A-Za-z]:[\\/])[\x20-\x7e]+(?=\x00)")
+"An absolute path in a compiled file (eg: \"/usr/lib/swipl\", \"C:\\\\Program Files\\\\swipl\"): a NUL-terminated string, after another one."
 
 def libraryFolders(module:str|Path) -> list[Path]:
   '''
