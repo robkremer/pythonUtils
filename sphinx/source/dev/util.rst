@@ -38,6 +38,7 @@ Submodules
    util.prefs
    util.rtValuesDialog
    util.singleInstance
+   util.swiProlog
    util.terminal
    util.tooltip
    util.urlDialog
