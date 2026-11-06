@@ -218,6 +218,34 @@ class TestPermissions(unittest.TestCase):
     with mock.patch.object(platformSupport, "MAC", False):
       self.assertFalse(platformSupport.privacyBlocked(eperm))
 
+  def test0250privacyError(self):
+    'The error the privacy protection caused, in what was raised because of it.'
+    import errno
+    eperm = PermissionError(errno.EPERM, "Operation not permitted", self.file)
+    with mock.patch.object(platformSupport, "MAC", True):
+      self.assertIs(platformSupport.privacyError(eperm), eperm)
+      try:
+        try:
+          raise eperm
+        except OSError as e:
+          raise ValueError(f"Can't read it: {e}") from e
+      except ValueError as wrapped:
+        self.assertIs(platformSupport.privacyError(wrapped), eperm)
+      try:
+        try:
+          raise eperm
+        except OSError:
+          raise LookupError("No strategy succeeded") # (while handling it)
+      except LookupError as during:
+        self.assertIs(platformSupport.privacyError(during), eperm)
+      self.assertIsNone(platformSupport.privacyError(PermissionError(errno.EACCES, "Permission denied", self.file)))
+      self.assertIsNone(platformSupport.privacyError(ValueError("no")))
+      a, b = ValueError("a"), ValueError("b")
+      a.__context__, b.__context__ = b, a # (a loop: still an answer)
+      self.assertIsNone(platformSupport.privacyError(a))
+    with mock.patch.object(platformSupport, "MAC", False):
+      self.assertIsNone(platformSupport.privacyError(eperm))
+
   def test0300privacyHelp(self):
     home = os.path.join(self.folder, "home")
     with mock.patch.dict(os.environ, {"HOME": home, "USERPROFILE": home}):

@@ -303,6 +303,23 @@ def privacyBlocked(ex:OSError, path:Optional[str]=None) -> bool:
   path = path or (ex.filename if isinstance(ex.filename, str) else None)
   return not (path and (_locked(path) or _locked(os.path.dirname(path))))
 
+def privacyError(ex:BaseException) -> Optional[OSError]:
+  '''
+  :param ex: Why something failed: eg, an error reading a file, or one raised
+    because of it (``raise ValueError(...) from e``).
+  :returns: The error in it -- *ex* itself, or what it was raised from or
+    while handling -- that the Mac's privacy protection caused (see
+    *privacyBlocked()*); None if none was.
+  '''
+  seen:set[int] = set()
+  e:Optional[BaseException] = ex
+  while e is not None and id(e) not in seen:
+    seen.add(id(e))
+    if isinstance(e, OSError) and privacyBlocked(e):
+      return e
+    e = e.__cause__ or e.__context__
+  return None
+
 def responsibleApp() -> Optional[str]:
   '''
   :returns: On the Mac, the app the privacy settings (in System Settings'
