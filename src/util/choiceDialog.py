@@ -34,7 +34,7 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
 from typing import Optional
-from util.utils import ownDialog
+from util.utils import ownDialog, placeDialog
 
 ICONS = ("error", "info", "question", "warning")
 "The icons a *ChoiceDialog* can show (Tk's own: as *tkinter.messagebox* shows)."
@@ -43,11 +43,16 @@ class ChoiceDialog(tk.Toplevel):
   '''
   A message, with a button for each choice, right to left: the first choice
   is the right-most (where the default button goes on macOS and Windows).
-  Modal: *show()* returns the choice made.
+  Modal: *show()* returns the choice made. It's centred over its parent's
+  window, or on the screen if that isn't on it (see *util.utils.placeDialog()*):
+  unlike *tkinter.messagebox*'s, which on macOS is put half off the screen
+  when the app has no window on it.
   '''
 
   def __init__(self, parent:tk.Misc|None, title:str, message:str, choices:list[str], default:Optional[str]=None,
                cancel:Optional[str]=None, detail:str="", icon:Optional[str]=None):
+    if icon is not None and icon not in ICONS: # (before the window's made: else it's left behind)
+      raise ValueError(f'icon "{icon}" isn\'t one of {", ".join(ICONS)}.')
     super().__init__(parent)
     ownDialog(self, parent) # (over its parent's window, not full screen: see ownDialog())
     self.title(title)
@@ -58,8 +63,6 @@ class ChoiceDialog(tk.Toplevel):
     frame.pack(fill=tk.BOTH, expand=True)
     frame.columnconfigure(1, weight=1)
     if icon is not None:
-      if icon not in ICONS:
-        raise ValueError(f'icon "{icon}" isn\'t one of {", ".join(ICONS)}.')
       ttk.Label(frame, image=f"::tk::icons::{icon}").grid(row=0, column=0, rowspan=2, sticky=tk.N, padx=(0, 12))
     ttk.Label(frame, text=message, wraplength=440, justify=tk.LEFT).grid(row=0, column=1, sticky=tk.W)
     if detail:
@@ -76,6 +79,7 @@ class ChoiceDialog(tk.Toplevel):
       self.bind("<Return>", lambda _e: self.choose(default))
     self.bind("<Escape>", lambda _e: self.choose(cancel))
     self.protocol("WM_DELETE_WINDOW", lambda: self.choose(cancel))
+    placeDialog(self, parent) # (centred over its parent's window, or the screen: wholly on screen)
 
   def choose(self, choice:Optional[str]) -> None:
     ''':param choice: The choice made (None: none -- eg: the window was closed with no *cancel* choice).'''

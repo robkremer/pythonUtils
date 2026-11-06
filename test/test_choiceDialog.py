@@ -74,6 +74,27 @@ class TestChoiceDialog(unittest.TestCase):
     self.assertEqual(self.ask(lambda d: d.tk.call(d.protocol("WM_DELETE_WINDOW")), cancel="Cancel"), "Cancel")
     self.assertIsNone(self.ask(lambda d: d.event_generate("<Escape>")))
 
+  def test_onScreen(self):
+    'With no window on screen (only the hidden root): in the middle of the screen, wholly on it.'
+    d = ChoiceDialog(self.root, "Title", "Which? " * 40, CHOICES, icon="warning")
+    d.update()
+    x, y, w, h = d.winfo_x(), d.winfo_y(), d.winfo_width(), d.winfo_height()
+    sw, sh = d.winfo_screenwidth(), d.winfo_screenheight()
+    self.assertTrue(0 <= x and x + w <= sw and 0 <= y and y + h <= sh, (x, y, w, h, sw, sh))
+    self.assertLessEqual(abs(x + w / 2 - sw / 2), 2, (x, y, w, h, sw, sh)) # (centred across)
+    d.destroy()
+
+  def test_overParent(self):
+    'Over a window on screen: centred across it.'
+    top = tk.Toplevel(self.root)
+    top.geometry("600x400+100+100")
+    top.update()
+    d = ChoiceDialog(top, "Title", "Which?", CHOICES)
+    d.update()
+    self.assertLessEqual(abs((d.winfo_rootx() + d.winfo_width() / 2) - (top.winfo_rootx() + top.winfo_width() / 2)), 2)
+    d.destroy()
+    top.destroy()
+
   def test_badIcon(self):
     with self.assertRaises(ValueError):
       ChoiceDialog(self.root, "Title", "Which?", CHOICES, icon="smiley")
