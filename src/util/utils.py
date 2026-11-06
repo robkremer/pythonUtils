@@ -2460,6 +2460,35 @@ def ownDialog(dialog:tk.Toplevel, parent:Any, keep:bool=True) -> None:
         dialog.after_idle(free)
       bound = dialog.bind("<Map>", letGo, add="+")
 
+def placeDialog(dialog:tk.Toplevel, parent:Any) -> None:
+  """
+  Put *dialog* (not shown yet) where it can be seen: centred over the window
+  it belongs over (see *dialogOwner()*) if one's on screen, else in the middle
+  of the screen -- and wholly on the screen either way. (Left to the window
+  manager, or to Tk's own message boxes, a dialog whose app has no window on
+  screen -- eg: at start-up, with only its hidden root window -- can be put
+  half off the screen, at its top-left, where it can't be read or moved.)
+
+  :param dialog: A dialog: a new window, not shown yet.
+  :type dialog: tk.Toplevel
+  :param parent: What it's opened from, if anything.
+  :type parent: tk.Misc | tk.Wm | None
+  """
+  try:
+    dialog.update_idletasks()
+    w, h = dialog.winfo_reqwidth(), dialog.winfo_reqheight()
+    sw, sh = dialog.winfo_screenwidth(), dialog.winfo_screenheight()
+    owner = dialogOwner(parent)
+    if owner is not None and owner is not dialog:
+      x = owner.winfo_rootx() + (owner.winfo_width() - w) // 2
+      y = owner.winfo_rooty() + (owner.winfo_height() - h) // 3
+    else:
+      x, y = (sw - w) // 2, (sh - h) // 3
+    x, y = max(0, min(x, sw - w)), max(0, min(y, sh - h))
+    dialog.geometry(f"+{x}+{y}")
+  except tk.TclError:
+    pass
+
 def showExceptionDialog(parent: tk.Toplevel|tk.Tk|None = None, title: str = "Error", text:str|None=None) -> None:
   """Display the currently-handled exception's traceback (as returned by
   traceback.format_exc()) in a scrollable, resizable dialog. Call this
