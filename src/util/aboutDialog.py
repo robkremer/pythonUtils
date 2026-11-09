@@ -148,7 +148,7 @@ def _read(d:metadata.Distribution, path:str) -> Optional[str]:
   for f in d.files or []:
     if len(f.parts) >= 2 and f.parts[0].endswith(".dist-info") and "/".join(f.parts[1:]) == path:
       try:
-        return f.read_binary().decode("latin-1")
+        return f.read_binary().decode("latin-1").replace("\r\n", "\n") # (as read_text() reads them)
       except OSError:
         return None
   return None
