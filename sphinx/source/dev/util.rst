@@ -21,6 +21,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   util.aboutDialog
    util.abstractGraph
    util.actionDialog
    util.attribute
