@@ -31,6 +31,7 @@ Created on Oct 24, 2026
 import unittest
 import tkinter as tk
 from util.choiceDialog import ChoiceDialog
+from util.utils import frameOffset
 
 CHOICES = ["Update", "Replace", "Cancel"]
 
@@ -93,6 +94,17 @@ class TestChoiceDialog(unittest.TestCase):
     d.update()
     self.assertLessEqual(abs((d.winfo_rootx() + d.winfo_width() / 2) - (top.winfo_rootx() + top.winfo_width() / 2)), 2)
     d.destroy()
+    top.destroy()
+
+  def test_frameOffset(self):
+    'Where a window\'s inside is in its frame: none for a window that isn\'t shown.'
+    self.assertEqual(frameOffset(self.root), (0, 0))
+    top = tk.Toplevel(self.root)
+    top.geometry("300x200+120+140")
+    top.update()
+    dx, dy = frameOffset(top)
+    self.assertTrue(0 <= dx <= 100 and 0 <= dy <= 200, (dx, dy))
+    self.assertEqual((top.winfo_rootx() - dx, top.winfo_rooty() - dy), (120, 140)) # (the frame's where it was put)
     top.destroy()
 
   def test_badIcon(self):
