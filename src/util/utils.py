@@ -2460,6 +2460,28 @@ def ownDialog(dialog:tk.Toplevel, parent:Any, keep:bool=True) -> None:
         dialog.after_idle(free)
       bound = dialog.bind("<Map>", letGo, add="+")
 
+def frameOffset(window:tk.Misc) -> tuple[int, int]:
+  """
+  :param window: A top-level window (eg: a *tk.Tk* or *tk.Toplevel*).
+  :type window: tk.Misc
+  :returns: Where *window*'s inside is in its frame -- the border and title
+    bar the window manager puts around it (and, on Windows, its menu bar):
+    how far its left edge is from the frame's, and its top from the frame's
+    top; (0, 0) if it has no frame, or isn't on screen. (``wm geometry``
+    places a window's frame, but ``winfo rootx`` and ``rooty`` say where its
+    inside is: on Windows they're 8 px or so apart across, more down.)
+  :rtype: tuple[int, int]
+  """
+  try:
+    if not window.winfo_viewable():
+      return 0, 0
+    m = re.fullmatch(r"\d+x\d+\+(-?\d+)\+(-?\d+)", window.wm_geometry()) #type: ignore[attr-defined]
+    fx, fy = (int(m[1]), int(m[2])) if m else (window.winfo_x(), window.winfo_y()) # (wm geometry is the frame's place everywhere; winfo x isn't, on X11)
+    dx, dy = window.winfo_rootx() - fx, window.winfo_rooty() - fy
+  except (tk.TclError, AttributeError):
+    return 0, 0
+  return (dx if 0 <= dx <= 100 else 0), (dy if 0 <= dy <= 200 else 0)
+
 def placeDialog(dialog:tk.Toplevel, parent:Any) -> None:
   """
   Put *dialog* (not shown yet) where it can be seen: centred over the window
@@ -2468,6 +2490,10 @@ def placeDialog(dialog:tk.Toplevel, parent:Any) -> None:
   manager, or to Tk's own message boxes, a dialog whose app has no window on
   screen -- eg: at start-up, with only its hidden root window -- can be put
   half off the screen, at its top-left, where it can't be read or moved.)
+
+  It's the dialog's inside that's centred over its owner's inside. Its frame
+  (see *frameOffset()*) can't be measured till it's shown, so it's taken to
+  be like its owner's.
 
   :param dialog: A dialog: a new window, not shown yet.
   :type dialog: tk.Toplevel
@@ -2480,11 +2506,13 @@ def placeDialog(dialog:tk.Toplevel, parent:Any) -> None:
     sw, sh = dialog.winfo_screenwidth(), dialog.winfo_screenheight()
     owner = dialogOwner(parent)
     if owner is not None and owner is not dialog:
-      x = owner.winfo_rootx() + (owner.winfo_width() - w) // 2
-      y = owner.winfo_rooty() + (owner.winfo_height() - h) // 3
+      dx, dy = frameOffset(owner)
+      x = owner.winfo_rootx() + (owner.winfo_width() - w) // 2 - dx
+      y = owner.winfo_rooty() + (owner.winfo_height() - h) // 3 - dy
     else:
+      dx = dy = 0
       x, y = (sw - w) // 2, (sh - h) // 3
-    x, y = max(0, min(x, sw - w)), max(0, min(y, sh - h))
+    x, y = max(0, min(x, sw - w - 2 * dx)), max(0, min(y, sh - h - dy - dx)) # (the frame wholly on screen)
     dialog.geometry(f"+{x}+{y}")
   except tk.TclError:
     pass
