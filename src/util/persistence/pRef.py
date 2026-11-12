@@ -1052,6 +1052,12 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
     :raises TypeError: If the *value* is not of type *PRObject*.
     
     Generate a (locally) unique id for this object and add it the this DB.
+
+    Observers are told (later: see *Subject.notifyLater()*) with the topic
+    ("new", (id, value)) -- or, for an object put back (*_id* given),
+    ("new", (id, value, True)): it's the one a "del" topic said had gone,
+    which an observer may want to treat as it did then (eg: a view that
+    wasn't showing it needn't start to).
     
     The method is private, but is used in the constructor of *PRObject*.
     '''
@@ -1078,7 +1084,7 @@ class PRDb[T:PRObject](Serializable, Subject, Dirtyable):
         PRDb.readProgress(self, count)
     #self.notify(("new", (ret, value)))
     with Subject.ChangeMgr(self, later=True) as cm:
-      cm.registerTopics(("new", (ret, value)))
+      cm.registerTopics(("new", (ret, value) if _id is None else (ret, value, True))) # (True: put back)
     return ret
   
   def _unregister(self, _id:int) -> None:

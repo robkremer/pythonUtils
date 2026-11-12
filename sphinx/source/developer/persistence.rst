@@ -128,8 +128,11 @@ gives it an integer id; it may also have a name. Look objects up by either:
   whether it's changed since it was last saved. A database can be
   *write-locked*.
 - A database is a :py:class:`~util.observer.Subject`: it announces objects
-  added (``"new"``) and removed (``"del"``), so views of it can keep up (see
-  :doc:`observer`).
+  added (``"new"``, with the object's id and the object) and removed
+  (``"del"``, with its id), so views of it can keep up (see :doc:`observer`).
+  An object put back with the id it had (eg: a delete undone) is announced
+  as ``("new", (id, object, True))``: an observer can then treat it as it did
+  before it went (eg: a view that wasn't showing it needn't start to).
 
 References
 ~~~~~~~~~~

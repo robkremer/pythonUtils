@@ -42,6 +42,7 @@ Submodules
    util.singleInstance
    util.swiProlog
    util.terminal
+   util.tkCommands
    util.tooltip
    util.urlDialog
    util.utils
