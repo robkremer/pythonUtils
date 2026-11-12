@@ -37,6 +37,7 @@ Submodules
    util.observer
    util.platformSupport
    util.prefs
+   util.reportWindow
    util.rtValuesDialog
    util.singleInstance
    util.swiProlog
