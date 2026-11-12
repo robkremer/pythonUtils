@@ -199,6 +199,25 @@ class Test(unittest.TestCase):
     self.assertEqual(path.read_text(), text)
     path.unlink()
 
+  def test_putBackSaidSo(self):
+    '''
+    An object taken out of its DB and put back (with its id): the "new" topic
+    says it's the one that went (a third item, True); one just made has none.
+    '''
+    Path('temp8.xml').unlink(missing_ok=True)
+    db = PRDb("temp8.xml")
+    heard:list[tuple] = []
+    db.scheduler = lambda fire: fire() # (told at once: no event loop here)
+    db.attachCallback(lambda topic, data: heard.append((topic, data)))
+    obj = TestObject(db)
+    key = obj._id
+    self.assertEqual(heard, [("new", (key, obj))])
+    db._unregister(key)
+    self.assertEqual(heard[-1], ("del", (key,)))
+    self.assertEqual(db._register(obj, key), key)
+    self.assertEqual(heard[-1], ("new", (key, obj, True)))
+    self.assertIs(db[key], obj)
+
   def test_containsLooksInSuperDBs(self):
     '''"name in db" agrees with db["name"], which finds a super-DB's objects by name; an id is only this DB's own.'''
     base = PRDb("tempBase.xml") # (not saved)

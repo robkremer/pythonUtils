@@ -92,3 +92,24 @@ Dialogs and tooltips
 :py:class:`~util.rtValuesDialog.RTValueDialog`
   A dialog of sliders, each described by a :py:class:`~util.rtValuesDialog.Param`,
   for adjusting a running program's parameters. (It needs matplotlib.)
+
+:py:class:`~util.reportWindow.ReportWindow`
+  A window showing a report: text that can be selected and copied but not
+  changed, with Copy and Close buttons, and a frame above the text for its
+  maker's controls (eg: buttons choosing what's reported).
+
+Tk command names
+----------------
+
+tkinter names the Tcl command of each callback (a binding, a button's
+command, a timer's callback) by an address and the callback's name. A
+destroyed widget's pending ``after()`` timers aren't cancelled, and an
+address can be used again: so a callback registered later, with the same
+name (every lambda's is ``<lambda>``), can get the very command name a stale
+timer holds -- and the timer then runs it: eg, a window's close handler,
+closing the window by itself. It's rare, and looks random.
+
+:py:func:`util.tkCommands.uniqueCommandNames`, called once before an
+application's first window is made, has tkinter put a serial number in each
+command's name, so none is used twice and a stale timer finds nothing to
+run.
