@@ -37,6 +37,7 @@ Submodules
    util.observer
    util.platformSupport
    util.prefs
+   util.programFiles
    util.reportWindow
    util.rtValuesDialog
    util.singleInstance

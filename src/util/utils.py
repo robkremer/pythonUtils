@@ -55,6 +55,7 @@ import importlib
 from abc import ABC
 import argparse
 from pickle import NONE
+from util import programFiles # (now, at start-up: it notes the program's files as they are -- see showExceptionDialog())
 #from docutils.nodes import description
 #logger:util.Logger = util.getLogger(__name__)
 
@@ -2521,7 +2522,9 @@ def showExceptionDialog(parent: tk.Toplevel|tk.Tk|None = None, title: str = "Err
   """Display the currently-handled exception's traceback (as returned by
   traceback.format_exc()) in a scrollable, resizable dialog. Call this
   from within an `except:` block, the same place you'd call
-  traceback.print_exc().
+  traceback.print_exc(). If the program's own files have been replaced since
+  it started (see *util.programFiles*) -- which may well be why -- it says
+  so first, and to quit and open it again.
 
   :param parent: The parent widget/window this dialog is transient to.
   :type parent: tk.Misc | None
@@ -2546,6 +2549,8 @@ def showExceptionDialog(parent: tk.Toplevel|tk.Tk|None = None, title: str = "Err
   # window yet to be transient to, only the (permanently withdrawn) root.
   ownDialog(dialog, parent) # (over a window on screen: see ownDialog())
 
+  if programFiles.changed():
+    tk.Label(dialog, text=programFiles.advice(), justify="left", anchor="w", wraplength=640).pack(fill="x", padx=8, pady=(8, 0))
   body = scrolledtext.ScrolledText(dialog, width=100, height=25, font=("Courier", 10), wrap="none")
   body.insert("1.0", text)
   body.configure(state="disabled")
