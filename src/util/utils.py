@@ -2161,6 +2161,11 @@ def askYesNo(question:str, title:str) -> bool:
   Ask the user a yes-or-no question: in a Yes/No dialog over the focused
   window, if the GUI is running; otherwise (eg: the terminal interface, or
   once the windows are gone at exit) as text (see *util.utils.askUser()*).
+  The dialog's never put over a window that isn't on screen (see
+  *dialogOwner()*): eg, the app's hidden root window, once its windows are
+  closed, when it's quitting. On macOS, a question over a window is a sheet
+  on it -- shown on a hidden one, it's never seen, and the app waits for an
+  answer forever. With no window on screen, it's in a dialog of its own.
 
   :param question:
   :type question: str
@@ -2175,10 +2180,10 @@ def askYesNo(question:str, title:str) -> bool:
     from tkinter import messagebox
     try:
       focused = root.focus_get()
-    except KeyError: # (eg: a menu's popdown, which isn't a Python widget)
+    except (KeyError, tk.TclError): # (eg: a menu's popdown, which isn't a Python widget)
       focused = None
-    while True:
-      return bool(messagebox.askyesno(title, question, parent=focused.winfo_toplevel() if focused is not None else root))
+    owner = dialogOwner(focused if focused is not None else root)
+    return bool(messagebox.askyesno(title, question, **({"parent": owner} if owner is not None else {})))
   def check(ans:str):
     return ans.strip().upper() in ("Y", "YES", "T", "TRUE", "N", "NO", "F", "FALSE")
   ans = askUser(f'{question}\n(Y/N):', title, check)

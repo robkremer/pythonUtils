@@ -208,6 +208,52 @@ class TestOwnDialog(unittest.TestCase):
   def test_letGo(self):
     self.assertEqual(self.shown(keep=False), "")
 
+class TestAskYesNo(unittest.TestCase):
+  '''
+  util.utils.askYesNo(): asked over a window that's on screen -- never over
+  the app's hidden root (eg: quitting, with its windows closed), which on
+  macOS would make it a sheet no one sees, and the app wait forever.
+  '''
+  def setUp(self):
+    import tkinter as tk
+    from tkinter import messagebox
+    try:
+      self.root = tk.Tk()
+    except tk.TclError as ex:
+      raise unittest.SkipTest(f"no display: {ex}")
+    self.root.withdraw() # (as an app's root is, with its windows its Toplevels)
+    self.asked:list[dict] = []
+    def ask(title, message, **kw):
+      self.asked.append(kw)
+      return True
+    self.saved = messagebox.askyesno
+    messagebox.askyesno = ask
+
+  def tearDown(self):
+    from tkinter import messagebox
+    messagebox.askyesno = self.saved
+    self.root.destroy()
+
+  def test_hiddenRoot(self):
+    from util.utils import askYesNo
+    self.root.update()
+    self.assertTrue(askYesNo("Save?", "Save"))
+    self.assertEqual(self.asked, [{}]) # (no parent: a dialog of its own)
+
+  def test_shownWindow(self):
+    import tkinter as tk
+    from util.utils import askYesNo
+    w = tk.Toplevel(self.root)
+    w.geometry("200x100")
+    w.wait_visibility()
+    self.root.update()
+    askYesNo("Save?", "Save")
+    self.assertEqual([str(kw.get("parent")) for kw in self.asked], [str(w)])
+    w.destroy() # (its window's gone: eg, closed as the app quits)
+    self.root.update()
+    askYesNo("Save?", "Save")
+    self.assertEqual(self.asked[1:], [{}])
+
 class TestRightMouse(unittest.TestCase):
   'util.utils.bindRightMouse() and friends: the right button\'s events, which on macOS depend on the Tk version.'
 
