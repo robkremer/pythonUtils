@@ -113,3 +113,17 @@ closing the window by itself. It's rare, and looks random.
 application's first window is made, has tkinter put a serial number in each
 command's name, so none is used twice and a stale timer finds nothing to
 run.
+
+Window stacking order
+---------------------
+
+:py:func:`util.windowStacking.stackingOrder` lists some of an application's
+windows from the one at the back to the one in front, as they're stacked on
+the screen (those hidden or minimized first); and
+:py:func:`util.windowStacking.restack` stacks windows in an order again, in
+front of the application's others, giving the one in front the focus. An
+application that reopens the windows it had open when it last quit records
+them in their stacking order, and after opening them again calls *restack()*:
+they're then one in front of another as they were, not in the order they
+happened to be opened in. Both use Tk's own commands (``wm stackorder`` and
+``raise``), so they work the same on the Mac, Windows and Linux.
