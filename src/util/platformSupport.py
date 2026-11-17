@@ -61,6 +61,34 @@ def shortcut(key:str, shift:bool=False, alt:bool=False, label:Optional[str]=None
   shown = label if label is not None else _KEY_LABELS.get(key, key.upper() if len(key) == 1 else key)
   return f"<{'-'.join(mods)}-KeyPress-{key}>", ("-" if MAC else "+").join(labels + [shown])
 
+SECOND_SHORTCUT = ["Control", "Command"] if MAC else ["Control", "Alt"]
+'''The Tk modifiers of *secondShortcut()*'s keys: Control-Command on the Mac, and
+Control-Alt elsewhere (where Command's Control: Control-Control would be
+Control alone).'''
+SECOND_SHORTCUT_LABEL = ["Control", "Command"] if MAC else ["Ctrl", "Alt"]
+"*SECOND_SHORTCUT*'s names in a menu item's accelerator (Tk on the Mac shows them as ⌃⌘)."
+
+def secondShortcut(key:str, label:Optional[str]=None) -> tuple[str, str]:
+  '''
+  A second shortcut for *key*, beside *shortcut()*'s: eg, a variant of what
+  Command-X does. *key* with Control-Command on the Mac, and Ctrl+Alt
+  elsewhere. Bound on the same widget as *shortcut(key)*, it's the one Tk
+  picks for these keys (it's more particular).
+
+  Ctrl+Alt is AltGr on Windows, so on some keyboard layouts (eg: Hungarian,
+  where AltGr+V types "@") the keys type a character instead: offer a menu
+  item too.
+
+  :param key: The key's Tk keysym, eg: "x", "c", "v".
+  :param label: How the key's shown in the accelerator (by default: *key*,
+    upper-cased, or eg "+" for "equal").
+  :returns: (the Tk event sequence to bind, the menu accelerator): eg, for "x",
+    ("<Control-Command-KeyPress-x>", "Control-Command-X") on the Mac and
+    ("<Control-Alt-KeyPress-x>", "Ctrl+Alt+X") elsewhere.
+  '''
+  shown = label if label is not None else _KEY_LABELS.get(key, key.upper() if len(key) == 1 else key)
+  return f"<{'-'.join(SECOND_SHORTCUT)}-KeyPress-{key}>", ("-" if MAC else "+").join(SECOND_SHORTCUT_LABEL + [shown])
+
 def altKey(key:str, label:Optional[str]=None) -> tuple[str, str]:
   '''
   :returns: (the Tk event sequence, the menu accelerator) for *key* with Option
