@@ -36,7 +36,7 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 from util import platformSupport
-from util.platformSupport import shortcut, altKey, MAC, WINDOWS, LINUX
+from util.platformSupport import shortcut, secondShortcut, altKey, MAC, WINDOWS, LINUX
 from util.utils import urlPath, pathURL, displayURL, isWindowsPath, isValidURL, wheelSteps, s_CMD, s_ALT, openFile
 
 
@@ -95,11 +95,42 @@ class TestKeys(unittest.TestCase):
       self.assertEqual(shortcut("z"), ("<Command-KeyPress-z>", "Command-Z"))
       self.assertEqual(shortcut("Z", shift=True), ("<Shift-Command-KeyPress-Z>", "Shift-Command-Z"))
       self.assertEqual(altKey("v"), ("<Option-KeyPress-v>", "Option-V"))
+      self.assertEqual(secondShortcut("x"), ("<Control-Command-KeyPress-x>", "Control-Command-X"))
     else:
       self.assertEqual(shortcut("z"), ("<Control-KeyPress-z>", "Ctrl+Z"))
       self.assertEqual(shortcut("Z", shift=True), ("<Shift-Control-KeyPress-Z>", "Shift+Ctrl+Z"))
       self.assertEqual(shortcut("equal")[1], "Ctrl++")
       self.assertEqual(altKey("v"), ("<Alt-KeyPress-v>", "Alt+V"))
+      self.assertEqual(secondShortcut("x"), ("<Control-Alt-KeyPress-x>", "Ctrl+Alt+X"))
+
+  def test0150secondShortcutWins(self):
+    '''
+    Bound on the same widget as *shortcut()*'s key, *secondShortcut()*'s is the
+    one that fires for its keys (it's more particular), and the plain one still
+    fires for its own.
+    '''
+    import tkinter as tk
+    try:
+      root = tk.Tk()
+    except tk.TclError as ex:
+      raise unittest.SkipTest(f"no display: {ex}")
+    try:
+      fired:list[str] = []
+      w = tk.Frame(root, width=50, height=50)
+      w.pack()
+      w.bind(shortcut("x")[0], lambda _e: fired.append("plain"))
+      w.bind(secondShortcut("x")[0], lambda _e: fired.append("second"))
+      root.update()
+      w.focus_force()
+      root.update()
+      control, command = 0x4, 0x8 # (Command is Mod1 on the Mac; Alt is Mod1 on X11, and 0x20000 on Windows)
+      alt = 0x20000 if WINDOWS else 0x8
+      second, plain = (control | command, command) if MAC else (control | alt, control)
+      w.event_generate("<KeyPress>", keysym="x", state=second, when="now")
+      w.event_generate("<KeyPress>", keysym="x", state=plain, when="now")
+      self.assertEqual(fired, ["second", "plain"])
+    finally:
+      root.destroy()
 
   def test0200masks(self):
     if MAC:
