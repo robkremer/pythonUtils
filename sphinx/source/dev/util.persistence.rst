@@ -13,6 +13,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   util.persistence.copyFiles
    util.persistence.pRef
    util.persistence.serialize
    util.persistence.serializeJSON

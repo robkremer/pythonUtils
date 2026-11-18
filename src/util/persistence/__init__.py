@@ -30,4 +30,7 @@ URLs), and refer to one another -- across files -- by reference:
   (*InstantiationInfo*), and the *SerializationStrategy* that writes and reads
   them -- in XML (*serializeXML*, and the more compact *serializeXML2*), JSON
   (*serializeJSON*) or property lists (*serializePlist*).
+- *util.persistence.copyFiles*: copying a set of their files as a unit (eg: a
+  model, its views, and the models it builds on): the copies refer to one
+  another, and say where they are.
 '''
