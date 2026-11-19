@@ -44,13 +44,13 @@ Created on Nov 9, 2026
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
-import base64
 import importlib.metadata as metadata
 import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk
 import webbrowser
 from typing import Any, Callable, NamedTuple, Optional, Sequence
+from util.appIcon import photo
 from util.platformSupport import MAC, shortcut
 from util.utils import afterMenu, keepLast, ownDialog, placeDialog
 
@@ -179,17 +179,6 @@ def licenceFiles(dist:str) -> list[tuple[str, str]]:
           ret.append((f.name, text))
   return ret
 
-def _photo(master:tk.Misc, icon:tk.PhotoImage|str|bytes) -> tk.PhotoImage:
-  '''
-  :param icon: A picture: one already made, a picture file's path, or its contents (PNG or GIF).
-  :returns: It, as a picture to show.
-  '''
-  if isinstance(icon, tk.PhotoImage):
-    return icon
-  if isinstance(icon, bytes):
-    return tk.PhotoImage(master=master, data=base64.b64encode(icon).decode("ascii"))
-  return tk.PhotoImage(master=master, file=icon)
-
 class AboutDialog(tk.Toplevel):
   '''
   An About box: the program's icon, name, version and details (eg: the
@@ -234,7 +223,7 @@ class AboutDialog(tk.Toplevel):
     head = ttk.Frame(frame)
     head.pack(fill=tk.X)
     if icon is not None:
-      self.icon = _photo(self, icon) # (kept: Tk forgets a picture Python no longer refers to)
+      self.icon = photo(self, icon) # (kept: Tk forgets a picture Python no longer refers to)
       ttk.Label(head, image=self.icon).pack()
     ttk.Label(head, text=name, font=self._font(1.6, bold=True)).pack(pady=(6, 0))
     if version:

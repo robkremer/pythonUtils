@@ -56,6 +56,7 @@ from abc import ABC
 import argparse
 from pickle import NONE
 from util import programFiles # (now, at start-up: it notes the program's files as they are -- see showExceptionDialog())
+from util.appIcon import alertIcon
 #from docutils.nodes import description
 #logger:util.Logger = util.getLogger(__name__)
 
@@ -2082,6 +2083,30 @@ def isGuiAvailable() -> bool:
   return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
 
 
+def askString(title:str, prompt:str, parent:Optional[tk.Misc]=None, initialvalue:Optional[str]=None) -> Optional[str]:
+  """Ask the user for a line of text, as *tkinter.simpledialog.askstring()*
+  does, but with the icon the system's alerts show (see
+  *util.appIcon.alertIcon()*): on macOS the program's, at the dialog's top
+  left.
+
+  :param title: The dialog's title.
+  :param prompt: What to type.
+  :param parent: The window it's over, if any.
+  :param initialvalue: The text it starts with (selected), if any.
+  :returns: The text typed, or None if it's cancelled.
+  """
+  from tkinter import simpledialog
+  query = getattr(simpledialog, "_QueryString", None) # (tkinter's own, for askstring(): its body's made by body())
+  if query is None or alertIcon(parent or tk._default_root) is None: # type: ignore[attr-defined] # @UndefinedVariable
+    return simpledialog.askstring(title, prompt, parent=parent, initialvalue=initialvalue)
+  class Query(query): # type: ignore[valid-type,misc]
+    def body(self, master:tk.Frame) -> Any:
+      image = alertIcon(self)
+      if image is not None: # (before the body's packed into the dialog, and its buttons: they go to its right)
+        ttk.Label(self, image=image).pack(side=tk.LEFT, anchor=tk.N, padx=(12, 2), pady=12)
+      return super().body(master)
+  return Query(title, prompt, parent=parent, initialvalue=initialvalue).result
+
 def askViaTk(prompt: str, title: str = "Input required", check:Callable[[str],bool]=lambda s: True) -> Optional[str]:
   """Prompt the user for input using a Tkinter dialog: in the running Tk
   application, if there is one (over its focused window); otherwise in a Tk
@@ -2112,7 +2137,7 @@ def askViaTk(prompt: str, title: str = "Input required", check:Callable[[str],bo
         focused = None
       parent = focused.winfo_toplevel() if focused is not None else existing
       while True:
-        ret = simpledialog.askstring(title, prompt, parent=parent)
+        ret = askString(title, prompt, parent=parent)
         if ret is None or len(ret) == 0:
           return None
         if check(ret):
@@ -2122,7 +2147,7 @@ def askViaTk(prompt: str, title: str = "Input required", check:Callable[[str],bo
     root.attributes("-topmost", True)
     
     while True:
-      result = simpledialog.askstring(title, prompt, parent=root)
+      result = askString(title, prompt, parent=root)
       if result is None or len(result) == 0:
         result = None
         break
@@ -2554,6 +2579,9 @@ def showExceptionDialog(parent: tk.Toplevel|tk.Tk|None = None, title: str = "Err
   # window yet to be transient to, only the (permanently withdrawn) root.
   ownDialog(dialog, parent) # (over a window on screen: see ownDialog())
 
+  image = alertIcon(dialog, "error", tkIcon=False) # (on macOS the program's icon, as the system's alerts show it: see util.appIcon)
+  if image is not None:
+    ttk.Label(dialog, image=image).pack(side="left", anchor="n", padx=(8, 0), pady=8) # (first: the rest goes to its right)
   if programFiles.changed():
     tk.Label(dialog, text=programFiles.advice(), justify="left", anchor="w", wraplength=640).pack(fill="x", padx=8, pady=(8, 0))
   body = scrolledtext.ScrolledText(dialog, width=100, height=25, font=("Courier", 10), wrap="none")

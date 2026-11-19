@@ -39,6 +39,7 @@ import tkinter as tk
 from tkinter import ttk
 from html.parser import HTMLParser
 from typing import Callable, Optional
+from util.appIcon import alertIcon
 from util.utils import ownDialog
 
 ActionCallback = Callable[[], None]
@@ -214,6 +215,9 @@ class ActionDialog(tk.Toplevel):
     self._closeOnAction:bool = closeOnAction
     self._linkTagCount:int = 0
 
+    image = alertIcon(self) # (on macOS the program's icon, at the top left, as the system's alerts show it: see util.appIcon)
+    if image is not None:
+      ttk.Label(self, image=image).pack(side="left", anchor="n", padx=(12, 0), pady=12) # (first: the rest goes to its right)
     container = ttk.Frame(self)
     container.pack(fill="both", expand=True)
 
