@@ -48,7 +48,7 @@ import logging
 import tkinter as tk
 import tkinter.font as tkfont
 import re
-from tkinter import colorchooser, ttk, messagebox, simpledialog
+from tkinter import colorchooser, ttk, messagebox
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Union, Optional, override, Type
 from types import NoneType
@@ -59,7 +59,7 @@ from util.attribute import AttributedObject, Attribute, \
   NoValue, NOVALUE
 from util.persistence.pRef import Serializable, PRObject
 from util.utils import getFullClassName, xmlToStringIndented
-from util.utils import VerticalScrolledFrame, ownDialog
+from util.utils import VerticalScrolledFrame, ownDialog, askString
 from util.tooltip import CreateToolTip
 from tkinter.ttk import Widget
 
@@ -419,7 +419,7 @@ class ListEditor(tk.Frame):
     if maker is not None:
       item = maker(self)
     else:
-      item = simpledialog.askstring("Add", "New item:", parent=self)
+      item = askString("Add", "New item:", parent=self)
     if item is None:
       return
     i = self._selected()
@@ -460,7 +460,7 @@ class ListEditor(tk.Frame):
     i = self._selected()
     if self.state == tk.DISABLED or i is None:
       return
-    text = simpledialog.askstring("Edit", "Item:", initialvalue=self.listbox.get(i), parent=self)
+    text = askString("Edit", "Item:", parent=self, initialvalue=self.listbox.get(i))
     if text is not None:
       self.listbox.delete(i)
       self.listbox.insert(i, text)

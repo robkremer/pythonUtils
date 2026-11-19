@@ -22,6 +22,7 @@ Submodules
    :maxdepth: 4
 
    util.aboutDialog
+   util.appIcon
    util.abstractGraph
    util.actionDialog
    util.attribute

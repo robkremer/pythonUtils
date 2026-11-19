@@ -34,15 +34,18 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
 from typing import Optional
+from util.appIcon import TK_ICONS, alertIcon
 from util.utils import ownDialog, placeDialog
 
-ICONS = ("error", "info", "question", "warning")
-"The icons a *ChoiceDialog* can show (Tk's own: as *tkinter.messagebox* shows)."
+ICONS = tuple(TK_ICONS)
+"The icons a *ChoiceDialog* can show, for what it says (as *tkinter.messagebox*'s: see *util.appIcon.alertIcon()*)."
 
 class ChoiceDialog(tk.Toplevel):
   '''
   A message, with a button for each choice, right to left: the first choice
   is the right-most (where the default button goes on macOS and Windows).
+  Its icon's the one the system's alerts show (see *util.appIcon.alertIcon()*):
+  on macOS the program's, elsewhere Tk's for what it says (*icon*), if anything.
   Modal: *show()* returns the choice made. It's centred over its parent's
   window, or on the screen if that isn't on it (see *util.utils.placeDialog()*):
   unlike *tkinter.messagebox*'s, which on macOS is put half off the screen
@@ -62,8 +65,9 @@ class ChoiceDialog(tk.Toplevel):
     frame = ttk.Frame(self, padding=14)
     frame.pack(fill=tk.BOTH, expand=True)
     frame.columnconfigure(1, weight=1)
-    if icon is not None:
-      ttk.Label(frame, image=f"::tk::icons::{icon}").grid(row=0, column=0, rowspan=2, sticky=tk.N, padx=(0, 12))
+    image = alertIcon(self, icon) # (as the system's alerts show: the program's icon on macOS -- see util.appIcon)
+    if image is not None:
+      ttk.Label(frame, image=image).grid(row=0, column=0, rowspan=2, sticky=tk.N, padx=(0, 12))
     ttk.Label(frame, text=message, wraplength=440, justify=tk.LEFT).grid(row=0, column=1, sticky=tk.W)
     if detail:
       ttk.Label(frame, text=detail, wraplength=440, justify=tk.LEFT, foreground="gray35") \
