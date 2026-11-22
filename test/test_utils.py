@@ -49,6 +49,27 @@ class Test(unittest.TestCase):
     self.assertEqual(removeDuplicates([1,2,[1,[3,4,2]],1,1,2], asTree=True), [1,2,[[3,4]]])
     self.assertEqual(removeDuplicates([1,2,[1,[3,4,2]],1,5,1,2], asTree=True), [1,2,[[3,4]],5])
 
+  def test_boxBreadth(self):
+    from util.utils import boxBreadth
+    self.assertEqual(boxBreadth((40, 20), (1, 0)), 40) # (across a vertical line: its width)
+    self.assertEqual(boxBreadth((40, 20), (0, -3)), 20) # (across a horizontal one: its height; any length, either way)
+    self.assertAlmostEqual(boxBreadth((40, 20), (1, 1)), 60 / 2 ** 0.5)
+    self.assertEqual(boxBreadth((40, 20), (0, 0)), 20)
+
+  def test_spreadOffsets(self):
+    from util.utils import spreadOffsets
+    self.assertEqual(spreadOffsets([]), [])
+    self.assertEqual(spreadOffsets([20]), [0])
+    self.assertEqual(spreadOffsets([20, 20, 20], gap=5), [0, 25, -25])
+    self.assertEqual(spreadOffsets([20, 10, 30, 40], gap=2), [0, 17, -27, 44])
+    # (one more at the end moves none of the others)
+    self.assertEqual(spreadOffsets([20, 10, 30, 40, 8], gap=2)[:4], spreadOffsets([20, 10, 30, 40], gap=2))
+    # (none overlaps another)
+    sizes = [20, 10, 30, 40, 8, 12]
+    spans = sorted((c - s / 2, c + s / 2) for c, s in zip(spreadOffsets(sizes, gap=3), sizes))
+    for (_, end), (start, _) in zip(spans, spans[1:]):
+      self.assertAlmostEqual(start - end, 3)
+
   def test_findConcreteSubclasses(self):
     from abc import ABC, abstractmethod
     from util.utils import findConcreteSubclasses
