@@ -29,6 +29,7 @@ Created on Oct 14, 2024
 -------------
 '''
 
+import math
 import os
 import sys
 from typing import Optional, Any, Iterable, Callable,\
@@ -1722,7 +1723,51 @@ def midpoint(*pts:Iterable[PointIndici]) -> Tuple[PointIndici, PointIndici]:
   except Exception as ex:
     raise ex
   return (sumX/n, sumY/n)
-  
+
+def boxBreadth(size:tuple[float, float], direction:tuple[float, float]) -> float:
+  '''
+  How long an upright box is along *direction*: the length of its shadow on
+  a line that way (eg: across a line it's on, to see how far beside it the
+  next one must go).
+
+  :param size: The box's (width, height).
+  :param direction: (dx, dy): needn't be of unit length. If it's (0, 0), *size*'s height.
+  :returns: The box's length along *direction*: its width if that's
+    horizontal, its height if vertical, more (up to its diagonal) between.
+  '''
+  w, h = size
+  dx, dy = direction
+  d = math.hypot(dx, dy)
+  if d == 0:
+    return abs(h)
+  return abs(w * dx / d) + abs(h * dy / d)
+
+def spreadOffsets(sizes:Sequence[float], gap:float=0.0) -> list[float]:
+  '''
+  Where to centre each of a row of things along a line so none overlaps
+  another: the first at 0, and each after it next to those before it, by
+  turns on the far (+) side and the near (-) side -- so adding one more to
+  the end moves none of the others (eg: the labels of lines drawn between
+  the same two things, spread out across them).
+
+  :param sizes: How long each is along the line, in order.
+  :param gap: The clear space between neighbours.
+  :returns: How far each one's centre is from the first's, in order.
+  '''
+  ret:list[float] = []
+  far = near = 0.0 # (how far the row reaches on each side of 0)
+  for i, size in enumerate(sizes):
+    if i == 0:
+      ret.append(0.0)
+      far = near = size / 2
+    elif i % 2:
+      ret.append(far + gap + size / 2)
+      far += gap + size
+    else:
+      ret.append(-(near + gap + size / 2))
+      near += gap + size
+  return ret
+
 def expandRect(rect:Iterable[PointIndici], spacing:Iterable[PointIndici]|PointIndici) -> list[PointIndici]:
   """
   :param rect: The rectangle to expand.
